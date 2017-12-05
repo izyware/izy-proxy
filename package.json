@@ -1,0 +1,23 @@
+{
+  "name": "izy-proxy",
+  "version": "1.0.5",
+  "description": "IZY PROXY MODULE",
+  "main": "app.js",
+  "dependencies": {
+    "http-proxy": "~1.16.2",
+    "izy-circus": "^1.0.13"
+  },
+  "files": [
+    "README",
+    "app.js",
+    "favicon.ico",
+    "server.js",
+    "modtask",
+    "plugin"
+  ],
+  "devDependencies": {},
+  "scripts": {
+    "test": "node test.js"
+  },
+  "author": "Izyware"
+}
