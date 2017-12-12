@@ -19,6 +19,12 @@ module.exports = {
 	// Array of plug-in definitions 
 	plugins: [
 	{
+		// Only do this while developing plug-ins
+		// This will reload the node modules for plug-in per request 
+		reloadPerRequest: false, 
+		name: 'apigateway'
+	},
+	{
 		aliases: ['.domain_to_alias_to_izyware.com'],
 		// Only do this while developing plug-ins
 		// This will reload the node modules for plug-in per request 
