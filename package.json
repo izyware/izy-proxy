@@ -3,6 +3,10 @@
   "version": "1.0.8",
   "description": "IZY PROXY MODULE",
   "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/izyware/izy-proxy"
+  },
   "dependencies": {
     "http-proxy": "~1.16.2",
     "izy-circus": "^1.0.13"
