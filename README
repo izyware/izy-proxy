@@ -7,14 +7,19 @@ It enables developers to focus on creating reusable user experiences instead of 
 
 ```
 npm i izy-proxy
-node ./node_modules/izy-proxy/app.js
+cd node_modules/izy-proxy
+node app.js
 ```
 
 If you are using PM2 to manage your node processes, you can:
 
 ```
-pm2 start ./node_modules/izy-proxy/app.js
+cd node_modules/izy-proxy
+pm2 start app.js
 ```
+
+Make cure the the *cwd* for the server process is set to the location for the izy-proxy installation.
+This is important because the *cwd* is used in locating plugin and thirdparty modules.
 
 ## Sample Config
 
@@ -71,14 +76,7 @@ If you wish to access izy modules from the file system, you may customize the mo
 izy-proxy/modtask/config/kernel/extstores/file.js
 ```
 
-currentdir and __dirname are two variables that allow you to construct relative paths. 
-
-### Automatic Deployments using npm i under node_modules
-
-```
-currentdir: node_modules/izy-proxy/
-__dirname: node_modules/izy-proxy/node_modules/izy-circus/node_modules/izymodtask
-```
+Please refer to the comments in the file to understand how to reference external modules.
 
 ## NOTE
 for more details, visit https://izyware.com
