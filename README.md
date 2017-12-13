@@ -63,5 +63,22 @@ The tool has an extensive and powerful plugin system that allows you to very eas
 
 Create a plugin by cloning the `default` subfolder under the `plugin` directory. You must also register the plugin in the config file.
 
+## Module Paths
+
+If you wish to access izy modules from the file system, you may customize the module path resolution rulesets defined in:
+
+```
+izy-proxy/modtask/config/kernel/extstores/file.js
+```
+
+currentdir and __dirname are two variables that allow you to construct relative paths. 
+
+### Automatic Deployments using npm i under node_modules
+
+```
+currentdir: node_modules/izy-proxy/
+__dirname: node_modules/izy-proxy/node_modules/izy-circus/node_modules/izymodtask
+```
+
 ## NOTE
 for more details, visit https://izyware.com
