@@ -71,7 +71,7 @@ If you wish to access izy modules from the file system, you may customize the mo
 izy-proxy/modtask/config/kernel/extstores/file.js
 ```
 
-currentdir and __dirname are two variables that allow you to construct relative paths. 
+currentdir and __dirname are two variables that allow you to construct relative paths.
 
 ### Automatic Deployments using npm i under node_modules
 

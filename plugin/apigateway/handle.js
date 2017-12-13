@@ -65,8 +65,7 @@ function ldPath(path, cb) {
     if (!outcome.success) return cb(outcome);
     var reason = 'Unknown';
     try {
-      var rootmod = require('izymodtask').getRootModule();
-      return cb({ success: true, data: rootmod.ldmod(mod) });
+      return cb({ success: true, data: outcome.rootmod.ldmod(mod) });
     } catch (e) {
       reason = e.message;
     }
@@ -77,17 +76,18 @@ function ldPath(path, cb) {
 function loadPackageIfNotPresent(query, cb) {
   var pkg = query.pkg;
   var mod = query.mod;
-  var rootmod = require('izymodtask').getRootModule();
 
+  // For security reasons we virtualize each requests's load into its own root context
+  // However, the file system caching (if present) will still allow sharing of context
+  var rootmod = require('izymodtask').getRootModule();
   if (rootmod.ldmod('kernel\\selectors').objectExist(mod, {}, false)) {
     return cb( { success: true });
   }
-  
   if (pkg === '') return cb( { success: true });
   var pkgloader = rootmod.ldmod('pkgloader');
   var modtask = rootmod;
 
-  var outcome = { success:true, reason: [] };
+  var outcome = { success:true, reason: [],  rootmod };
   pkgloader.getCloudMod(pkg).incrementalLoadPkg(
     // One of these per package :)
     function(pkgName, pkg, pkgString) {
@@ -98,7 +98,9 @@ function loadPackageIfNotPresent(query, cb) {
           pkg,
           modtask.ldmod('kernel/extstores/inline/import'),
           function (ops) {
-            console.log(ops.length + " modules installed for = " + pkgName);
+            if (modtask.verbose) {
+              console.log(ops.length + " modules installed for = " + pkgName);
+            }
           },
           function (outcome) {
             outcome.reason.push(outcome.reason);
