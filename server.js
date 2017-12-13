@@ -22,7 +22,7 @@ modtask.loadPlugin = function(pluginConfig, noCaching) {
     outcome.reason = e;
   }
   if (!outcome.success) {
-    console.log(`WARNING: failed to properly load plug-in ${pluginConfig.name}: ${outcome.reason}`);
+    console.log(`WARNING: failed to properly load plug-in *${pluginConfig.name}*: ${JSON.stringify(outcome.reason)}`);
   }
   return outcome;
 }
@@ -80,9 +80,10 @@ module.exports.run = function run() {
 function handleRequest(req, res, proxy) {
 
   if (req.url === '/izyproxystatus') {
-    res.writeHead(200);
-    res.end();
-    return;
+    return sendStatus(req, res, {
+      status: 200,
+      subsystem: 'server'
+    }, 'OK');
   }
 
   var i, handler;
@@ -94,7 +95,14 @@ function handleRequest(req, res, proxy) {
       }
       if (handler.plugin.canHandle(req)) {
         console.log(req.url, ' => ', handler.config.name);
-        return handler.plugin.handle(req, res, proxy);
+        return handler.plugin.handle(req, res, {
+          req,
+          res,
+          proxy,
+          sendStatus: function(info, msg) {
+            return sendStatus(req, res, info, msg);
+          }
+        });
       }
     } catch(e) {
       return onError(e.message, req, res);
@@ -105,8 +113,20 @@ function handleRequest(req, res, proxy) {
 
 function onError(err, req, res) {
   console.log('SERVER ERROR: ', err);
-  res.writeHead(500, {
-    'Content-Type': 'text/html'
-  });
-  res.end('Error servicing the request: '+ err);
+  return sendStatus(req, res, {
+    status: 500,
+    subsystem: 'server'
+  }, 'Error servicing the request: '+ err);
+}
+
+function sendStatus(req, res, info, msg) {
+  msg = msg || '';
+  res.writeHead(info.status, {'Content-Type': 'text/html' });
+  info.host = req.headers.host;
+  info.url = req.url;
+  res.write('<html><head><title>izy-proxy</title></head><body><h1>' + msg + '</h1><h2>'
+    + JSON.stringify(info, null, '\t') +
+    '</h2></body></html>'
+  );
+  res.end();
 }
