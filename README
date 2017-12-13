@@ -7,7 +7,7 @@ It enables developers to focus on creating reusable user experiences instead of 
 
 ### Requirements
 
-You need npm > 3.10.6. The npm install behavior is different in earlier versions. The tool requires that all the node dependency for children be installed in flat node_modules subdirectory.
+You need npm > 3.10.6. The npm install behavior is different in earlier versions. The tool requires that all the node dependencies be installed in flat node_modules subdirectory.
 If you happen to use an older version of npm, the work around is shown below:
 
 
@@ -33,7 +33,7 @@ cd node_modules/izy-proxy
 node app.js (or if you are using pm2, do pm2 start app.js)
 ```
 
-Make cure the the *cwd* for the server process is set to the location for the izy-proxy/app.js installation. This is important because the *cwd* is used in locating plugin, thirdparty modules and the configuration.
+Make sure the the *cwd* for the server process is set to the location for the izy-proxy/app.js installation. This is important because the *cwd* is used in locating plugin, thirdparty modules and the configuration.
 
 After the server is running, the following should work:
 
