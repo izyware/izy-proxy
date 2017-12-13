@@ -127,7 +127,13 @@ var decodeBase64Content = function (base64str, serverObjs) {
   var header = base64str.substr(0, index);
   // image/jpg
   var contentType = header.substr(5, header.length - 5);
+
+  // Node < v6
+  var buf = new Buffer(base64Pixels, 'base64');
+
+  /* Node v6.0.0 and beyond
   var buf = Buffer.from(base64Pixels, 'base64');
+  */
   serverObjs.res.writeHead(200, {'Content-Type': contentType});
   return serverObjs.res.end(buf, 'binary');
 }
