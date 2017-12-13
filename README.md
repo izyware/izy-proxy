@@ -36,15 +36,14 @@ node app.js (or if you are using pm2, do pm2 start app.js)
 Make sure the the *cwd* for the server process is set to the location for the izy-proxy/app.js installation. This is important because the *cwd* is used in locating plugin, thirdparty modules and the configuration.
 
 After the server is running, the following should work:
-
-#### TIP
-When upgrading or deploying a node (ec2-node or a docker container), you should deep clone the directory as a backup and switch back/forth with pm2 until things work.
-
 ```
 GET /izyproxystatus
 
 status: 200
 ```
+
+#### PRO TIP
+When upgrading or deploying a node (ec2-node or a docker container), you should deep clone the directory as a backup and switch back/forth with pm2 until things work.
 
 ## Configuration for the artifact
 
