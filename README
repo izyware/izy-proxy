@@ -42,7 +42,7 @@ GET /izyproxystatus
 status: 200
 ```
 
-#### PRO TIP
+#### IZY TIP
 When upgrading or deploying a node (ec2-node or a docker container), you should deep clone the directory as a backup and switch back/forth with pm2 until things work.
 
 ## Configuration for the artifact
