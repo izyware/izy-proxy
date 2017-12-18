@@ -78,7 +78,15 @@ module.exports = {
 		// Only do this while developing plug-ins
 		// This will reload the node modules for plug-in per request 
 		reloadPerRequest: false, 
-		name: 'apigateway'
+		name: 'apigateway',
+
+		// invoke pkg prefix. If set it will allow server side extensibility
+		// If you set this, it is STRONGLY recommended that you also enforce HTTP authentication (see Authorization below).
+		// Only enable this if you fully under the security risks involved.
+		invokePrefix: 'cryptokey',
+		// the Authotization header to be used in a typical HTTP authentication scheme.
+		// If you have Izy Identity Management system setup, set this to 'idm'
+		invokeAuthorization: 'access_token'
 	},
 	{
 		aliases: ['.domain_to_alias_to_izyware.com'],

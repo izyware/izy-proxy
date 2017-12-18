@@ -10,32 +10,43 @@ module.exports = function (config, pluginName) {
       return req.url.indexOf(basePath) === 0;
     },
     handle: function (req, res, serverObjs) {
-      var outcome = {};
-      outcome = parseClientRequest(req, config);
-      var path = outcome.path;
-      path = path.substr(basePath.length, path.length - basePath.length);
-      path = decodeURIComponent(path);
-
+      var removePrefix = function(str, sub) {
+        return str.substr(sub.length, str.length - sub.length);
+      }
       // fill my namespace with usable stuff
       serverObjs[name] = {};
       serverObjs[name].ldPath = ldPath;
-      return streamBase64Content(path, serverObjs);
 
-      /* More genetically this is is the *chain* pattern that needs to be followed
-      ldPath(path, function(outcome) {
-        if (outcome.success) {
-          try {
-            return outcome.data.apigateway.handle(serverObjs);
-          } catch (e) {
-            outcome = { reason : e.message };
-          }
+      var outcome = {};
+      outcome = parseClientRequest(req, config);
+      var path = outcome.path;
+      path = removePrefix(path, basePath);
+      path = decodeURIComponent(path);
+
+      if (config.invokePrefix && path.indexOf(config.invokePrefix) === 0) {
+        if (config.invokeAuthorization && serverObjs.req.headers['Authorization'] != config.invokeAuthorization) {
+          return serverObjs.sendStatus({
+            status: 401,
+            subsystem: name
+          }, 'invokeAuthorization token was invalid');
         }
-        return serverObjs.sendStatus({
-          status: 500,
-          subsystem: name
-        }, outcome.reason);
-      });
-      */
+        path = removePrefix(path, config.invokePrefix);
+        return ldPath(path, function(outcome) {
+          if (outcome.success) {
+            try {
+              return outcome.data.handle(serverObjs);
+            } catch (e) {
+              outcome = { reason : e.message };
+            }
+          }
+          return serverObjs.sendStatus({
+            status: 500,
+            subsystem: name
+          }, outcome.reason);
+        });
+      }
+
+      return streamBase64Content(path, serverObjs);
     }
   };
 };
@@ -74,20 +85,21 @@ function ldPath(path, cb) {
 }
 
 function loadPackageIfNotPresent(query, cb) {
-  var pkg = query.pkg;
-  var mod = query.mod;
-
   // For security reasons we virtualize each requests's load into its own root context
   // However, the file system caching (if present) will still allow sharing of context
   var rootmod = require('izymodtask').getRootModule();
+  var outcome = { success:true, reason: [],  rootmod };
+
+  var pkg = query.pkg;
+  var mod = query.mod;
+
   if (rootmod.ldmod('kernel\\selectors').objectExist(mod, {}, false)) {
-    return cb( { success: true });
+    return cb(outcome);
   }
-  if (pkg === '') return cb( { success: true });
+  if (pkg === '') return cb(outcome);
   var pkgloader = rootmod.ldmod('pkgloader');
   var modtask = rootmod;
 
-  var outcome = { success:true, reason: [],  rootmod };
   pkgloader.getCloudMod(pkg).incrementalLoadPkg(
     // One of these per package :)
     function(pkgName, pkg, pkgString) {
