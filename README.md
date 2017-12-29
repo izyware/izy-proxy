@@ -135,6 +135,14 @@ To test this plug-in, try:
  /favicon.ico
  ```
 
+## Handling CORS
+
+The serverObjs variable allows the plug-in modules to handle CORS. Note that to handle CORS a plug-in must:
+* Handle the OPTIONS request from the browser. A sample response is provided in the OPTIONS
+* Provide the Access-Control-Allow-XXX headers in each request
+
+You should customize the Access-Control-Allow-XXX headers for your own business needs.
+
 ## Module Paths
 
 If you wish to access izy modules from the file system, you may customize the module path resolution rulesets defined in:

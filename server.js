@@ -77,9 +77,33 @@ module.exports.run = function run() {
   }
 };
 
-function handleRequest(req, res, proxy) {
+function getCORSHeaders(extraHeaders) {
+  var ret = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Credentials' : 'true',
+    'Access-Control-Allow-Methods' : 'PROPFIND, PROPPATCH, COPY, MOVE, DELETE, MKCOL, LOCK, UNLOCK, PUT, GETLIB, VERSION-CONTROL, CHECKIN, CHECKOUT, UNCHECKOUT, REPORT, UPDATE, CANCELUPLOAD, HEAD, OPTIONS, GET, POST',
+    'Access-Control-Allow-Headers' : 'Overwrite, Destination, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, If-Modified-Since, X-File-Name, Cache-Control'
+  };
+  var p;
+  for(p in extraHeaders) {
+    ret[p] = extraHeaders[p];
+  }
+  return ret;
+}
 
+function acceptAndHandleCORS(req, res) {
+  if (req.method.toUpperCase() == 'OPTIONS') {
+    res.writeHead(200, getCORSHeaders());
+    res.end();
+    return true;
+  }
+  return false;
+}
+
+function handleRequest(req, res, proxy) {
   if (req.url === '/izyproxystatus') {
+    // If the handler allows CORS, then this can provide a generic shortcut for handling the OPTIONS request method
+    if (acceptAndHandleCORS(req, res)) return;
     return sendStatus(req, res, {
       status: 200,
       subsystem: 'server'
@@ -101,6 +125,10 @@ function handleRequest(req, res, proxy) {
           proxy,
           sendStatus: function(info, msg) {
             return sendStatus(req, res, info, msg);
+          },
+          getCORSHeaders: getCORSHeaders,
+          acceptAndHandleCORS: function() {
+            return acceptAndHandleCORS(req, res);
           }
         });
       }
@@ -121,7 +149,8 @@ function onError(err, req, res) {
 
 function sendStatus(req, res, info, msg) {
   msg = msg || '';
-  res.writeHead(info.status, {'Content-Type': 'text/html' });
+  info.headers = info.headers || getCORSHeaders({'Content-Type': 'text/html' });
+  res.writeHead(info.status, info.headers);
   info.host = req.headers.host;
   info.url = req.url;
   res.write('<html><head><title>izy-proxy</title></head><body><h1>' + msg + '</h1><h2>'

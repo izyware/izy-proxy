@@ -10,12 +10,15 @@ module.exports = function (config, pluginName) {
       return req.url.indexOf(basePath) === 0;
     },
     handle: function (req, res, serverObjs) {
+      if (serverObjs.acceptAndHandleCORS()) return;
+
       var removePrefix = function(str, sub) {
         return str.substr(sub.length, str.length - sub.length);
       }
       // fill my namespace with usable stuff
       serverObjs[name] = {};
       serverObjs[name].ldPath = ldPath;
+      serverObjs[name].decodeBase64Content = decodeBase64Content;
 
       var outcome = {};
       outcome = parseClientRequest(req, config);
@@ -31,7 +34,10 @@ module.exports = function (config, pluginName) {
           }, 'invokeAuthorization token was invalid');
         }
         path = removePrefix(path, config.invokePrefix);
-        return ldPath(path, function(outcome) {
+        var parsedPath = parseInvokeString(path);
+        serverObjs[name].parsedPath = parsedPath;
+
+        return ldParsedPath(parsedPath, function(outcome) {
           if (outcome.success) {
             try {
               return outcome.data.handle(serverObjs);
@@ -64,19 +70,35 @@ function parseClientRequest(req, config) {
   return outcome;
 }
 
-function ldPath(path, cb) {
+function parseInvokeString(path) {
   var pkg = path.split(':');
-  var mod = path.replace(':', '/');
+  var mod, params = '';
   if (pkg.length) {
+    mod = pkg[0] + '/' + pkg[1];
     pkg = pkg[0];
+    params = path.substr(mod.length+1);
   } else {
     pkg = '';
+    mod = path;
+    params = '';
   }
-  loadPackageIfNotPresent({pkg, mod}, function (outcome) {
+  return { path, pkg, mod, params };
+}
+
+function ldPath(path, cb) {
+  var parsed = parseInvokeString(path);
+  return ldParsedPath(parsed, cb);
+}
+
+function ldParsedPath(parsed, cb) {
+  loadPackageIfNotPresent({
+    pkg: parsed.pkg,
+    mod: parsed.mod
+  }, function (outcome) {
     if (!outcome.success) return cb(outcome);
     var reason = 'Unknown';
     try {
-      return cb({ success: true, data: outcome.rootmod.ldmod(mod) });
+      return cb({ success: true, data: outcome.rootmod.ldmod(parsed.mod) });
     } catch (e) {
       reason = e.message;
     }
@@ -146,7 +168,7 @@ var decodeBase64Content = function (base64str, serverObjs) {
   /* Node v6.0.0 and beyond
   var buf = Buffer.from(base64Pixels, 'base64');
   */
-  serverObjs.res.writeHead(200, {'Content-Type': contentType});
+  serverObjs.res.writeHead(200, serverObjs.getCORSHeaders({'Content-Type': contentType}));
   return serverObjs.res.end(buf, 'binary');
 }
 
