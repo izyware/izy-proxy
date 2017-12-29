@@ -78,7 +78,15 @@ module.exports = {
 		// Only do this while developing plug-ins
 		// This will reload the node modules for plug-in per request 
 		reloadPerRequest: false, 
-		name: 'apigateway'
+		name: 'apigateway',
+
+		// invoke pkg prefix. If set it will allow server side extensibility
+		// If you set this, it is STRONGLY recommended that you also enforce HTTP authentication (see Authorization below).
+		// Only enable this if you fully under the security risks involved.
+		invokePrefix: 'cryptokey',
+		// the Authotization header to be used in a typical HTTP authentication scheme.
+		// If you have Izy Identity Management system setup, set this to 'idm'
+		invokeAuthorization: 'access_token'
 	},
 	{
 		aliases: ['.domain_to_alias_to_izyware.com'],
@@ -126,6 +134,14 @@ To test this plug-in, try:
  ```
  /favicon.ico
  ```
+
+## Handling CORS
+
+The serverObjs variable allows the plug-in modules to handle CORS. Note that to handle CORS a plug-in must:
+* Handle the OPTIONS request from the browser. A sample response is provided in the OPTIONS
+* Provide the Access-Control-Allow-XXX headers in each request
+
+You should customize the Access-Control-Allow-XXX headers for your own business needs.
 
 ## Module Paths
 
