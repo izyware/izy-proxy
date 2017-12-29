@@ -17,7 +17,7 @@ To build an artifact for cloud deployment (i.e. docker container), in any clean 
 ```
 mkdir ~/izyware (or any location you would like have izyware tools deployed to)
 cd ~/izyware
-npm init -f; npm i izy-proxy; mkdir -p node_modules/configs;
+npm init -f; npm install --save izy-proxy; mkdir -p node_modules/configs;
 cp -r /myconfigs/repository/config_sample1/* node_modules/configs
 ```
 
@@ -25,6 +25,13 @@ If you are using npm < 3.10.6, you must also do:
 
 ```
 cp -r node_modules/izy-proxy/node_modules/* node_modules/; cp -r node_modules/izy-circus/node_modules/* node_modules/;
+```
+
+
+### Update
+
+```
+cd ~/izyware;npm update
 ```
 
 ### Run
@@ -53,7 +60,7 @@ pm2 start 2
 .... update ~/izyware/ ...
 ```
 
-Notice that you should put your containers behind a load balancer (i.e. AWS elb) to avoid ending up with broken connections. 
+Notice that you should put your containers behind a load balancer (i.e. AWS elb) to avoid ending up with broken connections.
 
 ## Configuration for the artifact
 
