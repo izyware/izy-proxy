@@ -11,7 +11,6 @@ module.exports = function (config, pluginName) {
     },
     handle: function (req, res, serverObjs) {
       if (~req.url.indexOf('/favicon.ico')) {
-
         var img = fs.readFileSync('./favicon.ico');
         res.writeHead(200, {'Content-Type': 'image/x-icon' });
         return res.end(img, 'binary');
@@ -20,8 +19,6 @@ module.exports = function (config, pluginName) {
       // No-one handled the requests, so say 404
       return serverObjs.sendStatus({
         status: 404,
-        host: req.headers.host,
-        url: req.url,
         subsystem: name
       }, 'The requested resource was not found');
       /*

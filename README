@@ -160,6 +160,20 @@ The serverObjs variable allows the plug-in modules to handle CORS. Note that to 
 
 You should customize the Access-Control-Allow-XXX headers for your own business needs.
 
+## Logging
+
+There is an *optional* plug-in called logging. If you would like to remotely view the internal server logs (or view the entries from your your dashboard), you must enable it in the config:
+
+```
+{
+	name: 'logging',
+	reloadPerRequest: false,
+	ipwhitelist: ['1.2.3.4']
+}
+```
+
+Due to security requirements, you must whitelist the IP address in order to access the logging feature.
+
 ## Module Paths
 
 If you wish to access izy modules from the file system, you may customize the module path resolution rulesets defined in:

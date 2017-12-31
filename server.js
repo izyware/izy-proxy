@@ -3,8 +3,29 @@
 var config = require('../configs/izy-proxy/config');
 var httpProxy = require('http-proxy');
 
+
+
 var handlers = [];
 var modtask = {};
+modtask.logEntries = [];
+modtask.maxLogLength = 5;
+modtask.serverLog = function(msg, type, plugin) {
+  if (!type) type = "WARNING";
+  if (!plugin) plugin = { name: '' };
+  var item = {
+    type,
+    ts: new Date(),
+    msg,
+    plugin: plugin
+  }
+  modtask.logEntries.unshift(item);
+  if (modtask.logEntries.length > modtask.maxLogLength) {
+    modtask.logEntries.length = modtask.maxLogLength;
+  }
+  var msg = '[' + item.ts + '] (' + item.type + ')(' + item.plugin.name + ') ' + item.msg;
+  console.log(msg);
+}
+
 modtask.loadPlugin = function(pluginConfig, noCaching) {
   var outcome = {};
   var path = `./plugin/${pluginConfig.name}/handle`;
@@ -22,7 +43,10 @@ modtask.loadPlugin = function(pluginConfig, noCaching) {
     outcome.reason = e;
   }
   if (!outcome.success) {
-    console.log(`WARNING: failed to properly load plug-in *${pluginConfig.name}*: ${JSON.stringify(outcome.reason)}`);
+    modtask.serverLog(`Failed to properly load plug-in *${pluginConfig.name}*. All plug-in requests will 404. The plug-in error was: ${JSON.stringify(outcome.reason)}`);
+    // This is needed so that *handler.plugin.canHandle is not a function* gets avoided
+    // Instead all the requests that would have been handled by this plug-in will get a 404 instead
+    outcome.canHandle = function() { return false };
   }
   return outcome;
 }
@@ -117,20 +141,30 @@ function handleRequest(req, res, proxy) {
       if (handler.config.reloadPerRequest) {
         handler.plugin = modtask.loadPlugin(handler.config, true);
       }
-      if (handler.plugin.canHandle(req)) {
-        console.log(req.url, ' => ', handler.config.name);
-        return handler.plugin.handle(req, res, {
-          req,
-          res,
-          proxy,
-          sendStatus: function(info, msg) {
-            return sendStatus(req, res, info, msg);
-          },
-          getCORSHeaders: getCORSHeaders,
-          acceptAndHandleCORS: function() {
-            return acceptAndHandleCORS(req, res);
-          }
-        });
+      /*** Errors happening in this block will be marked as belonging to the plug-in ***/
+      try {
+        if (handler.plugin.canHandle(req)) {
+          var serverObjs = {
+            modtask,
+            req,
+            res,
+            proxy,
+            sendStatus: function (info, msg) {
+              return sendStatus(req, res, info, msg);
+            },
+            getCORSHeaders: getCORSHeaders,
+            acceptAndHandleCORS: function () {
+              return acceptAndHandleCORS(req, res);
+            }
+          };
+          return handler.plugin.handle(req, res, serverObjs);
+        }
+      } catch(e) {
+        modtask.serverLog(e.message, null, handler.plugin);
+        return sendStatus(req, res, {
+          status: 500,
+          plugin: handler.plugin.name
+        }, e.message);
       }
     } catch(e) {
       return onError(e.message, req, res);
@@ -154,7 +188,13 @@ function sendStatus(req, res, info, msg) {
   info.host = req.headers.host;
   info.url = req.url;
   res.write('<html><head><title>izy-proxy</title></head><body><h1>' + msg + '</h1><h2>'
-    + JSON.stringify(info, null, '\t') +
+    + JSON.stringify({
+      status: info.status,
+      host: info.host,
+      url: info.url,
+      subsystem: info.subsystem,
+      plugin: info.plugin
+    }, null, '\t') +
     '</h2></body></html>'
   );
   res.end();
