@@ -53,8 +53,7 @@ status: 200
 When upgrading or deploying a node (ec2-node or a docker container), you should deep clone the directory as a backup and switch back/forth with pm2 until things work:
 
 ```
-mkdir ~izyware_backup
-cp -r ~/izyware/* ~/izyware_backup/
+mkdir ~/izyware_backup; cp -r ~/izyware/* ~/izyware_backup/
 pm2 stop 1
 pm2 start 2
 .... update ~/izyware/ ...
