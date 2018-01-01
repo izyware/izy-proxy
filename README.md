@@ -106,6 +106,15 @@ module.exports = {
 		invokeAuthorization: 'access_token'
 	},
 	{
+		// case sensitive
+		testUrl: '/izycircustest',
+
+		// case in-sensitive
+		acceptedPaths: [
+			'/path1',
+			'/',
+			'/path2'
+		],
 		aliases: ['.domain_to_alias_to_izyware.com'],
 		// Only do this while developing plug-ins
 		// This will reload the node modules for plug-in per request 

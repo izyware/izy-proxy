@@ -8,7 +8,7 @@ var httpProxy = require('http-proxy');
 var handlers = [];
 var modtask = {};
 modtask.logEntries = [];
-modtask.maxLogLength = 5;
+modtask.maxLogLength = 50;
 modtask.serverLog = function(msg, type, plugin) {
   if (!type) type = "WARNING";
   if (!plugin) plugin = { name: '' };
@@ -29,7 +29,7 @@ modtask.serverLog = function(msg, type, plugin) {
 modtask.loadPlugin = function(pluginConfig, noCaching) {
   var outcome = {};
   var path = `./plugin/${pluginConfig.name}/handle`;
-  console.log(`Loading plug-in ${pluginConfig.name}`);
+  modtask.serverLog(`Loading plug-in ${pluginConfig.name}`, 'INFO');
   if (noCaching) {
     // delete require.cache[require.resolve(path)]
     var p;
@@ -61,7 +61,7 @@ modtask.initHandlers = function() {
   var i;
   for(i=0; i < list.length; ++i) {
     if (!list[i].name) {
-      console.log(`WARNING: invalid config entry ${i} for plugins. Missing name property`);
+      modtask.serverLog(`WARNING: invalid config entry ${i} for plugins. Missing name property`);
       continue;
     }
     handlers.push({
@@ -72,6 +72,7 @@ modtask.initHandlers = function() {
 }
 
 module.exports.run = function run() {
+  modtask.serverLog(`Run`, 'INFO');
   modtask.initHandlers();
   var proxy = httpProxy.createProxyServer({
     proxyTimeout: config.proxy.timeoutInMs,
@@ -144,6 +145,7 @@ function handleRequest(req, res, proxy) {
       /*** Errors happening in this block will be marked as belonging to the plug-in ***/
       try {
         if (handler.plugin.canHandle(req)) {
+          modtask.serverLog('Handling ' + req.url, 'INFO', handler.plugin);
           var serverObjs = {
             modtask,
             req,
@@ -160,7 +162,7 @@ function handleRequest(req, res, proxy) {
           return handler.plugin.handle(req, res, serverObjs);
         }
       } catch(e) {
-        modtask.serverLog(e.message, null, handler.plugin);
+        modtask.serverLog(e.message, 'ERROR', handler.plugin);
         return sendStatus(req, res, {
           status: 500,
           plugin: handler.plugin.name
@@ -174,11 +176,11 @@ function handleRequest(req, res, proxy) {
 }
 
 function onError(err, req, res) {
-  console.log('SERVER ERROR: ', err);
+  modtask.serverLog(err, 'ERROR');
   return sendStatus(req, res, {
     status: 500,
     subsystem: 'server'
-  }, 'Error servicing the request: '+ err);
+  }, err);
 }
 
 function sendStatus(req, res, info, msg) {
