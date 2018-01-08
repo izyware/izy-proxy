@@ -182,6 +182,10 @@ There is an *optional* plug-in called logging. If you would like to remotely vie
 
 Due to security requirements, you must whitelist the IP address in order to access the logging feature.
 
+
+## sessionObjects
+The plug-ins may use the sessionObjects to share states and parsed information across the canHandle and handle stages. This will allow for writing high performance plug-ins.
+
 ## Module Paths
 
 If you wish to access izy modules from the file system, you may customize the module path resolution rulesets defined in:

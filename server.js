@@ -144,7 +144,8 @@ function handleRequest(req, res, proxy) {
       }
       /*** Errors happening in this block will be marked as belonging to the plug-in ***/
       try {
-        if (handler.plugin.canHandle(req)) {
+        var sessionObjects = {};
+        if (handler.plugin.canHandle(req, sessionObjects)) {
           modtask.serverLog('Handling ' + req.url, 'INFO', handler.plugin);
           var serverObjs = {
             modtask,
@@ -159,7 +160,7 @@ function handleRequest(req, res, proxy) {
               return acceptAndHandleCORS(req, res);
             }
           };
-          return handler.plugin.handle(req, res, serverObjs);
+          return handler.plugin.handle(req, res, serverObjs, sessionObjects);
         }
       } catch(e) {
         modtask.serverLog(e.message, 'ERROR', handler.plugin);
@@ -173,6 +174,26 @@ function handleRequest(req, res, proxy) {
     }
   }
   onError('no handlers defined', req, res);
+}
+
+function parseClientRequest(req, config) {
+  config = config || {};
+  var outcome = {};
+  var domain = req.headers.host.split(':')[0];
+  var path = req.url.split('?')[0].split('#')[0];
+  if (path.indexOf('/') != 0) {
+    path = '/' + path;
+  }
+  var url = `http://${domain}${path}`;
+  config.aliases = config.aliases || [];
+  config.aliases.forEach( alias => {
+    url = url.replace(alias, '.izyware.com');
+  });
+  outcome.url = url;
+  outcome.path = path;
+  outcome.domain = domain;
+
+  return outcome;
 }
 
 function onError(err, req, res) {
