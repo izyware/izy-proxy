@@ -176,26 +176,6 @@ function handleRequest(req, res, proxy) {
   onError('no handlers defined', req, res);
 }
 
-function parseClientRequest(req, config) {
-  config = config || {};
-  var outcome = {};
-  var domain = req.headers.host.split(':')[0];
-  var path = req.url.split('?')[0].split('#')[0];
-  if (path.indexOf('/') != 0) {
-    path = '/' + path;
-  }
-  var url = `http://${domain}${path}`;
-  config.aliases = config.aliases || [];
-  config.aliases.forEach( alias => {
-    url = url.replace(alias, '.izyware.com');
-  });
-  outcome.url = url;
-  outcome.path = path;
-  outcome.domain = domain;
-
-  return outcome;
-}
-
 function onError(err, req, res) {
   modtask.serverLog(err, 'ERROR');
   return sendStatus(req, res, {
