@@ -8,7 +8,7 @@ var httpProxy = require('http-proxy');
 var handlers = [];
 var modtask = {};
 modtask.logEntries = [];
-modtask.maxLogLength = 50;
+modtask.maxLogLength = 1000;
 modtask.serverLog = function(msg, type, plugin) {
   if (!type) type = "WARNING";
   if (!plugin) plugin = { name: '' };
@@ -126,6 +126,10 @@ function acceptAndHandleCORS(req, res) {
 }
 
 function handleRequest(req, res, proxy) {
+  var connectionInfo = Object.assign({}, req.headers);
+  connectionInfo.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  modtask.serverLog(JSON.stringify(connectionInfo), 'INFO');
+
   if (req.url === '/izyproxystatus') {
     // If the handler allows CORS, then this can provide a generic shortcut for handling the OPTIONS request method
     if (acceptAndHandleCORS(req, res)) return;
