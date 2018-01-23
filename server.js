@@ -80,11 +80,11 @@ module.exports.run = function run() {
     .on('proxyRes', (proxyRes, req, res) => console.log('proxyRes', proxyRes, req, res));
 
   const requestHandlerHttp = function (req, res) {
-    handleRequest(req, res, proxy, 'http');
+    handleRequest(req, res, proxy, 'http', config);
   }
 
   const requestHandlerHttps = function (req, res) {
-    handleRequest(req, res, proxy, 'https');
+    handleRequest(req, res, proxy, 'https', config);
   }
 
   if (config.port.http) {
@@ -128,7 +128,23 @@ function acceptAndHandleCORS(req, res) {
   return false;
 }
 
-function handleRequest(req, res, proxy, scheme) {
+function handleRequest(req, res, proxy, scheme, config) {
+  if (config.disallow && config.disallow.userAgents && req.headers['user-agent']) {
+    var i;
+    var requestAgent = req.headers['user-agent'];
+    var list = config.disallow.userAgents;
+    for(i=0; i < list.length; ++i) {
+      var agent = list[i];
+      if (requestAgent.indexOf(agent) >= 0) {
+        modtask.serverLog('disallowUserAgents ' + requestAgent, 'INFO');
+        return sendStatus(req, res, {
+          status: 404,
+          subsystem: 'server'
+        }, 'The requested resource can not be found. Please try again later.');
+      }
+    }
+  }
+
   if (req.url === '/izyproxystatus') {
     // If the handler allows CORS, then this can provide a generic shortcut for handling the OPTIONS request method
     if (acceptAndHandleCORS(req, res)) return;
