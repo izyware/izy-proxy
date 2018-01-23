@@ -145,6 +145,14 @@ function handleRequest(req, res, proxy, scheme, config) {
     }
   }
 
+  if (req.url.toLowerCase() === '/robots.txt') {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8'
+    });
+    res.write('User-agent: *\r\nDisallow:\r\n\r\n');
+    return res.end();
+  }
+
   if (req.url === '/izyproxystatus') {
     // If the handler allows CORS, then this can provide a generic shortcut for handling the OPTIONS request method
     if (acceptAndHandleCORS(req, res)) return;
