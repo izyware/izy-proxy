@@ -196,5 +196,45 @@ izy-proxy/modtask/config/kernel/extstores/file.js
 
 Please refer to the comments in the file to understand how to reference external modules.
 
+
+## Bridging and consuming resources across different networks
+Bridging and consuming resources across different networks can be difficult.  A common scenario is to integrate DBMS, files, etc. that are only accessable to the intranet or just the local computing resources (for example localhost) inside thirdparty web apps or SASS services. Izyware Proxy Component (izy-proxy) simplifies this process by exposing the heterogeneous resources via standard api gateway.
+
+### Benefits Of Using the API Gateway
+The major benefit is that by exposing the functionality as an api access point, it can then be pulled in any thirdparty app while controlling permissions and session management tasks automatically via the Izyware Framework.
+
+### Recommended Configuration
+
+The following solution is recommended:
+* A running instance of izy-proxy INSIDE the intranet with access to the resources.
+* A DNS entry that would resolve to the INTRANET IP ADDRESS of izy-proxy resource. e.g.
+
+    	localhost.izyware.com		  127.0.0.1
+    	intranetservice1.izyware.com  10.0.0.231
+    	....
+
+* SSL certificates corresponding to the DNS resources above: In most cases is not needed for the public facing izy-server instances where the HTTPS connections are handled by a load balancer. But in this scenarios, the izy-proxy instance should handle the HTTPS connection directly (see server.js):
+
+     	../configs/izy-proxy/certificates/privatekey.pem
+
+### Packaging
+It is recommended that the functionality be organized and packaged as an izyware app. This approach will have the following benefits:
+
+* A boilerplate app can be created (by cloning an existing one) which would immediately provide dashboard, toolbar, etc. features that can be accessed in the UI
+* The app can be immediately used and integrated inside existing business workflows either via the api access points or via the frames/slides UI automation framework.
+
+To make cloning and reusability easier, it is further recommended that the bridge functionality be implemented as a subpackage using the following scheme:
+
+
+    app_name/bridge/api
+
+For example, the sample app included with izy-proxy uses:
+
+    apps/sample/bridge/api.js
+
+This would result in the route:
+
+    https://dnsentry.com/apigateway/%3Aapps/sample/bridge%3Aapi
+
 ## NOTE
 for more details, visit https://izyware.com

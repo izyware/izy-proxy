@@ -18,7 +18,9 @@ module.exports = function (config, pluginName) {
       // fill my namespace with usable stuff
       serverObjs[name] = {};
       serverObjs[name].ldPath = ldPath;
-      serverObjs[name].decodeBase64Content = decodeBase64Content;
+      serverObjs[name].decodeBase64Content = function(base64str) {
+        return decodeBase64Content(base64str, serverObjs);
+      };
 
       var outcome = {};
       outcome = parseClientRequest(req, config);
