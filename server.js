@@ -159,7 +159,7 @@ function handleRequest(req, res, proxy, scheme, config) {
     return sendStatus(req, res, {
       status: 200,
       subsystem: 'server'
-    }, 'OK');
+    }, 'OK, version=2.0');
   }
 
   var i, handler;
