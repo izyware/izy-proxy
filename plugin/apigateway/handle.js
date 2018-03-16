@@ -216,7 +216,7 @@ function createTransitionRoot(rootmod, config) {
 
 function setupChainingPerSession(rootmod, config) {
   rootmod = rootmod || require('izymodtask').getRootModule();
-  var doChain = rootmod.ldmod('../../features/chain').setup(createTransitionRoot(rootmod, config));
+  var doChain = rootmod.ldmod('features/chain').setup(createTransitionRoot(rootmod, config));
   return doChain;
 }
 
