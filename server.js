@@ -70,6 +70,12 @@ modtask.initHandlers = function () {
   }
 }
 
+
+module.exports.getHandleRequestInterface = function() {
+  modtask.initHandlers();
+  return handleRequest;
+}
+
 module.exports.run = function run() {
   modtask.serverLog(`Run`, 'INFO');
   modtask.initHandlers();

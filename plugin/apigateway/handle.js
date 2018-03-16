@@ -42,7 +42,10 @@ module.exports = function (config, pluginName) {
         return ldParsedPath(parsedPath, function(outcome) {
           if (outcome.success) {
             try {
-              return outcome.data.handle(serverObjs);
+              var mod = outcome.data;
+              // This will configure the transition handlers per path's package and app permissions
+              mod.doChain = setupChainingPerSession(outcome.rootmod, config);
+              return mod.handle(serverObjs);
             } catch (e) {
               outcome = { reason : e.message };
             }
@@ -100,7 +103,7 @@ function ldParsedPath(parsed, cb) {
     if (!outcome.success) return cb(outcome);
     var reason = 'Unknown';
     try {
-      return cb({ success: true, data: outcome.rootmod.ldmod(parsed.mod) });
+      return cb({ success: true, data: outcome.rootmod.ldmod(parsed.mod), rootmod: outcome.rootmod });
     } catch (e) {
       reason = e.message;
     }
@@ -188,5 +191,32 @@ var streamBase64Content = function(path, serverObjs)  {
       subsystem: 'streamBase64Content'
     }, outcome.reason);
   });
+}
+
+function createTransitionRoot(rootmod, config) {
+  var chainHandler = null;
+  try {
+    if (config.chainHandlerMod) {
+      chainHandler = rootmod.ldmod(config.chainHandlerMod);
+    }
+  } catch(e) {
+    console.log('Cannot ldmod config.chainHandlerMod: "' + config.chainHandlerMod  + '". Some chains may not be available for the module in privilaged context.');
+  }
+  return function(transition, callback) {
+    if (chainHandler && chainHandler.doTransition(transition, callback)) return;
+    switch (transition.udt[0]) {
+      case 'nop':
+        callback(transition);
+        return true;
+    }
+    console.log('WARNING: Unhandled transition -- this should blow up the call');
+    return false;
+  }
+}
+
+function setupChainingPerSession(rootmod, config) {
+  rootmod = rootmod || require('izymodtask').getRootModule();
+  var doChain = rootmod.ldmod('../../features/chain').setup(createTransitionRoot(rootmod, config));
+  return doChain;
 }
 
