@@ -45,7 +45,12 @@ module.exports = function (config, pluginName) {
               var mod = outcome.data;
               // This will configure the transition handlers per path's package and app permissions
               mod.doChain = setupChainingPerSession(outcome.rootmod, config);
-              return mod.handle(serverObjs);
+              switch(mod.__apiInterfaceType) {
+                case 'jsonio':
+                  return outcome.rootmod.ldmod('plugin/apigateway/types/' + mod.__apiInterfaceType).handle(serverObjs, mod);
+                default:
+                  return mod.handle(serverObjs);
+              }
             } catch (e) {
               outcome = { reason : e.message };
             }
