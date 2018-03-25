@@ -44,7 +44,7 @@ module.exports = function (config, pluginName) {
             try {
               var mod = outcome.data;
               // This will configure the transition handlers per path's package and app permissions
-              mod.doChain = setupChainingPerSession(outcome.rootmod, config);
+              mod.doChain = setupChainingForRootMod(outcome.rootmod, config);
               switch(mod.__apiInterfaceType) {
                 case 'jsonio':
                   return outcome.rootmod.ldmod('plugin/apigateway/types/' + mod.__apiInterfaceType).handle(serverObjs, mod);
@@ -219,9 +219,9 @@ function createTransitionRoot(rootmod, config) {
   }
 }
 
-function setupChainingPerSession(rootmod, config) {
+function setupChainingForRootMod(rootmod, config) {
   rootmod = rootmod || require('izymodtask').getRootModule();
-  var doChain = rootmod.ldmod('features/chain').setup(createTransitionRoot(rootmod, config));
-  return doChain;
+  rootmod.doChain = rootmod.ldmod('features/chain').setup(createTransitionRoot(rootmod, config));
+  return rootmod.doChain;
 }
 
