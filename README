@@ -218,6 +218,40 @@ izy-proxy/modtask/config/kernel/extstores/file.js
 Please refer to the comments in the file to understand how to reference external modules.
 
 
+## Simplified JSONIO apis
+You can leverage this feature to create standard apis that send/recieve JSON objects. The advantages are:
+* No need to manage the HTTP metadata and headers
+* JSONIO api security context can be 'transported' and simulated by the IDE, thus making implementation very very easy.
+* The end-points can be directly consumed from chains anywhere in the cloud.
+
+By default, `doChain` is enabled inside the api module. A typical implementatin would look like:
+
+```
+var modtask = function() {}
+modtask.__apiInterfaceType = 'jsonio';
+modtask.processQueries = function(queryObject, cb) {
+    modtask.doChain([
+        ['nop'],
+        ['frame_getnode', modtask],
+        ['frame_importpkgs', ['sql/jsonnode']],
+        ['frame_importpkgs', ['ui/node']],
+        ['frame_importpkgs', ['encodedecode']],
+        function(_push) {
+        	...
+        }
+```
+
+This can be consumed from anywhere in the cloud via chaining, i.e:
+
+```
+	['//cloud_cluster_addr/path/to/packge:module/handler', payload, modtask],
+	function(_push) {
+		console.log(modtask.outcome);
+	}
+```
+
+
+
 ## Bridging and consuming resources across different networks
 Bridging and consuming resources across different networks can be difficult.  A common scenario is to integrate DBMS, files, etc. that are only accessable to the intranet or just the local computing resources (for example localhost) inside thirdparty web apps or SASS services. Izyware Proxy Component (izy-proxy) simplifies this process by exposing the heterogeneous resources via standard api gateway.
 
