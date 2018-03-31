@@ -102,7 +102,10 @@ module.exports = {
 		invokePrefix: 'cryptokey',
 		// the Authotization header to be used in a typical HTTP authentication scheme.
 		// If you have Izy Identity Management system setup, set this to 'idm'
-		invokeAuthorization: 'access_token'
+		invokeAuthorization: 'access_token',
+
+		// *Optional* enable chain handler for APIs
+		,chainHandlerMod: 'configs/izy-proxy/context'
 	},
 	{
 		// case sensitive
@@ -126,6 +129,24 @@ module.exports = {
 	}
 	]
 };
+```
+
+
+### Context Module For Chain Processing
+Chain processing is optional and should be used when heterogeneous development across multiple platforms is needed.
+
+To support chain processing in the izy-proxy container execution context, simply drop the chain handler module in the local file system and reference it from the api gateway config by the chainHandlerMod (see above).
+
+The chain handler should be configued based on the following criteria:
+* Security Context
+* Network Configuration
+* Performance Considerations
+
+#### IZY TIP
+When hosting on AWS, keep the chainhandler config options in the parameter store and sync it as part of deployment, i.e.:
+
+```
+scp -i ../servers/amazon/template/identity.pem ../configs/izy-proxy/context.js ec2-user@izyware.com:/home/ec2-user/configs/izy-proxy/context.js
 ```
 
 ## Plugins
