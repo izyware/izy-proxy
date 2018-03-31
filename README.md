@@ -146,7 +146,7 @@ The chain handler should be configued based on the following criteria:
 When hosting on AWS, keep the chainhandler config options in the parameter store and sync it as part of deployment, i.e.:
 
 ```
-scp -i ../servers/amazon/template/identity.pem ../configs/izy-proxy/context.js ec2-user@izyware.com:/home/ec2-user/configs/izy-proxy/context.js
+scp -i ../servers/amazon/template/identity.pem ../configs/izy-proxy/context.js ec2-user@domain.com:/home/ec2-user/configs/izy-proxy/context.js
 ```
 
 ## Plugins
