@@ -31,35 +31,6 @@ modtask.help[modtask.helpStr] = true;
 modtask.commit = false;
 modtask.verbose = false;
 
-function showError(outcome) {
-  console.log('ERROR: ' + outcome.reason);
-}
-
-
-
-modtask.simulateServerEnvironment = function(config) {
-  config.serverObjs = {};
-  config.serverObjs.getCORSHeaders = function() {
-    return {};
-  }
-  config.serverObjs.sendStatus = function(p1, p2) {
-    console.log('---- Server sendStatus ----', p1, p2);
-  }
-  config.serverObjs.res = {};
-  config.serverObjs.res.writeHead = function(status, headers) {
-    console.log('---- Server Response Headers ----')
-    console.log(status);
-    console.log(headers);
-  };
-  config.serverObjs.res.write = function(pageHtml) {
-    console.log('---- Server Response Body ----');
-    console.log('pageHtml length', pageHtml.length);
-  };
-  config.serverObjs.res.end = function() {
-    console.log('---- Server Response END ----');
-  }
-}
-
 modtask.cmdlineverbs[commandLineKey] = function() {
   var config = modtask.ldmod('izymodtask/index').extractConfigFromCmdLine(commandLineKey);
   var method = config[commandLineKey];
