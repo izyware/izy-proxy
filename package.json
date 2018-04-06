@@ -18,7 +18,10 @@
     "server.js",
     "modtask",
     "plugin",
-    "verifyconfig.js",
+    "cli.js",
+    "g_cli.js",
+    "mock",
+    "test",
     "features"
   ],
   "devDependencies": {},
