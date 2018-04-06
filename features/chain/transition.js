@@ -176,7 +176,7 @@ var modtask =
                "make sure that UDT[1] is referencing a valid part.", 
                udt);  
             break;
-      }
+      } 
       modtask.__modtask.doTransition(_transition , 
             function(__transition)
             {

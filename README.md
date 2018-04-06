@@ -61,6 +61,16 @@ pm2 start 2
 
 Notice that you should put your containers behind a load balancer (i.e. AWS elb) to avoid ending up with broken connections.
 
+### Container Deployment Configuration Verification For Enterprise Customers
+
+Use the commandline interface to simulate calling the forgot-password POST api call from your enterprise container:
+
+```
+ node cli.js method verifyconfig api.email <youremail>
+````
+
+If everything is successful, you should be able to replicate the online behavior locally.
+
 ## Configuration for the artifact
 
 The server expects the configuration file to be at:
@@ -290,6 +300,13 @@ For example, the sample app included with izy-proxy uses:
 This would result in the route:
 
     https://dnsentry.com/apigateway/%3Aapps/sample/bridge%3Aapi
+
+## Using the Commandline Interface For Testing And Developing Chain-based APIs
+While enterprise gold customers have access to Izyware Studio, the standard users can still use the command line to implement their chain based apis:
+
+```
+node cli.js method api api.path <path/to/api/module>
+```
 
 ## NOTE
 for more details, visit https://izyware.com

@@ -1,9 +1,6 @@
 "use strict";
 
 var config = require('../configs/izy-proxy/config');
-var httpProxy = require('http-proxy');
-
-
 var handlers = [];
 var modtask = {};
 modtask.logEntries = [];
@@ -73,29 +70,26 @@ modtask.initHandlers = function () {
 
 module.exports.getHandleRequestInterface = function() {
   modtask.initHandlers();
-  return handleRequest;
+  return function(req, res, method, _config) {
+    return handleRequest(req, res, method, _config || config);
+  };
 }
 
 module.exports.run = function run() {
   modtask.serverLog(`Run`, 'INFO');
   modtask.initHandlers();
-  var proxy = httpProxy.createProxyServer({
-    proxyTimeout: config.proxy.timeoutInMs,
-  })
-    .on('error', onError)
-    .on('proxyRes', (proxyRes, req, res) => console.log('proxyRes', proxyRes, req, res));
 
   const requestHandlerHttp = function (req, res) {
-    handleRequest(req, res, proxy, 'http', config);
+    handleRequest(req, res, 'http', config);
   }
 
   const requestHandlerHttps = function (req, res) {
-    handleRequest(req, res, proxy, 'https', config);
+    handleRequest(req, res, 'https', config);
   }
 
   if (config.port.http) {
     require('http').createServer(requestHandlerHttp).listen(config.port.http).on('clientError', (err) => console.log('clientError', err));
-    console.log('Proxying HTTP on port:' + config.port.http);
+    console.log('izy-proxy HTTP on port:' + config.port.http);
   }
 
   if (config.port.https) {
@@ -107,7 +101,7 @@ module.exports.run = function run() {
     };
 
     require('https').createServer(options, requestHandlerHttps).listen(config.port.https);
-    console.log('Proxying HTTPS on port:' + config.port.https);
+    console.log('izy-proxy HTTPS on port:' + config.port.https);
   }
 };
 
@@ -134,7 +128,7 @@ function acceptAndHandleCORS(req, res) {
   return false;
 }
 
-function handleRequest(req, res, proxy, scheme, config) {
+function handleRequest(req, res, scheme, config) {
   if (config.disallow && config.disallow.userAgents && req.headers['user-agent']) {
     var i;
     var requestAgent = req.headers['user-agent'];
@@ -190,7 +184,6 @@ function handleRequest(req, res, proxy, scheme, config) {
             modtask,
             req,
             res,
-            proxy,
             serverLog: function (msg, type) {
               modtask.serverLog(msg, type, _plugin);
             },
@@ -235,7 +228,7 @@ function sendStatus(req, res, info, msg) {
   res.writeHead(info.status, info.headers);
   info.host = req.headers.host;
   info.url = req.url;
-  res.write('<html><head><title>izy-proxy</title></head><body><h1>' + msg + '</h1><h2>'
+  res.write('<html><head><title>izy-proxy</title></head><body>\n\n<h1>' + msg + '</h1>\n\n<h2>'
     + JSON.stringify({
       status: info.status,
       host: info.host,

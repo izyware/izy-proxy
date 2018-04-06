@@ -43,13 +43,25 @@ module.exports = function (config, pluginName) {
           if (outcome.success) {
             try {
               var mod = outcome.data;
+              var rootmod = outcome.rootmod;
               // This will configure the transition handlers per path's package and app permissions
-              mod.doChain = setupChainingForRootMod(outcome.rootmod, config);
-              switch(mod.__apiInterfaceType) {
-                case 'jsonio':
-                  return outcome.rootmod.ldmod('plugin/apigateway/types/' + mod.__apiInterfaceType).handle(serverObjs, mod);
-                default:
-                  return mod.handle(serverObjs);
+              outcome = setupChainingForContext(mod, config,
+                // unhandledChainItem
+                function (outcome) {
+                  return serverObjs.sendStatus({
+                    status: 500,
+                    subsystem: mod.__myname
+                  }, outcome.reason);
+                }
+                , outcome.rootmod);
+              if (outcome.success) {
+                mod.doChain = outcome.doChain;
+                switch (mod.__apiInterfaceType) {
+                  case 'jsonio':
+                    return rootmod.ldmod('plugin/apigateway/types/' + mod.__apiInterfaceType).handle(serverObjs, mod);
+                  default:
+                    return mod.handle(serverObjs);
+                }
               }
             } catch (e) {
               outcome = { reason : e.message };
@@ -198,30 +210,56 @@ var streamBase64Content = function(path, serverObjs)  {
   });
 }
 
-function createTransitionRoot(rootmod, config) {
-  var chainHandler = null;
+function createChainItemProcessor(rootmod, config, unhandledChainItem) {
+  var chainHandlers = [];
+  var registerChainItemProcessor = function(chainItemProcessor) {
+    chainHandlers.push(chainItemProcessor);
+  }
+
+  /* Register contenxt chain item processor */
   try {
     if (config.chainHandlerMod) {
-      chainHandler = rootmod.ldmod(config.chainHandlerMod);
+      registerChainItemProcessor(rootmod.ldmod(config.chainHandlerMod).doTransition);
     }
   } catch(e) {
     console.log('Cannot ldmod config.chainHandlerMod: "' + config.chainHandlerMod  + '". Some chains may not be available for the module in privilaged context.');
   }
-  return function(transition, callback) {
-    if (chainHandler && chainHandler.doTransition(transition, callback)) return;
-    switch (transition.udt[0]) {
+
+  var chainItemProcessor = function (chainItem, cb) {
+    // ['nop', ..]
+    var udt = chainItem.udt;
+    switch (udt[0]) {
       case 'nop':
-        callback(transition);
+        cb(chainItem);
+        return true;
+      case 'registerChainItemProcessor':
+        registerChainItemProcessor(udt[1]);
+        cb(chainItem);
         return true;
     }
-    console.log('WARNING: Unhandled transition -- this should blow up the call');
+    var i;
+    for(i=0; i < chainHandlers.length; ++i) {
+      if (chainHandlers[i](chainItem, cb)) return;
+    }
+    unhandledChainItem({
+      reason: 'Unhandled chainItem: ' + udt[0]
+    });
     return false;
   }
+  return chainItemProcessor;
 }
 
-function setupChainingForRootMod(rootmod, config) {
+function setupChainingForContext(chainContextMod, config, unhandledChainItem, rootmod) {
   rootmod = rootmod || require('izymodtask').getRootModule();
-  rootmod.doChain = rootmod.ldmod('features/chain').setup(createTransitionRoot(rootmod, config));
-  return rootmod.doChain;
+  var outcome = rootmod.ldmod('features/chain/main').setupChaining(
+    createChainItemProcessor(rootmod, config, unhandledChainItem),
+    // Chain Done
+    function() {},
+    chainContextMod);
+  if (outcome.success) {
+    // This is always available in case any of the modules (i.e. context modules) need to make doChain available to others
+    rootmod.doChain = outcome.doChain;
+  }
+  return outcome;
 }
 
