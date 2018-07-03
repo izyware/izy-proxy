@@ -308,5 +308,32 @@ While enterprise gold customers have access to Izyware Studio, the standard user
 node cli.js method api api.path <path/to/api/module>
 ```
 
+## Using the package to extend existing node apps
+
+Setup the environment by:
+
+```
+npm install izy-proxy
+mkdir -p modtask/config/kernel/extstores
+cp ./node_modules/izy-proxy/modtask/config/kernel/extstores/file.js modtask/config/kernel/extstores/
+```
+
+You should then edit the modtask/config/kernel/extstores/file.js and add the hard coded and relative paths for the location of your repositories.
+
+Finally you can do:
+
+```
+require('izy-proxy').doChain([
+	['log', 'hello world'],
+	['frame_importpkgs', 'izy.machinelearning.moduleSim'],
+	....
+]);
+```
+
+## Enabling your apps via the Izy-Chaining scripting environment
+Your application functionality may be consumed via the universal scripting environment.
+
+It is recommended that you expose the functionality via an importable chain module. As of version 2.0 the chaining library will support importing and registering new chain handlers.
+
 ## NOTE
 for more details, visit https://izyware.com

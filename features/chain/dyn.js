@@ -1,6 +1,13 @@
 
 var modtask = 
 {
+   decoratePushFN: function(pushfn, chainContext) {
+      pushfn.chainContext = chainContext;
+      // Backward compat
+      pushfn.sourcepart = chainContext;
+      pushfn.outcome = chainContext.outcome || { reason: 'WARNING: set outcome for context internally since it didnot have one already'};
+   },
+
    getRendered : function(part) {
       if (typeof(part.itemid) != "string" && typeof(part.dyncpartpointer) == "function")
          return part.dyncpartpointer.dyncpartpointer; 
@@ -8,12 +15,11 @@ var modtask =
          return part; 
    },
 
-   udtchain : function(fn, sourcepart, sourcemodui, callback, chainparams) {
+   udtchain : function(fn, chainContext, sourcemodui, callback) {
       var pushfn = function(items) { callback(items); };
-      pushfn.sourcepart = sourcepart;  
-      pushfn["chainparams"] = chainparams; 
+      modtask.decoratePushFN(pushfn, chainContext);
       try {
-         fn(pushfn);
+         fn(pushfn, chainContext);
       } catch(e) {
          modtask.__modtask.moderr.dbg.failure(
             "dynamic function run error:" + modtask.exceptionToString(e)
@@ -21,16 +27,20 @@ var modtask =
       }  
    }, 
 
-   udt : function(fn, sourcepart, sourcemodui, chainindex, callback, chainreturn) {
-      var pushfn = function(items) { callback(items); };
-      pushfn.sourcepart = sourcepart; 
-      pushfn.chainreturn = chainreturn; 
+   udt : function(dynamicItemToBeEvaled, chainContext, callback) {
+      var pushfn = function(data) {
+         callback({
+            success: true,
+            data: data
+         });
+      };
+      modtask.decoratePushFN(pushfn, chainContext);
       try {
-         fn(pushfn); 
+         dynamicItemToBeEvaled(pushfn, chainContext);
       } catch(e) {
-         modtask.__modtask.moderr.dbg.failure(
-            "udt error:" + modtask.exceptionToString(e)
-         );  
+         callback({
+            reason: e.message + ' when dynamicItemToBeEvaled = ' + dynamicItemToBeEvaled.toString()
+         });
       }  
    },
 

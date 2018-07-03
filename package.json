@@ -2,7 +2,7 @@
   "name": "izy-proxy",
   "version": "1.0.35",
   "description": "IZY PROXY MODULE",
-  "main": "app.js",
+  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/izyware/izy-proxy"

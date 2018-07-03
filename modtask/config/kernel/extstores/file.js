@@ -17,6 +17,8 @@ var modtask =
 			currentdir,
 			currentdir + 'node_modules/',
 			currentdir + 'node_modules/izymodtask/',
+			// When referenced from an external app
+			currentdir + 'node_modules/izy-proxy/',
 			currentdir + '../',
 			// For the circus plug-in,
 			currentdir + '../izy-circus/',

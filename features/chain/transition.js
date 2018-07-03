@@ -9,45 +9,8 @@ var modtask =
    {
       modtask.modcore = modtask.ldmod("core\\core");
    },
- 
-   chainParse: function(chain, index, sourcepart, sourcemodui, callback, transitions, chainreturn)
-   {
-      if (!transitions) transitions = [];
-      if (chain.length <= index)
-      {
-         callback(transitions, chainreturn);
-      }
-      else 
-      {
-         modtask.udtToTrans(
-               chain[index],
-               sourcepart, sourcemodui, index, 
-               function(_transition, extra_udts)
-               {
-                  transitions.push(_transition);              
 
-                  if (typeof(_transition) != "object")
-                     modtask.Fail("Framework Error: _transition is not object!");
-
-                  if (_transition["chainreturn"])
-                  {
-                     chainreturn = _transition["chainreturn"];
-                  }
-
-                  if (extra_udts.length > 0)
-                  {
-                     chain.splice.apply(chain, [index+1, 0].concat(extra_udts));
-                  } 
-                  modtask.chainParse(chain, index+1, sourcepart, sourcemodui,  callback, transitions, chainreturn);
-               },
-               // Dont eval
-               false,
-               chainreturn
-         );
-      }
-   },   
-
-   doChain : function(chain, sourcepart, sourcemodui, callback, chainparams) 
+   doChain : function(chain, chainContext, sourcemodui, chainReturnCB)
    {
       if (!chain) modtask.Fail("doChain.invalid.chain");
       var i;
@@ -55,10 +18,9 @@ var modtask =
       {
          case "function" :
             modtask.modcontroller.moddyn.udtchain(
-               chain,  
-               sourcepart, sourcemodui,
-               function(_chain) { modtask.doChain(_chain, sourcepart, sourcemodui, callback); },
-               chainparams 
+               chain,
+              chainContext, sourcemodui,
+               function(_chain) { modtask.doChain(_chain, chainContext, sourcemodui, chainReturnCB); }
             ); 
             return ;
             break;
@@ -79,8 +41,8 @@ var modtask =
                        break;
                     default:
                        modtask.modcontroller.moderr.chain(chain, 
-                           sourcemodui,  
-                           sourcepart, 
+                           sourcemodui,
+                         chainContext,
                            "doChain", 
                            "Set chain element[" + i + "] to a UDT array. Currently it is '" + modtask.modcore.realTypeOf(chain[i]) + "'"
                            );   
@@ -88,16 +50,51 @@ var modtask =
                } 
             }
             chain = chain.slice(0); // clone it since we are changing the object 
-            modtask.chainParse(chain, 0, sourcepart, sourcemodui, callback); 
+            modtask.chainParse(chain, 0, chainContext, sourcemodui, chainReturnCB);
             break; 
          default:
-            modtask.modcontroller.moderr.chain(chain, sourcemodui,  sourcepart, 
+            modtask.modcontroller.moderr.chain(chain, sourcemodui,  chainContext,
                   "doChain", 
                   "chains can only be arrays or functions");
       } 
-   },  
+   },
 
-   udtToTrans : function(udt, sourcepart, sourcemodui, chainindex, callback, donteval, chainreturn)
+
+   chainParse: function(chain, index, chainContext, sourcemodui, chainReturnCB, transitions, chainreturn) {
+      if (!transitions) transitions = [];
+      if (chain.length <= index) {
+         chainReturnCB({ success: true, reason: 'chain done, total items: ' + (index-1) });
+      } else {
+         modtask.udtToTrans(
+           chain[index],
+           chainContext, sourcemodui, index,
+           chainReturnCB,
+           function(_transition, extra_udts)
+           {
+              transitions.push(_transition);
+
+              if (typeof(_transition) != "object")
+                 modtask.Fail("Framework Error: _transition is not object!");
+
+              if (_transition["chainreturn"])
+              {
+                 chainreturn = _transition["chainreturn"];
+              }
+
+              if (extra_udts.length > 0)
+              {
+                 chain.splice.apply(chain, [index+1, 0].concat(extra_udts));
+              }
+              modtask.chainParse(chain, index+1, chainContext, sourcemodui,  chainReturnCB, transitions, chainreturn);
+           },
+           // Dont eval
+           false,
+           chainreturn
+         );
+      }
+   },
+
+   udtToTrans : function(udt, chainContext, sourcemodui, chainindex, chainReturnCB, processChainItemCallback, donteval, chainreturn)
    {
       if (donteval)
       {
@@ -107,18 +104,26 @@ var modtask =
          if (typeof(udt) == "function")
          {
             modtask.modcontroller.moddyn.udt(
-               udt,  
-               sourcepart, sourcemodui, chainindex, 
-               function(_udt) { modtask.udtToTrans(_udt, sourcepart, sourcemodui, chainindex, callback, true, chainreturn); },
-               chainreturn
+               udt,
+              chainContext,
+               function(outcome) {
+                  if (outcome.success) {
+                     _udt = outcome.data;
+                     modtask.udtToTrans(_udt, chainContext, sourcemodui, chainindex, chainReturnCB, processChainItemCallback, true, chainreturn);
+                  } else {
+                     return chainReturnCB(outcome);
+                  }
+               }
             ); 
             return ; 
          }
       }
       var _transition = 
       { 
-         "udt" : udt, 
-         "sourcepart" : sourcepart,
+         "udt" : udt,
+         chainContext: chainContext,
+         // Keep this for backwards compatibility
+         "sourcepart" : chainContext,
          "sourcemodui" : sourcemodui,
          "method" : "replace",  
          "what" : { 
@@ -167,7 +172,7 @@ var modtask =
             break;  
          case "boolean" : 
             _transition.what.method = "inline";
-            _transition.what.part = sourcepart;
+            _transition.what.part = chainContext;
             break; 
          default : 
             modtask.modcontroller.moderr.trans(
@@ -180,50 +185,8 @@ var modtask =
       modtask.__modtask.doTransition(_transition , 
             function(__transition)
             {
-               callback(__transition, extra_udts); 
+               processChainItemCallback(__transition, extra_udts);
             }
        );      
-   },     
-
-   getPart : function(transition, index)
-   {
-      var part = transition.udt[index];
-      switch(modtask.modcore.realTypeOf(part)) 
-      {
-         case "object" :
-         case "function" : 
-            break;
-         case "boolean" : 
-            part = transition.sourcepart;    
-            break;
-         default : 
-            modtask.modcontroller.moderr.trans(
-               transition, 
-               "getPart", 
-               "make sure that UDT[" + index + "] is referencing a valid part. It is currently of type '" + modtask.modcore.realTypeOf(part) + "'"
-               );  
-            break;
-      }
-      return modtask.modcontroller.moddyn.getRendered(part); 
-   },      
-
-   extPartToUDT : function(part)
-   {
-      var ret = [];
-      switch(modtask.modcore.realTypeOf(part["what"]))
-      {
-         case "string":         
-            ret = ["replace", part["what"], part];
-            break; 
-         case "array":
-            modtask.Fail("extPartToUDT.deprecated"); 
-         //    ret = ["replace", part["what"][0], part, part["what"][1]]; 
-            break;
-         default:
-            modtask.modcontroller.moderr.trans(part, "what", "extPartToUDT", "'what' can only be a string or array. Get rid of the 'ext' and assign 'what' directly tp the part");
-            break;    
-      }
-  		if (modtask.modcore.isUndef(ret[3])) ret[3] = {}; 
-      return ret; 
-   }   
+   }
 }
