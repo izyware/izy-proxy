@@ -57,6 +57,28 @@ function setupNewContextAndDoChain(chain, chainReturnCB, chainContextObject) {
   }
 }
 
+function newChain(chain, chainReturnCB, context) {
+  var chainFeaturePath = 'features/v2/chain';
+  if (!chainReturnCB) chainReturnCB = console.log;
+  try {
+    var _modtaskModule = require('izymodtask').getRootModule();
+    if (!context) context = {};
+    _modtaskModule.ldmod(chainFeaturePath + '/main').newChain({
+      name: 'izy-proxy-rootchain',
+      chain: chain,
+      context: context,
+      chainHandlers: [
+        _modtaskModule.ldmod(chainFeaturePath + '/processors/basic'),
+        _modtaskModule.ldmod(chainFeaturePath + '/processors/import'),
+        _modtaskModule.ldmod(chainFeaturePath + '/processors/runpkg')
+      ]
+    }, chainReturnCB);
+  } catch(e) {
+    chainReturnCB( { reason: e.message });
+  }
+}
+
 module.exports = {
+  newChain: newChain,
   doChain: setupNewContextAndDoChain
 }
