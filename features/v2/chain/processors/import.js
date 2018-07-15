@@ -1,12 +1,11 @@
-var modtask = function(chainItem, cb, currentChainBeingProcessed) {
-
+var modtask = function(chainItem, cb, $chain) {
   var registerChainItemProcessor = function(chainItemProcessor, cb) {
     switch(typeof(chainItemProcessor)) {
       case 'string':
         try {
           var mod = modtask.ldmod(chainItemProcessor);
           // doTransition is for backwards compat
-          currentChainBeingProcessed.registerChainItemProcessor(mod.doTransition ? mod.doTransition : mod);
+          $chain.registerChainItemProcessor(mod.doTransition ? mod.doTransition : mod);
           return cb({ success: true });
         } catch (e) {
           cb({ reason: 'Cannot register chainHandlerMod: "' + chainItemProcessor + '": ' + e.message });
@@ -24,8 +23,7 @@ var modtask = function(chainItem, cb, currentChainBeingProcessed) {
   switch (params.action) {
     case 'importProcessor':
       registerChainItemProcessor(chainItem[i++], function(outcome) {
-        var chainContext = currentChainBeingProcessed.context;
-        chainContext.outcome = outcome;
+        $chain.set('outcome', outcome);
         cb();
       });
       return true;

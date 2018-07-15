@@ -1,11 +1,11 @@
 
-var modtask = function(chainItem, cb, currentChainBeingProcessed) {
+var modtask = function(chainItem, cb, $chain) {
     var str = chainItem[0] + '';
     if (str.indexOf('//') == 0) {
         var i = 1;
         var queryObject = chainItem[1];
-        modtask.doLaunchString(currentChainBeingProcessed, str, queryObject, function(outcome) {
-            currentChainBeingProcessed.context.outcome = outcome;
+        modtask.doLaunchString($chain, str, queryObject, function(outcome) {
+            $chain.set('outcome', outcome);
             cb();
         });
         return true;
@@ -29,7 +29,7 @@ modtask.parseLaunchString = function(url) {
     return outcome;
 }
 
-modtask.doLaunchString = function(currentChainBeingProcessed, launchString, payload, cb) {
+modtask.doLaunchString = function($chain, launchString, payload, cb) {
     var apiGatewayUrls = {
         'inline': 'inline',
         'localhost': 'https://localhost/apigateway/:',
@@ -44,17 +44,17 @@ modtask.doLaunchString = function(currentChainBeingProcessed, launchString, payl
     });
     var url = apiGatewayUrls[parsedLaunchString.serviceName];
     if (url == 'inline') {
-        return modtask.handlers.inline(currentChainBeingProcessed, cb, parsedLaunchString, payload);
+        return modtask.handlers.inline($chain, cb, parsedLaunchString, payload);
     }
     return modtask.handlers.http(cb, parsedLaunchString, payload, url);
 }
 
 modtask.handlers = {};
-modtask.handlers.inline = function(currentChainBeingProcessed, cb, parsedLaunchString, payload) {
+modtask.handlers.inline = function($chain, cb, parsedLaunchString, payload) {
     var parsed = modtask.ldmod('kernel/path').parseInvokeString(parsedLaunchString.invokeString);
     var runModule = function() {
         try {
-            var mod = modtask.ldmod(parsed.mod).sp('doChain', currentChainBeingProcessed.doChain).processQueries(payload, cb);
+            var mod = modtask.ldmod(parsed.mod).sp('doChain', $chain.doChain).processQueries(payload, cb);
         } catch (e) {
             return cb({
                 reason: e.message

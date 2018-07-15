@@ -99,23 +99,22 @@ var modtask = {
             return chainReturnCB({ reason: "chainItem[0] must be a string." });
             break;
       }
-      modtask.currentChainBeingProcessed.chainItemBeingProcessed = chainItem;
-      modtask.currentChainBeingProcessed.processChainItem(chainItem , function() {
+      modtask.$chain.chainItemBeingProcessed = chainItem;
+      modtask.$chain.processChainItem(chainItem , function() {
          processChainItemCallback(additionalChainItems);
       });
    }
 }
 
 modtask.evalDynamicItem = function(dynamicItemToBeEvaled, callback) {
-   var chainContext = modtask.currentChainBeingProcessed.context;
+   var chainContext = modtask.$chain.context;
    var pushfn = function(data) {
       callback({
          success: true,
          data: data
       });
    };
-   pushfn.chainContext = chainContext;
-   pushfn.outcome = chainContext.outcome || { reason: 'WARNING: set outcome for context internally since it didnot have one already'};
+   modtask.$chain.copyKeysToNewContext(pushfn);
    try {
       dynamicItemToBeEvaled(pushfn, chainContext);
    } catch(e) {

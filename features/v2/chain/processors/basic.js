@@ -1,43 +1,37 @@
-var modtask = function(chainItem, cb, currentChainBeingProcessed) {
+var modtask = function(chainItem, cb, $chain) {
   var i = 0;
   var params = {};
   params.action = chainItem[i++];
   switch (params.action) {
     case 'returnOnFail':
     case 'return':
-      var outcome = { reason: 'asked to return from a chain that does not have the outcome object defined. please use [set, outcome, ...] to fix this issue.' };
-      if (currentChainBeingProcessed.context.outcome && typeof(currentChainBeingProcessed.context.outcome) == 'object') {
-        outcome = currentChainBeingProcessed.context.outcome;
-        if (outcome.success && params.action == 'returnOnFail') {
-          cb();
-          return true;
-        }
+      var outcome = $chain.get('outcome') || { reason: 'asked to return from a chain that does not have the outcome object defined. please use [set, outcome, ...] to fix this issue.' };
+      if (outcome.success && params.action == 'returnOnFail') {
+        cb();
+        return true;
       }
       // we wont call the cb function here.
-      currentChainBeingProcessed.chainReturnCB(outcome);
+      $chain.chainReturnCB(outcome);
       return true;
     case 'log':
-      params.msg = chainItem[i++];
-      console.log(params.msg);
+      console.log('[' + $chain.chainName + '] ' + chainItem[i++]);
       cb();
       return true;
     case 'newChain':
       params.chainConfig = chainItem[i++];
       var chainConfig = {
-        name: currentChainBeingProcessed.name + '.' + params.chainConfig.name,
-        chain: params.chainConfig.chain,
-        context: params.chainConfig.context || currentChainBeingProcessed.context,
-        chainHandlers: params.chainConfig.chainHandlers || currentChainBeingProcessed.chainHandlers
+        chainName: $chain.chainName + '.' + params.chainConfig.chainName,
+        chainItems: params.chainConfig.chainItems,
+        context: params.chainConfig.context || $chain.context,
+        chainHandlers: params.chainConfig.chainHandlers || $chain.chainHandlers
       };
-      currentChainBeingProcessed.newChain(chainConfig, function(outcome) {
-        currentChainBeingProcessed.context.outcome = outcome;
+      $chain.newChain(chainConfig, function(outcome) {
+        $chain.set('outcome', outcome);
         cb();
       });
       return true;
     case 'set':
-      params.key = chainItem[i++];
-      params.val = chainItem[i++];
-      currentChainBeingProcessed.context[params.key] = params.val;
+      $chain.set(chainItem[i++], chainItem[i++]);
       cb();
       return true;
     case 'continue':

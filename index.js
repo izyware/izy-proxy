@@ -57,7 +57,7 @@ function setupNewContextAndDoChain(chain, chainReturnCB, chainContextObject) {
   }
 }
 
-function newChain(chain, chainReturnCB, context) {
+function newChain(chainItems, chainReturnCB, context) {
   var chainFeaturePath = 'features/v2/chain';
   if (!chainReturnCB) chainReturnCB = console.log;
   try {
@@ -65,7 +65,7 @@ function newChain(chain, chainReturnCB, context) {
     if (!context) context = {};
     _modtaskModule.ldmod(chainFeaturePath + '/main').newChain({
       name: 'izy-proxy-rootchain',
-      chain: chain,
+      chainItems: chainItems,
       context: context,
       chainHandlers: [
         _modtaskModule.ldmod(chainFeaturePath + '/processors/basic'),
@@ -80,5 +80,5 @@ function newChain(chain, chainReturnCB, context) {
 
 module.exports = {
   newChain: newChain,
-  doChain: setupNewContextAndDoChain
+  doChain: newChain
 }

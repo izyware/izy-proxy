@@ -3,77 +3,101 @@ var modtask = {};
 modtask.newChain = function(cfg, _chainReturnCB) {
   var chainReturnCB = function(outcome) {
     try {
-      if (!outcome.success && !outcome.chain) outcome.chain = currentChainBeingProcessed;
+      if (!outcome.success && !outcome.chain) outcome.chain = $chain;
       if (_chainReturnCB) _chainReturnCB(outcome);
     } catch(e) {
       console.log('Warning. chain return function threw an exception. Capturing it here to avoid multiple calls.');
     }
   }
   var chainContext = typeof(cfg.context) == 'object' ?  cfg.context : {};
-  var currentChainBeingProcessed = {
-    name: cfg.name || 'noname',
+
+  // doChain can be used to run chains in the same context as the caller i.e. features/v2/chain/processors/runpkg.js, taskrunner, etc.
+  var $chain = function(chainItems, cb) {
+    return modtask.newChain({
+      name: $chain.name + '.interal.doChain',
+      chainItems: chainItems,
+      context: $chain.context,
+      chainHandlers: $chain.chainHandlers
+    }, cb);
+  };
+
+  var propsToAdd = {
+    chainName: cfg.chainName || '',
     verbose: {
       logChainItemsBeingProcessed: false
     },
-    // doChain is used in features/v2/chain/processors/runpkg.js
-    doChain: function(chain, cb) {
-      return modtask.newChain({ context: cfg.context, chain: chain }, cb);
-    },
+    // doChain can be used to run chains in the same context as the caller i.e. features/v2/chain/processors/runpkg.js, taskrunner, etc.
+    doChain: $chain,
     newChain: modtask.newChain,
     chainReturnCB: chainReturnCB,
-
+    set: function(key, val) {
+      chainContext[key] = val;
+    },
+    get: function(key) {
+      return chainContext[key];
+    },
     registerChainItemProcessor: function() { console.log('registerChainItemProcessor_stub'); },
     chainHandlers: cfg.chainHandlers || [],
-    chain: cfg.chain,
+    chainItems: cfg.chainItems,
     context: chainContext
   };
-  // This will add the 'registerChainItemProcessor' to the currentChainBeingProcessed and update chainHandlers if necceessary
+
+  $chain.copyKeysToNewContext = function(newContext) {
+    var p;
+    for (p in propsToAdd) {
+      newContext[p] = propsToAdd[p];
+    }
+  }
+
+  $chain.copyKeysToNewContext($chain);
+
+  // This will add the 'registerChainItemProcessor' to the $chain and update chainHandlers if necceessary
   // Will also add processChainItem
-  create_processChainItemAndRegisterProcessorFunctions(currentChainBeingProcessed);
-  var parser = modtask.ldmod('rel:parser').sp('currentChainBeingProcessed', currentChainBeingProcessed);
+  create_processChainItemAndRegisterProcessorFunctions($chain);
+  var parser = modtask.ldmod('rel:parser').sp('$chain', $chain);
   return parser.doChain(
-    currentChainBeingProcessed.chain,
-    currentChainBeingProcessed.chainReturnCB
+    $chain.chainItems,
+    $chain.chainReturnCB
   );
 }
 
-function create_processChainItemAndRegisterProcessorFunctions(currentChainBeingProcessed) {
-  currentChainBeingProcessed.chainHandlers = currentChainBeingProcessed.chainHandlers || [];
+function create_processChainItemAndRegisterProcessorFunctions($chain) {
+  $chain.chainHandlers = $chain.chainHandlers || [];
   var registerChainItemProcessor = function(chainItemProcessorFn) {
-    currentChainBeingProcessed.chainHandlers.push(chainItemProcessorFn);
+    $chain.chainHandlers.push(chainItemProcessorFn);
   }
-  currentChainBeingProcessed.registerChainItemProcessor = registerChainItemProcessor;
+  $chain.registerChainItemProcessor = registerChainItemProcessor;
   var processChainItem = function (chainItem, cb) {
     // ['nop', ..]
     var i = 0;
     switch (chainItem[i++]) {
       case 'registerChainItemProcessor':
-        currentChainBeingProcessed.registerChainItemProcessor(chainItem[i++]);
+        $chain.registerChainItemProcessor(chainItem[i++]);
         return true;
     }
 
     var i;
-    for(i=0; i < currentChainBeingProcessed.chainHandlers.length; ++i) {
-      if (currentChainBeingProcessed.verbose.logChainItemsBeingProcessed) {
+    for(i=0; i < $chain.chainHandlers.length; ++i) {
+      if ($chain.verbose.logChainItemsBeingProcessed) {
         console.log('******************** processing chain item ******************************');
         console.log(chainItem);
       }
       try {
-        if (currentChainBeingProcessed.chainHandlers[i](chainItem, cb, currentChainBeingProcessed)) return;
+        if ($chain.chainHandlers[i](chainItem, cb, $chain)) return;
       } catch(e) {
-        return currentChainBeingProcessed.chainReturnCB({
-          reason: 'a chainHandler crashed. This means that there is a poorly designed chain handler registered. The error is: ' + e.message + '. The module for the chain handler is: ' + currentChainBeingProcessed.chainHandlers[i].__myname,
-          chain: currentChainBeingProcessed
+        return $chain.chainReturnCB({
+          reason: 'a chainHandler crashed. This means that there is a poorly designed chain handler registered. The error is: ' + e.message + '. The module for the chain handler is: ' + $chain.chainHandlers[i].__myname,
+          chain: $chain
         });
       }
     }
-    currentChainBeingProcessed.chainReturnCB({
+    $chain.chainReturnCB({
       reason: 'Could not find a processor for: "' + chainItem[0] + '". You may need to do ["import", ...] to resolve this issue.',
-      chain: currentChainBeingProcessed
+      chain: $chain
     });
     return false;
   }
-  currentChainBeingProcessed.processChainItem = processChainItem;
+  $chain.processChainItem = processChainItem;
 }
 
 
