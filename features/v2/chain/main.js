@@ -12,7 +12,12 @@ modtask.newChain = function(cfg, _chainReturnCB) {
   var chainContext = typeof(cfg.context) == 'object' ?  cfg.context : {};
 
   // doChain can be used to run chains in the same context as the caller i.e. features/v2/chain/processors/runpkg.js, taskrunner, etc.
+  // If cb is provided it will be called, otherwise the caller's callback will be launched
   var $chain = function(chainItems, cb) {
+    if (!cb) {
+      cb = chainReturnCB;
+    };
+
     return modtask.newChain({
       name: $chain.name + '.interal.doChain',
       chainItems: chainItems,
