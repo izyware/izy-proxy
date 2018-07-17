@@ -88,7 +88,14 @@ function create_processChainItemAndRegisterProcessorFunctions($chain) {
         console.log(chainItem);
       }
       try {
-        if ($chain.chainHandlers[i](chainItem, cb, $chain)) return;
+        if ($chain.chainHandlers[i](chainItem, function(outcome) {
+            // for backwards compatibility, only catch errors when { reason: ... } is passed
+            // legacy implementations may send outcome as null or send an array, etc.
+            if (typeof(outcome) == 'object' && !outcome.success && typeof(outcome.reason) == 'string') {
+              return $chain.chainReturnCB(outcome);
+            }
+            cb();
+          }, $chain)) return;
       } catch(e) {
         return $chain.chainReturnCB({
           reason: 'a chainHandler crashed. This means that there is a poorly designed chain handler registered. The error is: ' + e.message + '. The module for the chain handler is: ' + $chain.chainHandlers[i].__myname,
