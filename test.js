@@ -52,7 +52,10 @@ function testV2() {
 
     ['return'],
     ['log', 'you should not see his message']
-  ], function (outcome) { // optional
+  ],
+    // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
+    // Notice that this will NOT give any clues on chain variables such as $chain.outcome
+  function (outcome) {
     console.log('\r\n************************************ Chain Done *********************************************');
     if (outcome.success) return console.log('* All items ran successfully');
     console.log('* reason=     ', outcome.reason);

@@ -78,6 +78,7 @@ function create_processChainItemAndRegisterProcessorFunctions($chain) {
     switch (chainItem[i++]) {
       case 'registerChainItemProcessor':
         $chain.registerChainItemProcessor(chainItem[i++]);
+        cb({ success: true });
         return true;
     }
 

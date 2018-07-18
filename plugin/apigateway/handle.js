@@ -15,9 +15,16 @@ module.exports = function (config, pluginName) {
       var removePrefix = function(str, sub) {
         return str.substr(sub.length, str.length - sub.length);
       }
+
+      // For security reasons we virtualize each requests's load into its own root context
+      // However, the file system caching (if present) will still allow sharing of context
+      var featureModulesPath = 'features/v2/';
+      var rootmod = require('izymodtask').getRootModule();
+      var pkgmain = rootmod.ldmod(featureModulesPath + 'pkg/main');
+
       // fill my namespace with usable stuff
       serverObjs[name] = {};
-      serverObjs[name].ldPath = ldPath;
+      serverObjs[name].ldPath = pkgmain.ldPath;
       serverObjs[name].decodeBase64Content = function(base64str) {
         return decodeBase64Content(base64str, serverObjs);
       };
@@ -36,32 +43,39 @@ module.exports = function (config, pluginName) {
           }, 'invokeAuthorization token was invalid');
         }
         path = removePrefix(path, config.invokePrefix);
-        var parsedPath = parseInvokeString(path);
+
+        var parsedPath = rootmod.ldmod('kernel/path').parseInvokeString(path);
         serverObjs[name].parsedPath = parsedPath;
 
-        return ldParsedPath(parsedPath, function(outcome) {
+        return pkgmain.ldParsedPath(parsedPath, function(outcome) {
           if (outcome.success) {
             try {
               var mod = outcome.data;
-              var rootmod = outcome.rootmod;
-              // This will configure the transition handlers per path's package and app permissions
-              outcome = setupChainingForContext(mod, config,
-                // unhandledChainItem
-                function (outcome) {
-                  return serverObjs.sendStatus({
-                    status: 500,
-                    subsystem: mod.__myname
-                  }, outcome.reason);
-                }
-                , outcome.rootmod);
-              if (outcome.success) {
-                mod.doChain = outcome.doChain;
-                switch (mod.__apiInterfaceType) {
-                  case 'jsonio':
-                    return rootmod.ldmod('plugin/apigateway/types/' + mod.__apiInterfaceType).handle(serverObjs, mod);
-                  default:
-                    return mod.handle(serverObjs);
-                }
+              mod.doChain = function(chainItems, cb) {
+                if (!cb) {
+                  // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
+                  cb = function() {}
+                };
+                return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
+                  name: 'apiRoot',
+                  chainItems: chainItems,
+                  context: mod,
+                  chainHandlers: [
+                    rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
+                    rootmod.ldmod(featureModulesPath + 'chain/processors/import'),
+                    rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg'),
+                    // this should define frame_getnode, frame_importpkgs chain handlers
+                    // see README file section on how to test this configuration via test/api in a deployed environment
+                    rootmod.ldmod(config.chainHandlerMod)
+                  ]
+                }, cb);
+              };
+
+              switch (mod.__apiInterfaceType) {
+                case 'jsonio':
+                  return rootmod.ldmod('plugin/apigateway/types/' + mod.__apiInterfaceType).handle(serverObjs, mod);
+                default:
+                  return mod.handle(serverObjs);
               }
             } catch (e) {
               outcome = { reason : e.message };
@@ -90,87 +104,6 @@ function parseClientRequest(req, config) {
   outcome.path = path;
   outcome.domain = domain;
   return outcome;
-}
-
-function parseInvokeString(path) {
-  var pkg = path.split(':');
-  var mod, params = '';
-  if (pkg.length) {
-    mod = pkg[0] + '/' + pkg[1];
-    pkg = pkg[0];
-    params = path.substr(mod.length+1);
-  } else {
-    pkg = '';
-    mod = path;
-    params = '';
-  }
-  return { path, pkg, mod, params };
-}
-
-function ldPath(path, cb) {
-  var parsed = parseInvokeString(path);
-  return ldParsedPath(parsed, cb);
-}
-
-function ldParsedPath(parsed, cb) {
-  loadPackageIfNotPresent({
-    pkg: parsed.pkg,
-    mod: parsed.mod
-  }, function (outcome) {
-    if (!outcome.success) return cb(outcome);
-    var reason = 'Unknown';
-    try {
-      return cb({ success: true, data: outcome.rootmod.ldmod(parsed.mod), rootmod: outcome.rootmod });
-    } catch (e) {
-      reason = e.message;
-    }
-    return cb( { reason });
-  });
-}
-
-function loadPackageIfNotPresent(query, cb) {
-  // For security reasons we virtualize each requests's load into its own root context
-  // However, the file system caching (if present) will still allow sharing of context
-  var rootmod = require('izymodtask').getRootModule();
-  var outcome = { success:true, reason: [],  rootmod };
-
-  var pkg = query.pkg;
-  var mod = query.mod;
-
-  if (rootmod.ldmod('kernel\\selectors').objectExist(mod, {}, false)) {
-    return cb(outcome);
-  }
-  if (pkg === '') return cb(outcome);
-  var pkgloader = rootmod.ldmod('pkgloader');
-  var modtask = rootmod;
-
-  pkgloader.getCloudMod(pkg).incrementalLoadPkg(
-    // One of these per package :)
-    function(pkgName, pkg, pkgString) {
-      try {
-        modtask.commit = "true";
-        modtask.verbose = false;
-        modtask.ldmod('kernel/extstores/import').sp('verbose', modtask.verbose).install(
-          pkg,
-          modtask.ldmod('kernel/extstores/inline/import'),
-          function (ops) {
-            if (modtask.verbose) {
-              console.log(ops.length + " modules installed for = " + pkgName);
-            }
-          },
-          function (outcome) {
-            outcome.reason.push(outcome.reason);
-            outcome.success = false;
-          }
-        );
-      } catch(e) {
-        return cb({ reason: e.message });
-      }
-    }, function() {
-      cb(outcome);
-    },
-    cb
-  );
 }
 
 var decodeBase64Content = function (base64str, serverObjs) {
@@ -209,57 +142,3 @@ var streamBase64Content = function(path, serverObjs)  {
     }, outcome.reason);
   });
 }
-
-function createChainItemProcessor(rootmod, config, unhandledChainItem) {
-  var chainHandlers = [];
-  var registerChainItemProcessor = function(chainItemProcessor) {
-    chainHandlers.push(chainItemProcessor);
-  }
-
-  /* Register contenxt chain item processor */
-  try {
-    if (config.chainHandlerMod) {
-      registerChainItemProcessor(rootmod.ldmod(config.chainHandlerMod).doTransition);
-    }
-  } catch(e) {
-    console.log('Cannot ldmod config.chainHandlerMod: "' + config.chainHandlerMod  + '". Some chains may not be available for the module in privilaged context.');
-  }
-
-  var chainItemProcessor = function (chainItem, cb) {
-    // ['nop', ..]
-    var udt = chainItem.udt;
-    switch (udt[0]) {
-      case 'nop':
-        cb(chainItem);
-        return true;
-      case 'registerChainItemProcessor':
-        registerChainItemProcessor(udt[1]);
-        cb(chainItem);
-        return true;
-    }
-    var i;
-    for(i=0; i < chainHandlers.length; ++i) {
-      if (chainHandlers[i](chainItem, cb)) return;
-    }
-    unhandledChainItem({
-      reason: 'Unhandled chainItem: ' + udt[0]
-    });
-    return false;
-  }
-  return chainItemProcessor;
-}
-
-function setupChainingForContext(chainContextMod, config, unhandledChainItem, rootmod) {
-  rootmod = rootmod || require('izymodtask').getRootModule();
-  var outcome = rootmod.ldmod('features/chain/main').setupChaining(
-    createChainItemProcessor(rootmod, config, unhandledChainItem),
-    // Chain Done
-    function() {},
-    chainContextMod);
-  if (outcome.success) {
-    // This is always available in case any of the modules (i.e. context modules) need to make doChain available to others
-    rootmod.doChain = outcome.doChain;
-  }
-  return outcome;
-}
-

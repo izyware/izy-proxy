@@ -37,40 +37,20 @@ function createChainItemProcessor(finalCb, previousChainItemProcessor) {
   return chainItemProcessor;
 }
 
-function setupNewContextAndDoChain(chain, chainReturnCB, chainContextObject) {
-  try {
-    var _modtaskModule = require('izymodtask').getRootModule();
-    var chainFeaturePath = 'features/chain';
-
-    if (!chainContextObject) chainContextObject = _modtaskModule;
-    var outcome = _modtaskModule.ldmod(chainFeaturePath + '/main').createProcessor(chainReturnCB,
-      chainContextObject,
-      [
-        _modtaskModule.ldmod(chainFeaturePath + '/processors/basic'),
-        _modtaskModule.ldmod(chainFeaturePath + '/processors/import'),
-        _modtaskModule.ldmod(chainFeaturePath + '/processors/runpkg')
-      ]);
-    if (!outcome.success) return chainReturnCB(outcome);
-    return outcome.chainProcessorSystem.doChain(chain, chainReturnCB);
-  } catch(e) {
-    console.log('internal error: ', e);
-  }
-}
-
 function newChain(chainItems, chainReturnCB, context) {
-  var chainFeaturePath = 'features/v2/chain';
+  var featureModulesPath = 'features/v2/';
   if (!chainReturnCB) chainReturnCB = console.log;
   try {
     var _modtaskModule = require('izymodtask').getRootModule();
     if (!context) context = {};
-    _modtaskModule.ldmod(chainFeaturePath + '/main').newChain({
+    _modtaskModule.ldmod(featureModulesPath + 'chain/main').newChain({
       name: 'izy-proxy-rootchain',
       chainItems: chainItems,
       context: context,
       chainHandlers: [
-        _modtaskModule.ldmod(chainFeaturePath + '/processors/basic'),
-        _modtaskModule.ldmod(chainFeaturePath + '/processors/import'),
-        _modtaskModule.ldmod(chainFeaturePath + '/processors/runpkg')
+        _modtaskModule.ldmod(featureModulesPath + 'chain/processors/basic'),
+        _modtaskModule.ldmod(featureModulesPath + 'chain/processors/import'),
+        _modtaskModule.ldmod(featureModulesPath + 'chain/processors/runpkg')
       ]
     }, chainReturnCB);
   } catch(e) {
@@ -79,6 +59,5 @@ function newChain(chainItems, chainReturnCB, context) {
 }
 
 module.exports = {
-  newChain: newChain,
-  doChain: newChain
+  newChain: newChain
 }

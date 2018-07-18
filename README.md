@@ -71,6 +71,17 @@ Use the commandline interface to simulate calling the forgot-password POST api c
 
 If everything is successful, you should be able to replicate the online behavior locally.
 
+## Testing The Functionality
+Since the izy-proxy contains a heterogeneous set of component, full testing will entail running each test piece seperately.
+
+```
+# Test the chaining engine functionality
+node test.js
+# Test the API plug-in
+node cli.js method api api.path ...
+
+```
+
 ## Configuration for the artifact
 
 The server expects the configuration file to be at:

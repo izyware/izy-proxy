@@ -24,7 +24,8 @@ node cli.js ${commandLineKey} api path pkg:api payloadstr <xxxx> payloadfile <fi
 
 Test
 ----
-node cli.js ${commandLineKey} test
+The component does not have test enabled from the command line. See README for instructions on how to test it.
+
 `;
 
 modtask.help[modtask.helpStr] = true;
