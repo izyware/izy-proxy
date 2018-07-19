@@ -315,8 +315,10 @@ This would result in the route:
 While enterprise gold customers have access to Izyware Studio, the standard users can still use the command line to implement their chain based apis:
 
 ```
-node cli.js method api api.path <path/to/api/module>
+node cli.js method api api.path <path/to/api/module> api.queryObject.key1 value1 ...
 ```
+
+the system will deserialize the api.queryObject.* into a JSON queryObject that gets passed into the JSONIO api handlers.
 
 ## Using the package to extend existing node apps
 

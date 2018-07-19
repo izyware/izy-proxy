@@ -43,7 +43,7 @@ modtask.cmdlineverbs[commandLineKey] = function() {
       });
       break;
     case 'api':
-      modtask.ldmod('rel:test/utils').simulateApiCall(config.api.path);
+      modtask.ldmod('rel:test/utils').simulateApiCall(config.api.path, config.api.queryObject);
       break;
     default:
       modtask.Log(modtask.helpStr);

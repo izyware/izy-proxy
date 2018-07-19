@@ -1,11 +1,14 @@
 
 var modtask = function(chainItem, cb, $chain) {
-    var str = chainItem[0] + '';
+    var i = 0;
+    var str = chainItem[i++] + '';
     if (str.indexOf('//') == 0) {
-        var i = 1;
-        var queryObject = chainItem[1];
+        var queryObject = chainItem[i++];
         modtask.doLaunchString($chain, str, queryObject, function(outcome) {
             $chain.set('outcome', outcome);
+            // backwards compat for legacy APIs using modtask.doChain(['...', queryObject, modtask]) style components
+            var containerParam = chainItem[i++];
+            if (containerParam) containerParam.outcome = $chain.get('outcome');
             cb();
         });
         return true;
@@ -67,14 +70,11 @@ modtask.handlers.inline = function($chain, cb, parsedLaunchString, payload) {
         return;
     }
 
-    cb({ reason: 'import_module_disabled_for_inline_pkgruns. Enable this after doChain and callback handling has been fixed.'});
-    /*
-    * change this to doChain([['frame_importpkgs', ..] ...]])
-    // Not found, so import first
-    modtask.importPkgs([parsed.pkg], function(outcome) {
-        if (!outcome.success) return cb(outcome);
-        runModule();
-    });*/
+    $chain.doChain([
+        ['frame_importpkgs', [parsed.pkg]],
+        ['returnOnFail'],
+        runModule
+     ]);
 }
 
 modtask.handlers.http = function(cb, parsedLaunchString, payload, url) {
