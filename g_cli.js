@@ -20,7 +20,7 @@ node cli.js ${commandLineKey} verifyconfig api.email my_email_address
 
 Api Launch
 ----------
-node cli.js ${commandLineKey} api path pkg:api payloadstr <xxxx> payloadfile <file>
+node cli.js method api api.path pkg:api api.queryObject.key1 val1 ...
 
 Test
 ----
