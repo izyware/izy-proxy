@@ -36,7 +36,7 @@ cd ~/izyware;npm update
 
 ## Running
 
-### HTTP Serve Mode
+### HTTP Server Mode
 ```
 cd node_modules/izy-proxy
 node app.js (or if you are using pm2, do pm2 start app.js)
