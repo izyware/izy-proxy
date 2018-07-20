@@ -34,7 +34,9 @@ cp -r node_modules/izy-proxy/node_modules/* node_modules/; cp -r node_modules/iz
 cd ~/izyware;npm update
 ```
 
-### Run
+## Running
+
+### HTTP Serve Mode
 ```
 cd node_modules/izy-proxy
 node app.js (or if you are using pm2, do pm2 start app.js)
@@ -49,7 +51,15 @@ GET /izyproxystatus
 status: 200
 ```
 
-#### IZY TIP
+### TaskRunner Mode
+You may also run the tool in the task runner configuration. Please make sure that the configuration file is setup properly.
+
+```
+cd node_modules/izy-proxy
+node taskrunner.js (or if you are using pm2, do pm2 start taskrunner.js)
+```
+
+### IZY TIP
 When upgrading or deploying a node (ec2-node or a docker container), you should deep clone the directory as a backup and switch back/forth with pm2 until things work:
 
 ```
@@ -76,14 +86,14 @@ Since the izy-proxy contains a heterogeneous set of component, full testing will
 
 ```
 # Test the chaining engine functionality
-node test.js
+node test/chain.js
 # Test the API plug-in
 node cli.js method api api.path :test/api
 ```
 
 ## Configuration for the artifact
 
-The server expects the configuration file to be at:
+The HTTP server expects the configuration file to be at:
 
 ```
 ../configs/izy-proxy/config.js relative to app.js
@@ -97,7 +107,26 @@ node_modules/configs/izy-proxy/config.js
 
 It is best to keep the configurations in a seperate location and just copy them over as shown in the deployment section.
 
-### Sample config.js file
+
+The Taskrunner expects the configuration file to be at:
+
+```
+../configs/izy-proxy/taskrunner.js relative to app.js
+```
+
+### Sample TaskRunner Server taskrunner.js config file
+
+```
+module.exports = {
+    authenticate: {
+        izyware_taskrunner_key_id: 'your_access_key',
+        izyware_taskrunner_secret_access_key: 'your_secret_key'
+    },
+    izyware_runtime_id: 'your_izyware_runtime_id'
+};
+```
+
+### Sample HTTP Server config.js file
 
 ```
 module.exports = {

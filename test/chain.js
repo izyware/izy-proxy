@@ -1,6 +1,6 @@
 
 function testV2() {
-  require('./index').newChain([
+  require('../index').newChain([
     ['log', 'testing newChainContext'],
     ['set', 'newChainContext', {}],
     ['newChain', {
@@ -10,6 +10,29 @@ function testV2() {
         ['log', 'new chain logging items'],
         ['set', 'outcome', { success: true }],
         ['return']
+      ]
+    }],
+    ['returnOnFail'],
+
+    ['newChain', {
+      // This will help with debugging when the chain fails (i.e. could not find a processor, etc.)
+      chainName: 'Chain For Testing Replay',
+      chainItems: [
+        ['log', 'testing replay'],
+        function(chain) {
+          var counter = chain.get('counter') || 0;
+          if (counter < 2) {
+            counter++;
+            chain.set('counter', counter);
+            return chain(['log', 'counter is '  + counter]);
+          } else {
+            chain([
+              ['set', 'outcome', { success: true }],
+              ['return']
+            ]);
+          }
+        },
+        ['replay']
       ]
     }],
     ['returnOnFail'],
@@ -47,8 +70,12 @@ function testV2() {
     ['log', 'if you see this message it means that the logging is working'],
 
     ['frame_getnode'],
-    $chain => $chain($chain.get('node') ? ['set', 'outcome', { success: true }] : ['set', 'outcome', { reason: 'frame_getnode did not get the node obj' }]),
+    $chain => $chain($chain.get('outcome').success ? ['set', 'outcome', { success: true }] : ['set', 'outcome', { reason: 'frame_getnode did not get the node obj' }]),
     ['returnOnFail'],
+
+    ['log', 'test delay'],
+    ['delay', 500],
+    ['log', 'after delay'],
 
     ['return'],
     ['log', 'you should not see his message']
@@ -56,8 +83,8 @@ function testV2() {
     // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
     // Notice that this will NOT give any clues on chain variables such as $chain.outcome
   function (outcome) {
-    console.log('\r\n************************************ Chain Done *********************************************');
     if (outcome.success) return console.log('* All items ran successfully');
+    console.log('\r\n************************************ ERRROR *********************************************');
     console.log('* reason=     ', outcome.reason);
     console.log('* chain.name= ', outcome.chain.name);
     console.log('* chain.chainItemBeingProcessed= ', outcome.chain.chainItemBeingProcessed);

@@ -34,9 +34,15 @@ var modtask = function(chainItem, cb, $chain) {
       $chain.set(chainItem[i++], chainItem[i++]);
       cb();
       return true;
+    case 'delay':
     case 'continue':
     case 'nop':
-      cb();
+      var delay = chainItem[i++] || 0;
+      if (delay) {
+        setTimeout(cb, delay);
+      } else {
+        cb();
+      }
       return true;
     case 'sysview':
       require('izymodtask').getRootModule().ldmod('s_root').cmdlineverbs.sysview();

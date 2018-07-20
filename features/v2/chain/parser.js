@@ -53,11 +53,12 @@ var modtask = {
            index,
            chainReturnCB,
            // processChainItemCallback
-           function(additionalChainItems) {
+           function(additionalChainItems, newIndex) {
               if (additionalChainItems.length > 0) {
                  chain.splice.apply(chain, [index+1, 0].concat(additionalChainItems));
               }
-              modtask.chainParse(chain, index+1, chainReturnCB);
+              if (!newIndex && newIndex != 0) newIndex = index+1;
+              modtask.chainParse(chain, newIndex, chainReturnCB);
            },
            // Dont eval
            false
@@ -100,6 +101,11 @@ var modtask = {
             break;
       }
       modtask.$chain.chainItemBeingProcessed = chainItem;
+      if (chainItem[0] == 'replay') {
+         return setTimeout(function() {
+            processChainItemCallback(additionalChainItems, 0);
+         }, 100);
+      }
       modtask.$chain.processChainItem(chainItem , function() {
          processChainItemCallback(additionalChainItems);
       });
