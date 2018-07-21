@@ -12,7 +12,7 @@ function ldParsedPath(parsed, cb) {
     if (!outcome.success) return cb(outcome);
     var reason = 'Unknown';
     try {
-      return cb({ success: true, data: modtask.ldmod(parsed.mod), rootmod: modtask });
+      return cb({ success: true, data: modtask.ldmod(parsed.mod) });
     } catch (e) {
       reason = e.message;
     }

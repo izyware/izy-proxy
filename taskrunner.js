@@ -23,7 +23,7 @@ require('./index').newChain([
     // ['sysview'],
     ['chain.importProcessor', 'configs/izy-proxy/context'],
     ['returnOnFail'],
-    ['chain.importProcessor', 'apps/tasks/api/chain'],
+    ['chain.importProcessor', 'apps/tasks/api:chain'],
     ['returnOnFail'],
     ['taskrunner.authenticate', config.authenticate],
     ['returnOnFail'],

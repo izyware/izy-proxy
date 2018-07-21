@@ -3,10 +3,15 @@ var modtask = function(chainItem, cb, $chain) {
     switch(typeof(chainItemProcessor)) {
       case 'string':
         try {
-          var mod = modtask.ldmod(chainItemProcessor);
-          // doTransition is for backwards compat
-          $chain.registerChainItemProcessor(mod.doTransition ? mod.doTransition : mod);
-          return cb({ success: true });
+          var featureModulesPath = 'features/v2/';
+          var pkgmain = modtask.ldmod(featureModulesPath + 'pkg/main');
+          pkgmain.ldPath(chainItemProcessor, function(outcome) {
+            if (!outcome.success) return cb(outcome);
+            var mod = outcome.data;
+            // doTransition is for backwards compat
+            $chain.registerChainItemProcessor(mod.doTransition ? mod.doTransition : mod);
+            return cb({ success: true });
+          });
         } catch (e) {
           cb({ reason: 'Cannot register chainHandlerMod: "' + chainItemProcessor + '": ' + e.message });
         }
