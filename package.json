@@ -23,7 +23,8 @@
     "g_cli.js",
     "mock",
     "test",
-    "features"
+    "features",
+    "chains"
   ],
   "devDependencies": {},
   "scripts": {
