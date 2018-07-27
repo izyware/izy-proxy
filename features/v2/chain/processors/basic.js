@@ -4,9 +4,10 @@ var modtask = function(chainItem, cb, $chain) {
   params.action = chainItem[i++];
   switch (params.action) {
     case 'returnOnFail':
+    case 'ROF':
     case 'return':
       var outcome = $chain.get('outcome') || { reason: 'asked to return from a chain that does not have the outcome object defined. please use [set, outcome, ...] to fix this issue.' };
-      if (outcome.success && params.action == 'returnOnFail') {
+      if (outcome.success && (params.action == 'returnOnFail' || params.action == 'ROF')) {
         cb();
         return true;
       }
@@ -20,7 +21,7 @@ var modtask = function(chainItem, cb, $chain) {
     case 'newChain':
       params.chainConfig = chainItem[i++];
       var chainConfig = {
-        chainName: $chain.chainName + '.' + params.chainConfig.chainName,
+        chainName: params.chainConfig.chainName,
         chainItems: params.chainConfig.chainItems,
         context: params.chainConfig.context || $chain.context,
         chainHandlers: params.chainConfig.chainHandlers || $chain.chainHandlers

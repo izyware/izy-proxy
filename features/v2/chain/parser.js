@@ -28,7 +28,7 @@ var modtask = {
                for(i=0; i < chain.length; ++i) {
                   switch(modtask.modcore.realTypeOf(chain[i])) {
                     case "array":
-                    case "function" :                     
+                    case "function" :
                        break;
                     default:
                       return chainReturnCB({ reason: "Set chain element[" + i + "] to a UDT array. Currently it is '" + modtask.modcore.realTypeOf(chain[i]) + "'" });
@@ -53,13 +53,17 @@ var modtask = {
            index,
            chainReturnCB,
            // processChainItemCallback
-           function(additionalChainItems, newIndex) {
-              if (additionalChainItems.length > 0) {
-                 chain.splice.apply(chain, [index+1, 0].concat(additionalChainItems));
-              }
-              if (!newIndex && newIndex != 0) newIndex = index+1;
-              modtask.chainParse(chain, newIndex, chainReturnCB);
-           },
+            function(subChainToProcess, newIndex) {
+               if (!newIndex && newIndex != 0) newIndex = index+1;
+               if (subChainToProcess.length > 0) {
+                  modtask.doChain(subChainToProcess, function(outcome) {
+                     if (!outcome.success) return chainReturnCB(outcome);
+                     modtask.chainParse(chain, newIndex, chainReturnCB);
+                  });
+               } else {
+                  modtask.chainParse(chain, newIndex, chainReturnCB);
+               }
+            },
            // Dont eval
            false
          );
@@ -87,13 +91,13 @@ var modtask = {
          return chainReturnCB({ reason: "chainItem cannot be an empty array. Please remove it." });
       }
 
-      var additionalChainItems = [];
+      var subChainToProcess = [];
       switch (modtask.modcore.realTypeOf(chainItem[0])) {
          case "string" : 
             break;
          case "array" : 
             if (chainItem.length > 1)
-               additionalChainItems = chainItem.slice(1, chainItem.length);
+               subChainToProcess = chainItem.slice(1, chainItem.length);
             chainItem = chainItem[0];
             break;
          default:
@@ -103,11 +107,11 @@ var modtask = {
       modtask.$chain.chainItemBeingProcessed = chainItem;
       if (chainItem[0] == 'replay') {
          return setTimeout(function() {
-            processChainItemCallback(additionalChainItems, 0);
+            processChainItemCallback(subChainToProcess, 0);
          }, 100);
       }
       modtask.$chain.processChainItem(chainItem , function() {
-         processChainItemCallback(additionalChainItems);
+         processChainItemCallback(subChainToProcess);
       });
    }
 }

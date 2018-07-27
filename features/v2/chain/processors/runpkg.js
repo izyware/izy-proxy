@@ -4,8 +4,9 @@ var modtask = function(chainItem, cb, $chain) {
     var str = chainItem[i++] + '';
     if (str.indexOf('//') == 0) {
         var queryObject = chainItem[i++];
-        modtask.doLaunchString($chain, str, queryObject, function(outcome) {
-            $chain.set('outcome', outcome);
+        modtask.doLaunchString($chain, str, queryObject, function(Outcome_cbWhenLaunchDone) {
+            if (!Outcome_cbWhenLaunchDone.recordOutcome) return cb();
+            $chain.set('outcome', Outcome_cbWhenLaunchDone.outcome);
             // backwards compat for legacy APIs using modtask.doChain(['...', queryObject, modtask]) style components
             var containerParam = chainItem[i++];
             if (containerParam) containerParam.outcome = $chain.get('outcome');
@@ -15,6 +16,36 @@ var modtask = function(chainItem, cb, $chain) {
     };
     return false;
 };
+
+modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchDone) {
+    var apiGatewayUrls = {
+        'inline': 'inline',
+        'chain': 'chain',
+        'localhost': 'https://localhost/apigateway/:',
+        'izyware': 'https://izyware.com/apigateway/:'
+    }
+
+    var parsedLaunchString = modtask.parseLaunchString(launchString);
+    if (!parsedLaunchString.success) return cbWhenLaunchDone({
+        outcome: parsedLaunchString,
+        recordOutcome: true
+    });
+    if (!parsedLaunchString.serviceName) parsedLaunchString.serviceName = 'inline';
+    if (!parsedLaunchString.serviceName || !apiGatewayUrls[parsedLaunchString.serviceName]) return cbWhenLaunchDone({
+        outcome: {
+            reason: 'Cannot find the proper gateway for:' + parsedLaunchString.serviceName
+        },
+        recordOutcome: true
+    });
+    var url = apiGatewayUrls[parsedLaunchString.serviceName];
+    if (url == 'inline') {
+        return modtask.handlers.inline($chain, cbWhenLaunchDone, parsedLaunchString, payload, false);
+    }
+    if (url == 'chain') {
+        return modtask.handlers.inline($chain, cbWhenLaunchDone, parsedLaunchString, payload, true);
+    }
+    return modtask.handlers.http(cbWhenLaunchDone, parsedLaunchString, payload, url);
+}
 
 modtask.parseLaunchString = function(url) {
     var outcome = {
@@ -32,35 +63,42 @@ modtask.parseLaunchString = function(url) {
     return outcome;
 }
 
-modtask.doLaunchString = function($chain, launchString, payload, cb) {
-    var apiGatewayUrls = {
-        'inline': 'inline',
-        'localhost': 'https://localhost/apigateway/:',
-        'izyware': 'https://izyware.com/apigateway/:'
-    }
-
-    var parsedLaunchString = modtask.parseLaunchString(launchString);
-    if (!parsedLaunchString.success) return cb(parsedLaunchString);
-    if (!parsedLaunchString.serviceName) parsedLaunchString.serviceName = 'inline';
-    if (!parsedLaunchString.serviceName || !apiGatewayUrls[parsedLaunchString.serviceName]) return cb({
-        reason: 'Cannot find the proper gateway for:' + parsedLaunchString.serviceName
-    });
-    var url = apiGatewayUrls[parsedLaunchString.serviceName];
-    if (url == 'inline') {
-        return modtask.handlers.inline($chain, cb, parsedLaunchString, payload);
-    }
-    return modtask.handlers.http(cb, parsedLaunchString, payload, url);
-}
-
 modtask.handlers = {};
-modtask.handlers.inline = function($chain, cb, parsedLaunchString, payload) {
+modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString, payload, chainMode) {
     var parsed = modtask.ldmod('kernel/path').parseInvokeString(parsedLaunchString.invokeString);
     var runModule = function() {
         try {
-            var mod = modtask.ldmod(parsed.mod).sp('doChain', $chain.doChain).processQueries(payload, cb);
+            if (chainMode) {
+                $chain.newChain({
+                    chainName: parsed.mod,
+                    chainItems: modtask.ldmod(parsed.mod),
+                    context: $chain.context,
+                    chainHandlers: $chain.chainHandlers
+                },
+                function(outcome) {
+                    if (!outcome.success) {
+                        cbWhenLaunchDone({
+                            recordOutcome: true,
+                            outcome: { reason: 'error running module: \r\n"' + parsed.mod + '"\r\n as chain: ' + outcome.reason }
+                        });
+                    } else {
+                        cbWhenLaunchDone({ recordOutcome: false });
+                    }
+                });
+            } else {
+                modtask.ldmod(parsed.mod).sp('doChain', $chain.doChain).processQueries(payload, function(outcome) {
+                    cbWhenLaunchDone({
+                        recordOutcome: true,
+                        outcome: outcome
+                    });
+                });
+            }
         } catch (e) {
-            return cb({
-                reason: e.message
+            return cbWhenLaunchDone({
+                recordOutcome: true,
+                outcome: {
+                    reason: e.message
+                }
             });
         }
     }
@@ -77,7 +115,7 @@ modtask.handlers.inline = function($chain, cb, parsedLaunchString, payload) {
      ]);
 }
 
-modtask.handlers.http = function(cb, parsedLaunchString, payload, url) {
+modtask.handlers.http = function(cbWhenLaunchDone, parsedLaunchString, payload, url) {
     var connectionString = url + parsedLaunchString.invokeString;
     var http = modtask.ldmod('net\\http');
     http.postAsyncHTTPRequest(
@@ -96,7 +134,10 @@ modtask.handlers.http = function(cb, parsedLaunchString, payload, url) {
                   reason: 'non outcome object returned from gateway ' + parsedLaunchString.serviceName
               };
           }
-          cb(outcome);
+          cbWhenLaunchDone({
+              recordOutcome: true,
+              outcome: outcome
+          });
       },
       connectionString, // url
       JSON.stringify(payload), // postdata
@@ -104,8 +145,11 @@ modtask.handlers.http = function(cb, parsedLaunchString, payload, url) {
       false, // auth
       // failpush
       function (_outcomeStr) {
-          return cb({
-              reason: _outcomeStr
+          return cbWhenLaunchDone({
+              recordOutcome: true,
+              outcome: {
+                  reason: _outcomeStr
+              }
           });
       }
     );

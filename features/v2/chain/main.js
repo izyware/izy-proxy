@@ -6,7 +6,7 @@ modtask.newChain = function(cfg, _chainReturnCB) {
       if (!outcome.success && !outcome.chain) outcome.chain = $chain;
       if (_chainReturnCB) _chainReturnCB(outcome);
     } catch(e) {
-      console.log('Warning. chain return function threw an exception. Capturing it here to avoid multiple calls.');
+      console.log('Warning. chain return function threw an exception. Capturing it here to avoid multiple calls. chainName: ', $chain.chainName);
     }
   }
   var chainContext = typeof(cfg.context) == 'object' ?  cfg.context : {};
@@ -17,9 +17,8 @@ modtask.newChain = function(cfg, _chainReturnCB) {
     if (!cb) {
       cb = chainReturnCB;
     };
-
     return modtask.newChain({
-      name: $chain.name + '.interal.doChain',
+      chainName: $chain.chainName + '.doChain',
       chainItems: chainItems,
       context: $chain.context,
       chainHandlers: $chain.chainHandlers

@@ -44,7 +44,7 @@ function newChain(chainItems, chainReturnCB, context) {
     var _modtaskModule = require('izymodtask').getRootModule();
     if (!context) context = {};
     _modtaskModule.ldmod(featureModulesPath + 'chain/main').newChain({
-      name: 'izy-proxy-rootchain',
+      chainName: 'root',
       chainItems: chainItems,
       context: context,
       chainHandlers: [

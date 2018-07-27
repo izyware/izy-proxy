@@ -29,7 +29,7 @@ require('./index').newChain([
     ['returnOnFail'],
     ['taskrunner.onNewTask', seqs.onNewTask],
     ['taskrunner.setRuntimeID', config.izyware_runtime_id],
-    // these may be moved into the config also 
+    // these may be moved into the config also
     ['taskrunner.config', {
         loopMode: true,
         readOnlyMode: false,

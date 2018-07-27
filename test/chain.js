@@ -13,6 +13,8 @@ function testV2() {
       ]
     }],
     ['returnOnFail'],
+    // short for return on fail
+    ['ROF'],
 
     ['newChain', {
       // This will help with debugging when the chain fails (i.e. could not find a processor, etc.)
@@ -41,7 +43,7 @@ function testV2() {
     ['chain.importProcessor', 'configs/izy-proxy/context'],
     ['returnOnFail'],
 
-    ['log', 'test runpkg'],
+    ['log', 'test runpkg izyware'],
     ['//izyware/ui/w/shell/credsrecovey:api/forgotpassword', {
       email: 'this_email_address_should_not_exists@izyware.com'
     }],
@@ -49,6 +51,24 @@ function testV2() {
       if ('email not found' == $chain.get('outcome').reason) return $chain([['log', 'runpkg on izycloud worked!']]);
       $chain(['return']);
     },
+
+
+    ['log', 'test runpkg chain will catch problematic launches'],
+    ['set', 'outcome', { success: true }],
+    ['//chain/izy-proxy/test/module_that_does_not_exist'],
+    ($chain) => {
+      if ($chain.get('outcome').success) {
+        return $chain([
+          ['set', 'outcome', { reason: 'expected module_that_does_not_exist to generate non-success outcome.' }],
+          ['return']
+        ]);
+      }
+      $chain(['continue']);
+    },
+
+    ['set', 'outcome', { reason: 'this outcome should be overwritten by samplechainmodule' }],
+    ['//chain/izy-proxy/test/samplechainmodule'],
+    ['ROF'],
 
     ['log', 'test getter/setter'],
     ['set', 'testKey', 'testValue'],
@@ -77,11 +97,12 @@ function testV2() {
     ['delay', 500],
     ['log', 'after delay'],
 
-    ['return'],
-    ['log', 'you should not see his message']
+    // Return will check the 'outcome' key and will project it into the callback below
+    ['return']
   ],
-    // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
-    // Notice that this will NOT give any clues on chain variables such as $chain.outcome
+
+  // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
+  // Notice that this will NOT give any clues on chain variables such as $chain.outcome
   function (outcome) {
     if (outcome.success) return console.log('* All items ran successfully');
     console.log('\r\n************************************ ERRROR *********************************************');
