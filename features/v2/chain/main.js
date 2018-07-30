@@ -2,11 +2,18 @@ var modtask = {};
 
 modtask.newChain = function(cfg, _chainReturnCB) {
   var chainReturnCB = function(outcome) {
+    if (chainReturnCB.blockFurtherCallbacksToChain) {
+      // this could happen for example if there was a failure early that change the execution sequence
+      // but some handlers just resolved their callback
+      return;
+    }
+    chainReturnCB.blockFurtherCallbacksToChain = true;
+
     try {
       if (!outcome.success && !outcome.chain) outcome.chain = $chain;
       if (_chainReturnCB) _chainReturnCB(outcome);
     } catch(e) {
-      console.log('Warning. chain return function threw an exception. Capturing it here to avoid multiple calls. chainName: ', $chain.chainName);
+      return console.log('Warning. chain return function threw an exception. Capturing it here to avoid multiple calls. chainName: ', $chain.chainName);
     }
   }
   var chainContext = typeof(cfg.context) == 'object' ?  cfg.context : {};
@@ -88,14 +95,28 @@ function create_processChainItemAndRegisterProcessorFunctions($chain) {
         console.log(chainItem);
       }
       try {
-        if ($chain.chainHandlers[i](chainItem, function(outcome) {
+        var itemProcessedCallback = (function() {
+          var fn = function(outcome) {
+            if (fn.shouldNotBeCalled) {
+              return $chain.chainReturnCB({ reason: 'rogue chain handler detected, calling the callback when it should not be.' });
+            }
+            fn.shouldNotBeCalled = true;
             // for backwards compatibility, only catch errors when { reason: ... } is passed
             // legacy implementations may send outcome as null or send an array, etc.
             if (typeof(outcome) == 'object' && !outcome.success && typeof(outcome.reason) == 'string') {
               return $chain.chainReturnCB(outcome);
             }
             cb();
-          }, $chain)) return;
+          };
+          return fn;
+        })();
+
+        if ($chain.chainHandlers[i](chainItem, itemProcessedCallback, $chain)) {
+          return;
+        } else {
+          // mark this to catch rouge processors
+          itemProcessedCallback.shouldNotBeCalled = true;
+        }
       } catch(e) {
         return $chain.chainReturnCB({
           reason: 'a chainHandler crashed. This means that there is a poorly designed chain handler registered. The error is: ' + e.message + '. The module for the chain handler is: ' + $chain.chainHandlers[i].__myname,
