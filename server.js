@@ -10,7 +10,7 @@ modtask.serverLog = function (msg, type, plugin) {
   if (!plugin) plugin = {name: ''};
   var item = {
     type,
-    ts: new Date(),
+    ts: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
     msg,
     plugin: plugin
   }
@@ -39,7 +39,9 @@ modtask.loadPlugin = function (pluginConfig, noCaching) {
     outcome.reason = e;
   }
   if (!outcome.success) {
-    modtask.serverLog(`Failed to properly load plug-in *${pluginConfig.name}*. All plug-in requests will 404. The plug-in error was: ${JSON.stringify(outcome.reason)}`);
+    var reason = outcome.reason;
+    if (typeof(reason) != 'string' && typeof(reason.toString) == 'function') reason = reason.toString();
+    modtask.serverLog(`Failed to properly load plug-in *${pluginConfig.name}*. All plug-in requests will 404. The plug-in error was: ${reason}`);
     // This is needed so that *handler.plugin.canHandle is not a function* gets avoided
     // Instead all the requests that would have been handled by this plug-in will get a 404 instead
     outcome.canHandle = function () { return false };
@@ -60,10 +62,13 @@ modtask.initHandlers = function () {
       modtask.serverLog(`WARNING: invalid config entry ${i} for plugins. Missing name property`);
       continue;
     }
-    handlers.push({
+    var item = {
       plugin: modtask.loadPlugin(list[i]),
       config: list[i]
-    });
+    };
+    if (item.plugin.success) {
+      handlers.push(item);
+    }
   }
 }
 
@@ -75,9 +80,25 @@ module.exports.getHandleRequestInterface = function() {
   };
 }
 
-module.exports.run = function run() {
-  modtask.serverLog(`Run`, 'INFO');
-  modtask.initHandlers();
+modtask.initCustomHandlers = function() {
+  var i, handler;
+  for (i = 0; i < handlers.length; ++i) {
+    try {
+      handler = handlers[i];
+      if (handler.config.customRequestHandler) {
+        modtask.serverLog(`initCustomHandler: ${handler.config.name}`, 'INFO');
+        handler.plugin.initCustomHandler(modtask, handler);
+      }
+    } catch(e) {
+      modtask.serverLog(e.message, 'ERROR', handler.plugin);
+    }
+  }
+}
+
+modtask.initHttpHandlers = function() {
+  if (!config.port) {
+    config.port = {};
+  };
 
   const requestHandlerHttp = function (req, res) {
     handleRequest(req, res, 'http', config);
@@ -89,7 +110,7 @@ module.exports.run = function run() {
 
   if (config.port.http) {
     require('http').createServer(requestHandlerHttp).listen(config.port.http).on('clientError', (err) => console.log('clientError', err));
-    console.log('izy-proxy HTTP on port:' + config.port.http);
+    modtask.serverLog('izy-proxy HTTP on port:' + config.port.http, 'INFO');
   }
 
   if (config.port.https) {
@@ -101,8 +122,15 @@ module.exports.run = function run() {
     };
 
     require('https').createServer(options, requestHandlerHttps).listen(config.port.https);
-    console.log('izy-proxy HTTPS on port:' + config.port.https);
+    modtask.serverLog('izy-proxy HTTPS on port:' + config.port.https, 'INFO');
   }
+}
+
+module.exports.run = function run() {
+  modtask.serverLog(`Run`, 'INFO');
+  modtask.initHandlers();
+  modtask.initCustomHandlers();
+  modtask.initHttpHandlers();
 };
 
 function getCORSHeaders(extraHeaders) {
@@ -166,6 +194,7 @@ function handleRequest(req, res, scheme, config) {
   for (i = 0; i < handlers.length; ++i) {
     try {
       handler = handlers[i];
+      if (handler.config.customRequestHandler) continue;
       if (handler.config.reloadPerRequest) {
         handler.plugin = modtask.loadPlugin(handler.config, true);
       }
@@ -240,3 +269,6 @@ function sendStatus(req, res, info, msg) {
   );
   res.end();
 }
+
+
+module.exports.modtask = modtask;

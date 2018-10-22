@@ -45,6 +45,9 @@ modtask.cmdlineverbs[commandLineKey] = function() {
     case 'api':
       modtask.ldmod('rel:test/utils').simulateApiCall(config.api.path, config.api.queryObject);
       break;
+    case 'socket':
+      modtask.ldmod('rel:test/utils').simulateSocketIO(config.socket);
+      break;
     default:
       modtask.Log(modtask.helpStr);
       break;

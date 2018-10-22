@@ -18,9 +18,9 @@ module.exports = function (config, pluginName) {
 
       // For security reasons we virtualize each requests's load into its own root context
       // However, the file system caching (if present) will still allow sharing of context
-      var featureModulesPath = 'features/v2/';
+      var pathToCoreProxyFunctionality = 'features/v2/';
       var rootmod = require('izymodtask').getRootModule();
-      var pkgmain = rootmod.ldmod(featureModulesPath + 'pkg/main');
+      var pkgmain = rootmod.ldmod(pathToCoreProxyFunctionality + 'pkg/main');
 
       // fill my namespace with usable stuff
       serverObjs[name] = {};
@@ -56,14 +56,14 @@ module.exports = function (config, pluginName) {
                   // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
                   cb = function() {}
                 };
-                return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
+                return rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/main').newChain({
                   name: 'apiRoot',
                   chainItems: chainItems,
                   context: mod,
                   chainHandlers: [
-                    rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
-                    rootmod.ldmod(featureModulesPath + 'chain/processors/import'),
-                    rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg'),
+                    rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/basic'),
+                    rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/import'),
+                    rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/runpkg'),
                     // this should define frame_getnode, frame_importpkgs chain handlers
                     // see README file section on how to test this configuration via test/api in a deployed environment
                     rootmod.ldmod(config.chainHandlerMod)

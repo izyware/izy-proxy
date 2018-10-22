@@ -1,7 +1,4 @@
-## izy-proxy
-IZY Proxy server is part of the Izyware framework for building applications and services using the interactive tools.
-
-It enables developers to focus on creating reusable user experiences instead of spending time building and maintaining code and infrastructure.
+For more details, see: [izy-proxy-help-article]
 
 ## Deployment Setup
 
@@ -89,7 +86,18 @@ Since the izy-proxy contains a heterogeneous set of component, full testing will
 node test/all.js
 # Test the API plug-in
 node cli.js method api api.path :test/api
+# Test the Socket plug-in
+node cli.js method socket socket.path :test/socket socket.user user@yourdomain.com socket.pass your_password socket.verbose...
 ```
+
+### Using the Commandline Interface For Testing And Developing Chain-based APIs
+While enterprise gold customers have access to Izyware Studio, the standard users can still use the command line to implement their chain based apis:
+
+```
+node cli.js method api api.path <path/to/api/module> api.queryObject.key1 value1 ...
+```
+
+the system will deserialize the api.queryObject.* into a JSON queryObject that gets passed into the JSONIO api handlers.
 
 ## Configuration for the artifact
 
@@ -340,15 +348,6 @@ This would result in the route:
 
     https://dnsentry.com/apigateway/%3Aapps/sample/bridge%3Aapi
 
-## Using the Commandline Interface For Testing And Developing Chain-based APIs
-While enterprise gold customers have access to Izyware Studio, the standard users can still use the command line to implement their chain based apis:
-
-```
-node cli.js method api api.path <path/to/api/module> api.queryObject.key1 value1 ...
-```
-
-the system will deserialize the api.queryObject.* into a JSON queryObject that gets passed into the JSONIO api handlers.
-
 ## Using the package to extend existing node apps
 
 Setup the environment by:
@@ -376,5 +375,46 @@ Your application functionality may be consumed via the universal scripting envir
 
 It is recommended that you expose the functionality via an importable chain module. As of version 2.0 the chaining library will support importing and registering new chain handlers.
 
+## Creating TCP/UDP services using the socket plug-in
+You can use the socket plug-in for creating non HTTPs application layer services (SMTP, POP, SOCKS, etc.) that can be deployed from the IzyCloud environment. To configure a node add the following to the plug-ins config:
+
+
+```
+module.exports = {
+	plugins: [
+	{
+		name: 'socket',
+		customRequestHandler: true,
+		items: [
+			{ port: 20110, handlerPath: ':test/socket' }
+		]
+		,chainHandlerMod: 'configs/izy-proxy/context'
+	}]
+}
+```
+
+
+See the testing instructions above (under `Testing`) for howto test the service handler directly from the command line. The following verbose flags (and the default values) are available 
+
+
+```
+    writes: false,
+    ondata: false,
+    connect: false,
+    terminate: true,
+    error: true,
+    close: false,
+    end: false
+  
+    datacopy: false,
+    detectStandardOK: false,
+    authenticate: false  
+
+```
+
+
 ## NOTE
-for more details, visit https://izyware.com
+for more details, visit [izyware]
+
+[izyware]: https://izyware.com
+[izy-proxy-help-article]: https://izyware.com/help/article/izy-proxy-readme
