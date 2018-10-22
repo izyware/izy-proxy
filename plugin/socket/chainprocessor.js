@@ -94,8 +94,8 @@ var modtask = function(chainItem, cb, $chain) {
       cb();
       return true;
       break;
-    case 'socket.expect':
-      modtask.socketExpect(chainItem[i++], function(outcome) {
+    case 'socket.while':
+      modtask.socketWhile(chainItem[i++], function(outcome) {
         $chain.set('outcome', outcome);
         cb();
       });
@@ -134,52 +134,108 @@ modtask.socketWrite = function(config, cb) {
   }
 }
 
-modtask.socketExpect = function(config, cb) {
-  config =  config || {
-    socket: null,
-    timeOut: 1000,
-    encoding: 'ascii',
-    test: function (str) {
-      return (str.toLowerCase().indexOf('+ok') == 0 && str.indexOf(CRLF) > 0);
-    }
-  };
+modtask.socketWhile = function(config, cb) {
+  config =  config || {};
 
-  var socketWrapper = config.socket;
+//  config.handlers = sample.handlers;
+// config.test = sample.test;
 
-  var check = function() {
-    var outcome = {};
+  if (!config.timeOut) config.timeOut = 5000;
+  if (!config.state) config.state = {};
+
+  var timeOutStep = 1000;
+  var totalTimeWaited = 0;
+  var socketWrapper = config.socketWrapper;
+  var check = function(handlerIndex) {
+    if (!handlerIndex) handlerIndex = 0;
+    if (handlerIndex >= config.handlers.length) handlerIndex = 0;
+
+    if (modtask.verbose.socketwhile) modtask.sessionLog('currentHandler[' + handlerIndex + '], totalTimeWaited=' + totalTimeWaited, 'socket.while', socketWrapper.name);
     try {
+      var outcome = {};
+      if (totalTimeWaited >= config.timeOut) {
+        outcome = { reason: 'socketWhile timeout, totalTimeWaited: ' +  totalTimeWaited };
+        if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while', socketWrapper.name);
+        return cb(outcome);
+      };
+
       var bufferedData = socketWrapper.state.bufferedData;
-      var test = config.test;
       if (config.encoding) {
         bufferedData = bufferedData.toString(config.encoding);
       }
-      outcome = test(bufferedData);
-      if (outcome.success) {
-        socketWrapper.reset();
+
+      // placeholder
+      if (modtask.verbose.socketwhile) modtask.sessionLog(JSON.stringify(bufferedData), 'socket.while', socketWrapper.name);
+      var scanNextHandler = function () {
+        if (modtask.verbose.socketwhile) modtask.sessionLog('scanNextHandler', 'socket.while', socketWrapper.name);
+        if (socketWrapper.changed) {
+          totalTimeWaited = 0;
+          socketWrapper.changed = false;
+        }
+        totalTimeWaited += timeOutStep;
+        setTimeout(function () {
+          check(handlerIndex + 1);
+        }, timeOutStep);
+      }
+
+      var currentHandler = config.handlers[handlerIndex];
+      if (typeof(currentHandler) != 'function') {
+        outcome = {reason: 'handler needs to be a function'}
+        if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while', socketWrapper.name);
         return cb(outcome);
-      };
-      setTimeout(check, 1000);
+      }
     } catch(e) {
       outcome.reason = e.message;
+      if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while', socketWrapper.name);
+      return cb(outcome);
+    }
+
+    try {
+      currentHandler(bufferedData, config, function(outcome) {
+        if (outcome.success) {
+          if (modtask.verbose.socketwhile) modtask.sessionLog('Condition met', 'socket.while', socketWrapper.name);
+          if (modtask.verbose.socketwhile) modtask.sessionLog('Condition met, should break?', 'socket.while', socketWrapper.name);
+          try {
+            config.test(function (outcome) {
+              if (outcome.success) {
+                if (modtask.verbose.socketwhile) modtask.sessionLog('yeah break', 'socket.while', socketWrapper.name);
+                return cb(outcome);
+              }
+              scanNextHandler();
+            }, config);
+          } catch(e) {
+            outcome.reason = e.message;
+            if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while [TEST]', socketWrapper.name);
+            console.log('aaa');
+            return cb(outcome);
+          }
+        } else {
+          scanNextHandler();
+        }
+      });
+    } catch(e) {
+      outcome.reason = e.message;
+      if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while [HANDLERCODE]', socketWrapper.name);
       return cb(outcome);
     };
   }
-  check();
+  check(0);
 }
 
 modtask.socketWrapper = function(socket, config) {
   if (!config) config = {};
   var state = {};
   var resetState = function() {
-    state.bufferedData = Buffer.alloc(0);
-    state.timeSinceLastData = 0;
+    // Buffer.alloc is not supported in the earlier versions of node
+    // state.bufferedData = Buffer.alloc(0);
+    state.bufferedData = new Buffer([]);
   }
   resetState();
 
   // This will get launched by socket.emit('error', ...)
   socket.on('error', function () {
     if (modtask.verbose.error) modtask.sessionLog('socket error', 'socket.error', ret.name);
+    ret.changed = true;
     if (ret.onError) {
       return ret.onError();
     };
@@ -187,6 +243,7 @@ modtask.socketWrapper = function(socket, config) {
 
   socket.on('close', function () {
     if (modtask.verbose.close) modtask.sessionLog('socket connection was closed', 'socket.close', ret.name);
+    ret.changed = true;
     if (ret.onClose) {
       return ret.onClose();
     };
@@ -194,6 +251,7 @@ modtask.socketWrapper = function(socket, config) {
 
   socket.on('end', function () {
     if (modtask.verbose.end) modtask.sessionLog('the other-end signalled that they are planning on closing the connection', 'socket.end', ret.name);
+    ret.changed = true;
     if (ret.onEnd) {
       return ret.onEnd();
     };
@@ -201,15 +259,15 @@ modtask.socketWrapper = function(socket, config) {
 
   socket.on('data', function(data) {
     if (modtask.verbose.ondata) modtask.sessionLog(JSON.stringify(data.toString()), 'verbose.ondata', ret.name);
+    ret.changed = true;
     if (ret.onData) {
       return ret.onData(data);
     };
-    state.timeSinceLastData = 0;
     state.bufferedData = Buffer.concat([state.bufferedData, data]);
   });
 
   var ret = {
-    socketDamaged: false,
+    changed: false,
     name: config.name,
     state: state,
     reset: resetState,
@@ -246,6 +304,7 @@ modtask.createSocketConnection = function(config, cb) {
 }
 
 modtask.verbose = {
+  socketwhile: false,
   writes: false,
   ondata: false,
   connect: false,

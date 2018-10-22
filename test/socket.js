@@ -13,25 +13,8 @@ modtask.processQueries = function(queryObject, cb, context) {
 	});
 }
 
-var detectStandardOK = function(socketName) {
-	if (!socketName) socketName = 'backSocket';
-	return function(chain) {
-		chain([
-			modtask.verbose.detectStandardOK ? ['sessionlog', '', 'detectStandardOK', sockets[socketName].name] : ['nop'],
-			['socket.expect', {
-			socket: sockets[socketName],
-			timeOut: 1000,
-			encoding: 'ascii',
-			test: function(str) {
-				if (str.toLowerCase().indexOf('+ok') == 0 && str.indexOf(CRLF) > 0) {
-					return { success: true, data: str };
-				} else {
-					return { reason: 'expectation not met' }
-				}
-			}
-		}], ['ROF']]);
-	}
-};
+// todo: this needs to be per sesssion
+var standardExpectTimeout = 5000;
 
 var sendCmd = function(cmd, socketName) {
 	if (!socketName) socketName = 'backSocket';
@@ -50,13 +33,99 @@ var sockets = {
 	backSocket: null,
 	frontSocket: null
 }
+
+modtask.handlers = {};
+
+modtask.handlers.pass = function (str, config, cb) {
+	var state = config.state;
+	var socketWrapper =  config.socketWrapper;
+	var socketName = socketWrapper.name;
+	if (str.toLowerCase().indexOf('pass') == 0 && str.indexOf(CRLF) > 0) {
+		socketWrapper.reset();
+		state.pass = str;
+		return cb( { success: true });
+	} else {
+		return cb({ reason: 'expectation not met' });
+	}
+};
+
+modtask.handlers.user = function (str, config, cb) {
+	var state = config.state;
+	var socketWrapper =  config.socketWrapper;
+	var socketName = socketWrapper.name;
+	if (str.toLowerCase().indexOf('user') == 0 && str.indexOf(CRLF) > 0) {
+		socketWrapper.reset();
+		state.user = str;
+		return modtask.doChain([
+			['nop'],
+			sendCmd('+OK' + CRLF, socketName),
+			['set', 'outcome', { success: true }],
+			['return']
+		], cb);
+	} else {
+		return cb({ reason: 'expectation not met' });
+	}
+};
+
+modtask.handlers.capa = function (str, config, cb) {
+	var state = config.state;
+	var socketWrapper =  config.socketWrapper;
+	var socketName = socketWrapper.name;
+
+	if (str.toLowerCase().indexOf('capa') == 0 && str.indexOf(CRLF) > 0) {
+		state.capa = true;
+		socketWrapper.reset();
+		return modtask.doChain([
+			['nop'],
+			sendCmd('+OK Capability list follows' + CRLF + 'USER' + CRLF + 'IZY-S' + CRLF + '.' + CRLF, socketName),
+			['set', 'outcome', { success: true }],
+			['return']
+		], cb);
+	} else {
+		return cb({ reason: 'expectation not met' });
+	}
+};
+
+modtask.handlers.ok = function (str, config, cb) {
+	var state = config.state;
+	var socketWrapper =  config.socketWrapper;
+	var socketName = socketWrapper.name;
+	if (str.toLowerCase().indexOf('+ok') == 0 && str.indexOf(CRLF) > 0) {
+		socketWrapper.reset();
+		cb({ success: true });
+	} else {
+		return cb({ reason: 'expectation not met' });
+	}
+};
+
+var detectStandardOK = function(socketName) {
+	if (!socketName) socketName = 'backSocket';
+	return function(chain) {
+		chain([
+			modtask.verbose.detectStandardOK ? ['sessionlog', '', 'detectStandardOK', sockets[socketName].name] : ['nop'],
+			['socket.while', {
+				socketWrapper: sockets[socketName],
+				timeOut: standardExpectTimeout,
+				encoding: 'ascii',
+				handlers: [modtask.handlers.ok],
+				test: function(cb) {
+					return cb({
+						success: true
+					});
+				}
+			}],
+			['ROF']
+		]);
+	}
+};
+
+
 modtask.actions = {};
 modtask.actions.newIncoming = function(queryObject, cb, context) {
 	if (!context) context = {};
 	var session = context.session || {};
 
 	var rawSocket = queryObject.socket;
-	var frontInfo = {};
  	modtask.doChain([
 		['sessionlog', '', 'newIncoming'],
 		['socket.wrapraw', rawSocket, { name: 'frontSocket' }],
@@ -68,43 +137,29 @@ modtask.actions.newIncoming = function(queryObject, cb, context) {
 		sendCmd('+OK POP3 Server ready' + CRLF, 'frontSocket'),
 		['ROF'],
 		function(chain) {
-			chain(['socket.expect', {
-				socket: sockets['frontSocket'],
-				timeOut: 1000,
+			chain(['socket.while', {
+				socketWrapper: sockets['frontSocket'],
+				timeOut: standardExpectTimeout,
 				encoding: 'ascii',
-				test: function (str) {
-					if (str.toLowerCase().indexOf('user') == 0 && str.indexOf(CRLF) > 0) {
-						return {success: true, data: str};
-					} else {
-						return {reason: 'expectation not met'}
-					}
+				state: { user: null, pass: null },
+				handlers: [modtask.handlers.capa, modtask.handlers.user, modtask.handlers.pass],
+				test: function(cb, config) {
+					var state = config.state || {};
+					if (state.user && state.pass) return cb({
+						success: true,
+						data: state
+					});
+					cb({ reason: 'waiting for user' });
 				}
 			}]);
 		},
 		['ROF'],
 		function(chain) {
-			frontInfo.user = chain.get('outcome').data;
-			chain(['nop']);
-		},
-	  sendCmd('+OK' + CRLF, 'frontSocket'),
-	  function(chain) {
-			chain(['socket.expect', {
-				socket: sockets['frontSocket'],
-				timeOut: 1000,
-				encoding: 'ascii',
-				test: function (str) {
-					if (str.toLowerCase().indexOf('pass') == 0 && str.indexOf(CRLF) > 0) {
-						return {success: true, data: str};
-					} else {
-						return {reason: 'expectation not met'}
-					}
-				}
-			}]);
-		},
-		['ROF'],
-		function(chain) {
-			frontInfo.pass = chain.get('outcome').data;
-			modtask.actions.authenticate(frontInfo, function(outcome) {
+			var frontInfo = chain.get('outcome').data;
+			modtask.actions.authenticate({
+				user: frontInfo.user,
+				pass: frontInfo.pass
+			}, function(outcome) {
 				if (!outcome.success) {
 					return chain([
 						['socket.write', {
@@ -130,6 +185,7 @@ modtask.actions.newIncoming = function(queryObject, cb, context) {
 					return chain([
 						['sessionlog', outcome.reason, 'error', 'connect'],
 						['socket.terminate', sockets['frontSocket']],
+						['socket.terminate', sockets['backSocket']],
 						['return']
 					]);
 				};
@@ -199,7 +255,7 @@ modtask.actions.authenticate = function(queryObject, cb, context) {
 				});
 			});
 		}
-	]);
+	], cb);
 }
 
 modtask.actions.setupBackend = function(queryObject, cb, context) {

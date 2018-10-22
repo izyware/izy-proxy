@@ -398,18 +398,17 @@ See the testing instructions above (under `Testing`) for howto test the service 
 
 
 ```
+    socketwhile: false,
     writes: false,
     ondata: false,
     connect: false,
     terminate: true,
     error: true,
     close: false,
-    end: false
-  
+    end: false,
     datacopy: false,
     detectStandardOK: false,
-    authenticate: false  
-
+    authenticate: false
 ```
 
 

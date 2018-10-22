@@ -29,8 +29,11 @@ modtask.simulateSocketIO = function(config) {
   };
   console.log('********************************************');
   var incomingSocketTestConfig = {
+    // android: capa,
+    //
     responses: [
-      ['+OK POP3 Server ready\r\n', new Buffer('USER ' + config.user + '\r\n', 'ascii')],
+      ['+OK POP3 Server ready\r\n', new Buffer('CAPA' + '\r\n', 'ascii')],
+      ['+OK', new Buffer('USER ' + config.user + '\r\n', 'ascii')],
       ['+OK\r\n', new Buffer('PASS ' + config.pass + '\r\n', 'ascii')],
       ['+OK\r\n', new Buffer('LIST\r\n', 'ascii')],
       ['\r\n.\r\n', new Buffer('QUIT\r\n', 'ascii')]
