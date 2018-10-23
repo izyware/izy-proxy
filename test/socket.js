@@ -75,9 +75,10 @@ modtask.handlers.capa = function (str, config, cb) {
 	if (str.toLowerCase().indexOf('capa') == 0 && str.indexOf(CRLF) > 0) {
 		state.capa = true;
 		socketWrapper.reset();
+		var capabilities = ['USER', 'PASS', 'LIST', 'UIDL', 'RETR'];
 		return modtask.doChain([
 			['nop'],
-			sendCmd('+OK Capability list follows' + CRLF + 'USER' + CRLF + 'IZY-S' + CRLF + '.' + CRLF, socketName),
+			sendCmd('+OK Capability list follows' + CRLF + capabilities.join(CRLF) + CRLF + '.' + CRLF, socketName),
 			['set', 'outcome', { success: true }],
 			['return']
 		], cb);
