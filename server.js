@@ -36,7 +36,7 @@ modtask.loadPlugin = function (pluginConfig, noCaching) {
   try {
     outcome = require(path)(pluginConfig, pluginConfig.name, config);
   } catch (e) {
-    outcome.reason = e;
+    outcome.reason = e.message;
   }
   if (!outcome.success) {
     var reason = outcome.reason;

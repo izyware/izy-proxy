@@ -411,6 +411,8 @@ See the testing instructions above (under `Testing`) for howto test the service 
     authenticate: false
 ```
 
+## Handling Domain Based Requests
+Use the http plug-in to handle the domain based requests. The http plug-in will use cloudservices data base to configure the raw http handlers.
 
 ## NOTE
 for more details, visit [izyware]
