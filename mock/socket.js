@@ -1,7 +1,7 @@
 var modtask = function(config, finalCb) {
 	if (!finalCb) finalCb = function() {};
 
-	var verbose = false;
+	var verbose = config.verbose;
 	var cbs = {};
 	var onCalls  = 0;
 	var obj = {
@@ -28,17 +28,21 @@ var modtask = function(config, finalCb) {
 
 	var alreadyFinalized = false;
 	var responseCounter = -1;
+	var cumulativeStr = '';
 	function processNextInteraction(dataStr) {
+		if (dataStr) cumulativeStr += dataStr;
 		if (alreadyFinalized) {
+			if (verbose) console.log('*** TEST CLIENT GETTING DATA AFTER FINALIZATION ***');
 			return finalCb({ response: 'More data transfer after finalized' });
 		}
 		var found = false;
-		if (dataStr) {
+		if (cumulativeStr.length > 0) {
 			var i;
 			var currentRespose = null;
-			for (i = responseCounter; i < config.responses.length; ++i) {
+			// Only check the current one
+			for (i = responseCounter; i < responseCounter+1; ++i) {
 				currentRespose = config.responses[i];
-				if (currentRespose[1] == dataStr || dataStr.indexOf(currentRespose[1]) >= 0) {
+				if (currentRespose[1] == cumulativeStr || cumulativeStr.indexOf(currentRespose[1]) >= 0) {
 					found = true;
 					responseCounter = i + 1;
 					break;
@@ -51,6 +55,7 @@ var modtask = function(config, finalCb) {
 		}
 
 		if (found) {
+			cumulativeStr = '';
 			if (responseCounter >= config.responses.length) {
 				if (verbose) console.log('*** TEST CLIENT AT THE END ***');
 				return finalize({ success: true });
@@ -63,7 +68,7 @@ var modtask = function(config, finalCb) {
 				if (verbose) console.log('*** Nothing to write ***');
 			}
 		} else {
-			return finalize({ reason: 'Invalid response' });
+			if (verbose) console.log('*** Waiting for proper response ***', JSON.stringify(currentRespose[1]));
 		}
 
 		function finalize(outcome) {

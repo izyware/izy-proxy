@@ -47,7 +47,10 @@ modtask.simulateSocketIO = function(config) {
         function(outcome) {
           if (!outcome.success) return testOutcome(outcome);
           var incomingSocketTestConfig = outcome.data;
-          var testSocket = modtask.ldmod('rel:../mock/socket')(incomingSocketTestConfig);
+          var testSocket = modtask.ldmod('rel:../mock/socket')({
+            verbose: verbose.mock,
+            responses: incomingSocketTestConfig.responses
+          });
           mod.processQueries(
             { action: 'newIncoming', socket: testSocket },
             testOutcome,
