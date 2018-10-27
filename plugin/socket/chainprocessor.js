@@ -136,10 +136,6 @@ modtask.socketWrite = function(config, cb) {
 
 modtask.socketWhile = function(config, cb) {
   config =  config || {};
-
-//  config.handlers = sample.handlers;
-// config.test = sample.test;
-
   if (!config.timeOut) config.timeOut = 5000;
   if (!config.state) config.state = {};
 
@@ -149,8 +145,11 @@ modtask.socketWhile = function(config, cb) {
   var check = function(handlerIndex) {
     if (!handlerIndex) handlerIndex = 0;
     if (handlerIndex >= config.handlers.length) handlerIndex = 0;
+    var handlerCollection = config.handlerCollection || {};
+    var currentHandlerName = config.handlers[handlerIndex];
+    var currentHandler = handlerCollection[currentHandlerName];
 
-    if (modtask.verbose.socketwhile) modtask.sessionLog('currentHandler[' + handlerIndex + '], totalTimeWaited=' + totalTimeWaited, 'socket.while', socketWrapper.name);
+    if (modtask.verbose.socketwhile) modtask.sessionLog('Scanning handler "' + currentHandlerName + '", totalTimeWaited=' + totalTimeWaited, 'socket.while', socketWrapper.name);
     try {
       var outcome = {};
       if (totalTimeWaited >= config.timeOut) {
@@ -164,7 +163,6 @@ modtask.socketWhile = function(config, cb) {
         bufferedData = bufferedData.toString(config.encoding);
       }
 
-      // placeholder
       if (modtask.verbose.socketwhile) modtask.sessionLog(JSON.stringify(bufferedData), 'socket.while', socketWrapper.name);
       var scanNextHandler = function () {
         if (modtask.verbose.socketwhile) modtask.sessionLog('scanNextHandler', 'socket.while', socketWrapper.name);
@@ -172,15 +170,18 @@ modtask.socketWhile = function(config, cb) {
           totalTimeWaited = 0;
           socketWrapper.changed = false;
         }
-        totalTimeWaited += timeOutStep;
+        var timeOutValue = 10;
+        if (handlerIndex == 0) {
+          timeOutValue = timeOutStep;
+        }
+        totalTimeWaited += timeOutValue;
         setTimeout(function () {
           check(handlerIndex + 1);
-        }, timeOutStep);
+        }, timeOutValue);
       }
 
-      var currentHandler = config.handlers[handlerIndex];
       if (typeof(currentHandler) != 'function') {
-        outcome = {reason: 'handler needs to be a function'}
+        outcome = {reason: '"' + currentHandlerName + '" handler needs to be a function'}
         if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while', socketWrapper.name);
         return cb(outcome);
       }
@@ -193,29 +194,39 @@ modtask.socketWhile = function(config, cb) {
     try {
       currentHandler(bufferedData, config, function(outcome) {
         if (outcome.success) {
-          if (modtask.verbose.socketwhile) modtask.sessionLog('Condition met', 'socket.while', socketWrapper.name);
-          if (modtask.verbose.socketwhile) modtask.sessionLog('Condition met, should break?', 'socket.while', socketWrapper.name);
+          if (modtask.verbose.socketwhile) modtask.sessionLog('Condition met for handler "' + currentHandlerName + '"', 'socket.while', socketWrapper.name);
+          if (modtask.verbose.socketwhile) modtask.sessionLog('should break?', 'socket.while', socketWrapper.name);
           try {
             config.test(function (outcome) {
               if (outcome.success) {
                 if (modtask.verbose.socketwhile) modtask.sessionLog('yeah break', 'socket.while', socketWrapper.name);
                 return cb(outcome);
+              } else {
+                if (outcome.stillWaiting) {
+                  scanNextHandler();
+                } else {
+                  if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while error in test', socketWrapper.name);
+                  return cb(outcome);
+                }
               }
-              scanNextHandler();
             }, config);
           } catch(e) {
             outcome.reason = e.message;
             if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while [TEST]', socketWrapper.name);
-            console.log('aaa');
             return cb(outcome);
           }
         } else {
-          scanNextHandler();
+          if (outcome.stillWaiting) {
+            scanNextHandler();
+          } else {
+            if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while error in handler "' + currentHandlerName + '"', socketWrapper.name);
+            return cb(outcome);
+          }
         }
       });
     } catch(e) {
       outcome.reason = e.message;
-      if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while [HANDLERCODE]', socketWrapper.name);
+      if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while error, handler=' + currentHandlerName, socketWrapper.name);
       return cb(outcome);
     };
   }

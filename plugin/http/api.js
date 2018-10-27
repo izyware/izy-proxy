@@ -28,7 +28,6 @@ modtask.actions.load = function(queryObject, cb, context) {
 		['frame_importpkgs', ['sql/jsonnode']],
 		function(push) {
 			modtask.ldmod('sql/jsonnode/q').select({
-				// placeholder
 				map: {
 					backaddress: 'handlerMod',
 					address: 'domain'

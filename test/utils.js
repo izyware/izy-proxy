@@ -14,6 +14,12 @@ modtask.simulateApiCall = function(path, jsonPayload) {
 modtask.simulateSocketIO = function(config) {
   var path = config.path;
   var verbose = config.verbose || {};
+  var testmod = config.testmod;
+  
+  var testOutcome = function(outcome) {
+    if (!outcome.success) console.log('Tests failed: "' + outcome.reason + '"');
+    else console.log('Tests successful');
+  }
 
   var setupHandlerMod = require(__dirname + '/../../plugin/socket/handle').setupHandlerMod;
   var sessionInfo = {
@@ -28,30 +34,28 @@ modtask.simulateSocketIO = function(config) {
     systemLog: require('../../server').modtask.serverLog
   };
   console.log('********************************************');
-  var incomingSocketTestConfig = {
-    // android: capa,
-    //
-    responses: [
-      ['+OK POP3 Server ready\r\n', new Buffer('CAPA' + '\r\n', 'ascii')],
-      ['+OK', new Buffer('USER ' + config.user + '\r\n', 'ascii')],
-      ['+OK\r\n', new Buffer('PASS ' + config.pass + '\r\n', 'ascii')],
-      ['+OK\r\n', new Buffer('CAPA\r\n', 'ascii')],
-      ['\r\n.\r\n', new Buffer('QUIT\r\n', 'ascii')]
-    ]
-  }
+
   setupHandlerMod(
     { chainHandlerMod: 'configs/izy-proxy/context' },
     { handlerPath: path },
     sessionInfo,
     function(outcome) {
-    if (!outcome.success) return console.log(outcome.reason);
-    outcome.data.processQueries(
-      { action: 'newIncoming', socket: modtask.ldmod('rel:../mock/socket')(incomingSocketTestConfig) },
-      function(outcome) {
-        if (!outcome.success) console.log(outcome.reason);
-      },
-      {
-        session: sessionInfo
-      })
+      if (!outcome.success) return testOutcome(outcome);
+      var mod = outcome.data;
+      modtask.ldmod(testmod).processQueries(
+        { action: 'socketConfig', config: config },
+        function(outcome) {
+          if (!outcome.success) return testOutcome(outcome);
+          var incomingSocketTestConfig = outcome.data;
+          var testSocket = modtask.ldmod('rel:../mock/socket')(incomingSocketTestConfig);
+          mod.processQueries(
+            { action: 'newIncoming', socket: testSocket },
+            testOutcome,
+            {
+              session: sessionInfo
+            }
+          );
+        }
+      );
   });
 }

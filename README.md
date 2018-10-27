@@ -87,7 +87,7 @@ node test/all.js
 # Test the API plug-in
 node cli.js method api api.path :test/api
 # Test the Socket plug-in
-node cli.js method socket socket.path :test/socket socket.user user@yourdomain.com socket.pass your_password socket.verbose...
+node cli.js method socket socket.path izy-pop3/proxypkg:directdb socket.testmod izy-pop3/proxypkg/test/android socket.user user@yourdomain.com socket.pass your_password socket.verbose.ondata true
 ```
 
 ### Using the Commandline Interface For Testing And Developing Chain-based APIs
@@ -145,12 +145,12 @@ module.exports = {
   proxy: {
     timeoutInMs: 60000
   },
-	// Array of plug-in definitions 
+	// Array of plug-in definitions
 	plugins: [
 	{
 		// Only do this while developing plug-ins
-		// This will reload the node modules for plug-in per request 
-		reloadPerRequest: false, 
+		// This will reload the node modules for plug-in per request
+		reloadPerRequest: false,
 		name: 'apigateway',
 
 		// invoke pkg prefix. If set it will allow server side extensibility
@@ -176,8 +176,8 @@ module.exports = {
 		],
 		aliases: ['.domain_to_alias_to_izyware.com'],
 		// Only do this while developing plug-ins
-		// This will reload the node modules for plug-in per request 
-		reloadPerRequest: false, 
+		// This will reload the node modules for plug-in per request
+		reloadPerRequest: false,
 		name: 'circus',
 		bootstrapUrl: 'https://izyware.com/chrome_extension.js',
 		cache: {
@@ -394,7 +394,7 @@ module.exports = {
 ```
 
 
-See the testing instructions above (under `Testing`) for howto test the service handler directly from the command line. The following verbose flags (and the default values) are available 
+See the testing instructions above (under `Testing`) for howto test the service handler directly from the command line. The following verbose flags (and the default values) are available
 
 
 ```

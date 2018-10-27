@@ -6,7 +6,7 @@ module.exports = function (config, pluginName) {
   var rootmod = require('izymodtask').getRootModule();
   var modHeader = rootmod.ldmod(pathToCoreProxyFunctionality + 'html/headers');
   var cloudServices = [];
-  var verbose = config.verbose || { cloudServices: true };
+  var verbose = config.verbose || { cloudServices: false };
 
   var syncCloudServiceConfig = function(cb) {
     if (verbose.cloudServices) console.log('syncing cloud service config');
