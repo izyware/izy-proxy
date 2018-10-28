@@ -1,6 +1,15 @@
 var modtask = function(config, finalCb) {
 	if (!finalCb) finalCb = function() {};
 
+
+	var isThereAMatch = function(cumulativeStr, condition) {
+		if (condition == cumulativeStr || cumulativeStr.indexOf(condition) >= 0) return true;
+		if (typeof(condition) == 'object' && condition.test) {
+			return condition.test(cumulativeStr);
+		}
+		return false;
+	}
+
 	var verbose = config.verbose;
 	var cbs = {};
 	var onCalls  = 0;
@@ -42,7 +51,7 @@ var modtask = function(config, finalCb) {
 			// Only check the current one
 			for (i = responseCounter; i < responseCounter+1; ++i) {
 				currentRespose = config.responses[i];
-				if (currentRespose[1] == cumulativeStr || cumulativeStr.indexOf(currentRespose[1]) >= 0) {
+				if (isThereAMatch(cumulativeStr, currentRespose[1])) {
 					found = true;
 					responseCounter = i + 1;
 					break;
