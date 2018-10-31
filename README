@@ -82,12 +82,18 @@ If everything is successful, you should be able to replicate the online behavior
 Since the izy-proxy contains a heterogeneous set of component, full testing will entail running each test piece seperately.
 
 ```
+
 # Test the chaining engine functionality
 node test/all.js
+
 # Test the API plug-in
 node cli.js method api api.path :test/api
+
 # Test the Socket plug-in
-node cli.js method socket socket.path izy-pop3/proxypkg:directdb socket.testmod izy-pop3/proxypkg/test/android socket.user user@yourdomain.com socket.pass your_password socket.verbose.ondata true
+node cli.js method socket socket.path izy-pop3/proxypkg:directdb socket.testmod izy-pop3/proxypkg/test/android socket.user user@yourdomain.com socket.pass your_password socket.verbose.writes true socket.verbose.ondata true
+
+# Test remote servers over TCP/SSL
+node cli.js method socket socket.path pop3.izyware.com socket.port 110 socket.testmod izy-pop3/proxypkg/test/android socket.user user  socket.pass 'password!' socket.verbose.mock true
 ```
 
 ### Using the Commandline Interface For Testing And Developing Chain-based APIs
@@ -409,6 +415,7 @@ See the testing instructions above (under `Testing`) for howto test the service 
     datacopy: false,
     detectStandardOK: false,
     authenticate: false
+    mock: false
 ```
 
 ## Handling Domain Based Requests

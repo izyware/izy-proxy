@@ -127,6 +127,9 @@ modtask.socketWrite = function(config, cb) {
       data = new Buffer(data, config.encoding);
     }
     if (modtask.verbose.writes) modtask.sessionLog(JSON.stringify(data.toString()), 'verbose.writes', socketWrapper.name);
+    if (config.clientError && modtask.verbose.error) {
+      modtask.sessionLog(config.clientError, 'verbose.error', socketWrapper.name);
+    };
     socketWrapper.socket.write(data);
     cb( { success: true });
   } catch(e) {
