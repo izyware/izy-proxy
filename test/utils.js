@@ -45,13 +45,15 @@ modtask.run_simulateSocketIO = function(config, modtest) {
   );
 }
 
-modtask.streamSocketUI = function(s1, s2) {
+modtask.streamSocketUI = function(s1, s2, verbose) {
   var pipe = function(evtName, fnName) {
     console.log('pipe', evtName, '->', fnName);
     s1.on(evtName, function(p1, p2, p3) {
+      if (verbose.ondata && evtName == 'data') console.log('recieved from remote socket', JSON.stringify(p1.toString()));
       s2[fnName](p1, p2, p3);
     });
     s2.on(evtName, function(p1, p2, p3) {
+      if (verbose.writes && fnName == 'write') console.log('sending to remote socket', JSON.stringify(p1.toString()));
       s1[fnName](p1, p2, p3);
     });
   }
@@ -74,14 +76,14 @@ modtask.connectTestSocket = function(config, testSocket) {
       const tls = require('tls');
       var stream = tls.connect(config.port, config.path);
       stream.once('secureConnect', function () {
-        modtask.streamSocketUI(stream, testSocket);
+        modtask.streamSocketUI(stream, testSocket, verbose);
       });
     } else {
       var net = require('net');
       var stream = new net.Socket();
       stream.connect(config.port, config.path);
       stream.once('connect', function () {
-        modtask.streamSocketUI(stream, testSocket);
+        modtask.streamSocketUI(stream, testSocket, verbose);
       });
     };
   } else {
