@@ -15,7 +15,7 @@ To build an artifact for cloud deployment (i.e. docker container), in any clean 
 mkdir ~/izyware (or any location you would like have izyware tools deployed to)
 cd ~/izyware
 npm init -f; npm install --save izy-proxy; mkdir -p node_modules/configs;
-cp -r /myconfigs/repository/config_sample1/* node_modules/configs
+mkdir -p node_modules/configs/izy-proxy;cp node_modules/izy-proxy/samples/taskrunner_production_config.js node_modules/configs/izy-proxy/taskrunner.js
 ```
 
 If you are using npm < 3.10.6, you must also do:

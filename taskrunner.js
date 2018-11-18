@@ -3,9 +3,7 @@ require('./index').newChain([
     // Use this to adjust the paths defined in modtask/config/kernel/extstores/file.js
     // So that all the relative and absolute paths to pkgs and modules are accessible
     // ['sysview'],
-    ['chain.importProcessor', 'configs/izy-proxy/context'],
-    ['ROF'],
-    ['chain.importProcessor', 'apps/tasks/api:chain'],
+    ['chain.importProcessor', 'apps/tasks/api:chain', config.taskApi],
     ['ROF'],
     ['taskrunner.authenticate', config.authenticate],
     ['ROF'],
@@ -15,5 +13,9 @@ require('./index').newChain([
     ['taskrunner.config', config.runner],
     ['taskrunner.listen'],
     ['ROF']
-], console.log);
+], console.log, {
+    // Configuration for each processor 
+    'import': config.import,
+    izynode: config.izynode
+});
 

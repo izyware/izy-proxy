@@ -49,7 +49,8 @@ function newChain(chainItems, chainReturnCB, context) {
       context: context,
       chainHandlers: [
         _modtaskModule.ldmod(featureModulesPath + 'chain/processors/basic'),
-        _modtaskModule.ldmod(featureModulesPath + 'chain/processors/import'),
+        _modtaskModule.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', context.izynode),
+        _modtaskModule.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', context.import),
         _modtaskModule.ldmod(featureModulesPath + 'chain/processors/runpkg')
       ]
     }, chainReturnCB);
