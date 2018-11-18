@@ -24,7 +24,9 @@
     "mock",
     "test",
     "features",
-    "chains"
+    "chains",
+    "samples",
+    "kernel"
   ],
   "devDependencies": {},
   "scripts": {
