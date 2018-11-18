@@ -1,6 +1,8 @@
 var modtask = function(chainItem, cb, $chain) {
   if (!modtask.__chainProcessorConfig) modtask.__chainProcessorConfig = {};
   modtask.verbose = modtask.__chainProcessorConfig.verbose;
+  modtask.cacheImportedPackagesInMemory = modtask.__chainProcessorConfig.cacheImportedPackagesInMemory;
+
   var registerChainItemProcessor = function(chainItemProcessor, __chainProcessorConfig, cb) {
     switch(typeof(chainItemProcessor)) {
       case 'string':
@@ -55,11 +57,11 @@ modtask.extractPrefix = function(str) {
   return str;
 }
 
-modtask.cachingEnabled = false;
+modtask.cacheImportedPackagesInMemory = false;
 modtask.importPkgs = function(pkgs, cb) {
   modtask.__importCache = modtask.__importCache || {};
   var pkgName = pkgs[0];
-  if (modtask.cachingEnabled && modtask.__importCache[pkgName]) {
+  if (modtask.cacheImportedPackagesInMemory && modtask.__importCache[pkgName]) {
     console.log('WARNING (importPkgs), using the cache version for: ' + pkgName);
     return cb({
       success: true

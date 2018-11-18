@@ -16,6 +16,7 @@ require('./index').newChain([
 ], console.log, {
     // Configuration for each processor 
     'import': config.import,
-    izynode: config.izynode
+    izynode: config.izynode,
+    runpkg: config.runpkg
 });
 

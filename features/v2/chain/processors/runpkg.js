@@ -1,5 +1,9 @@
 
 var modtask = function(chainItem, cb, $chain) {
+    if (!modtask.__chainProcessorConfig) modtask.__chainProcessorConfig = {};
+    modtask.verbose = modtask.__chainProcessorConfig.verbose;
+    modtask.noReimportIfAlreadyLoaded = modtask.__chainProcessorConfig.noReimportIfAlreadyLoaded;
+
     var i = 0;
     var str = chainItem[i++] + '';
     if (str.indexOf('//') == 0) {
@@ -17,6 +21,7 @@ var modtask = function(chainItem, cb, $chain) {
     return false;
 };
 
+modtask.verbose = true;
 modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchDone) {
     var apiGatewayUrls = {
         'inline': 'inline',
@@ -38,6 +43,10 @@ modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchDon
         recordOutcome: true
     });
     var url = apiGatewayUrls[parsedLaunchString.serviceName];
+    if (modtask.verbose) {
+        console.log('launchString', launchString);
+        console.log('url', url);
+    }
     if (url == 'inline') {
         return modtask.handlers.inline($chain, cbWhenLaunchDone, parsedLaunchString, payload, false);
     }
@@ -102,8 +111,9 @@ modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString,
             });
         }
     }
+    
     // If it is already loaded 'inline' (which means either it is being managed by the IDE or someone pulled it in), just run it
-    if (modtask.ldmod('kernel\\selectors').objectExist(parsed.mod, {}, false)) {
+    if (modtask.noReimportIfAlreadyLoaded && modtask.ldmod('kernel\\selectors').objectExist(parsed.mod, {}, false)) {
         runModule();
         return;
     }
