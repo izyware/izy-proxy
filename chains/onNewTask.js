@@ -1,13 +1,14 @@
 var modtask = function(chain) {
+  var config = chain.get('config') || {};
   chain([
-    ['log', 'new task'],
+    config.verbose ? ['log', 'new task'] : ['nop'],
     ['task.progress', 1],
     ['task.reason', 'chain runner getting params'],
     ['task.getparameters'], // there is no task.setparams only thtough admin
     function(chain) {
       var path = chain.get('taskParameters');
       chain([
-        ['log', 'running ' + path],
+        config.verbose ? ['log', 'running ' + path] : ['nop'],
         ['task.reason', 'running ' + path],
         [path]
       ]);

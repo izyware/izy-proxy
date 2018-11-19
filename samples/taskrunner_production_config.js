@@ -26,7 +26,8 @@ module.exports = {
      taskApi: {
           // values: 'izyware', 'inline'
           // Note that 'inline' would require 'frame_getnode' to be availbe
-          apiExecutionContext: 'izyware'
+          apiExecutionContext: 'izyware',
+          verbose: false
      },
      authenticate: {
           izyware_taskrunner_key_id: 'FROM_IZYCLOUD_DASHBOARD__access_key',
@@ -37,5 +38,6 @@ module.exports = {
           loopMode: true,
           readOnlyMode: false,
           delay: 5000
-     }
+     },
+     verbose: false
 };
