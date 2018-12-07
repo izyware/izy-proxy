@@ -15,7 +15,7 @@ To build an artifact for cloud deployment (i.e. docker container), in any clean 
 mkdir ~/izyware (or any location you would like have izyware tools deployed to)
 cd ~/izyware
 npm init -f; npm install --save izy-proxy; mkdir -p node_modules/configs;
-mkdir -p node_modules/configs/izy-proxy;cp node_modules/izy-proxy/samples/taskrunner_production_config.js node_modules/configs/izy-proxy/taskrunner.js
+mkdir -p node_modules/configs/izy-proxy;cp node_modules/izy-proxy/samples/taskrunner_production_config.js node_modules/configs/izy-proxy/taskrunner.js 
 ```
 
 If you are using npm < 3.10.6, you must also do:
@@ -143,7 +143,28 @@ module.exports = {
 ### Sample HTTP Server config.js file
 
 ```
+
+var __chainProcessorConfig = {
+	'import': {
+		pkgloadermodname: 'pkgloader',
+		pkgloadermodconfig: {},
+		verbose: false
+	},
+	izynode: {
+		accesstoken: '_PASTE_FROM_DASHBOARD_',
+		dataservice: '_PASTE_FROM_DASHBOARD_',
+		// Other options for restricted sandboxes are:
+		// - qry/transport/scrsrc
+		// - qry/transport/toolbar (message queue based)
+		transportmodule: 'qry/transport/http',
+		verbose: false
+	}
+};
+
+
 module.exports = {
+	// Just expose this here so that the tests can access this :-)
+	__chainProcessorConfig: __chainProcessorConfig,
   port: {
     http: 80,
     https: 443
@@ -151,12 +172,12 @@ module.exports = {
   proxy: {
     timeoutInMs: 60000
   },
-	// Array of plug-in definitions
+	// Array of plug-in definitions 
 	plugins: [
 	{
 		// Only do this while developing plug-ins
-		// This will reload the node modules for plug-in per request
-		reloadPerRequest: false,
+		// This will reload the node modules for plug-in per request 
+		reloadPerRequest: false, 
 		name: 'apigateway',
 
 		// invoke pkg prefix. If set it will allow server side extensibility
@@ -167,8 +188,7 @@ module.exports = {
 		// If you have Izy Identity Management system setup, set this to 'idm'
 		invokeAuthorization: 'access_token',
 
-		// *Optional* enable chain handler for APIs
-		,chainHandlerMod: 'configs/izy-proxy/context'
+	    __chainProcessorConfig: __chainProcessorConfig,
 	},
 	{
 		// case sensitive
@@ -182,8 +202,8 @@ module.exports = {
 		],
 		aliases: ['.domain_to_alias_to_izyware.com'],
 		// Only do this while developing plug-ins
-		// This will reload the node modules for plug-in per request
-		reloadPerRequest: false,
+		// This will reload the node modules for plug-in per request 
+		reloadPerRequest: false, 
 		name: 'circus',
 		bootstrapUrl: 'https://izyware.com/chrome_extension.js',
 		cache: {
@@ -195,22 +215,16 @@ module.exports = {
 ```
 
 
-### Context Module For Chain Processing
+### __chainProcessorConfig For Chain Processing
 Chain processing is optional and should be used when heterogeneous development across multiple platforms is needed.
 
-To support chain processing in the izy-proxy container execution context, simply drop the chain handler module in the local file system and reference it from the api gateway config by the chainHandlerMod (see above).
+To support chain processing in the izy-proxy container execution context, simply drop the __chainProcessorConfig in the config file.
 
 The chain handler should be configued based on the following criteria:
 * Security Context
 * Network Configuration
 * Performance Considerations
 
-#### IZY TIP
-When hosting on AWS, keep the chainhandler config options in the parameter store and sync it as part of deployment, i.e.:
-
-```
-scp -i ../servers/amazon/template/identity.pem ../configs/izy-proxy/context.js ec2-user@domain.com:/home/ec2-user/configs/izy-proxy/context.js
-```
 
 ## Plugins
 
@@ -394,13 +408,13 @@ module.exports = {
 		items: [
 			{ port: 20110, handlerPath: ':test/socket' }
 		]
-		,chainHandlerMod: 'configs/izy-proxy/context'
+		__chainProcessorConfig: __chainProcessorConfig
 	}]
 }
 ```
 
 
-See the testing instructions above (under `Testing`) for howto test the service handler directly from the command line. The following verbose flags (and the default values) are available
+See the testing instructions above (under `Testing`) for howto test the service handler directly from the command line. The following verbose flags (and the default values) are available 
 
 
 ```
@@ -419,7 +433,7 @@ See the testing instructions above (under `Testing`) for howto test the service 
 ```
 
 ## Handling Domain Based Requests
-Use the http plug-in to handle the domain based requests. The http plug-in will use cloudservices data base to configure the raw http handlers.
+Use the http plug-in to handle the domain based requests. The http plug-in will use cloudservices data base to configure the raw http handlers. 
 
 ## NOTE
 for more details, visit [izyware]
