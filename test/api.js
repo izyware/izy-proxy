@@ -3,7 +3,7 @@ modtask.__apiInterfaceType = 'jsonio';
 modtask.processQueries = function(queryObject, cb) {
     modtask.doChain([
         ['log', '-------------------------------------------------------------------------------------------------------------'],
-        ['log', 'testing izyware api system and chainHandlerMod configuration for the API system'],
+        ['log', 'testing izyware api system and configuration for the API system'],
         ['log', 'verify frame_getnode'],
         ['frame_getnode', modtask],
         function(chain) {

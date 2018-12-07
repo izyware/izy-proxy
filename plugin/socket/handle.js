@@ -77,8 +77,8 @@ module.exports = function (config, pluginName) {
 var setupHandlerMod = function(config, portCfg, session, cb) {
   // One per connection
   var rootmod = require('izymodtask').getRootModule();
-  var pathToCoreProxyFunctionality = 'features/v2/';
-  var pkgmain = rootmod.ldmod(pathToCoreProxyFunctionality + 'pkg/main');
+  var featureModulesPath = 'features/v2/';
+  var pkgmain = rootmod.ldmod(featureModulesPath + 'pkg/main');
 
   pkgmain.ldPath(portCfg.handlerPath, function(outcome) {
     if (!outcome.success) return cb(outcome);
@@ -89,18 +89,16 @@ var setupHandlerMod = function(config, portCfg, session, cb) {
           // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
           cb = function() {}
         };
-        return rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/main').newChain({
+        return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
           name: 'socket',
           chainItems: chainItems,
           context: mod,
           chainHandlers: [
-            rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/basic'),
-            rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/import'),
-            rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/runpkg'),
-            // this should define frame_getnode, frame_importpkgs chain handlers
-            // see README file section on how to test this configuration via test/api in a deployed environment
-            rootmod.ldmod(config.chainHandlerMod),
-            rootmod.ldmod(pathToCoreProxyFunctionality + '../../plugin/socket/chainprocessor').sp('session', session),
+            rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
+            rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
+            rootmod.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', config.__chainProcessorConfig.import),
+            rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg'),
+            rootmod.ldmod(featureModulesPath + '../../plugin/socket/chainprocessor').sp('session', session),
           ]
         }, cb);
       };

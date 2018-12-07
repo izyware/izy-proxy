@@ -1,16 +1,16 @@
 "use strict";
 
-var pathToCoreProxyFunctionality = 'features/v2/';
+var featureModulesPath = 'features/v2/';
 module.exports = function (config, pluginName) {
   var name = 'http';
   var rootmod = require('izymodtask').getRootModule();
-  var modHeader = rootmod.ldmod(pathToCoreProxyFunctionality + 'html/headers');
+  var modHeader = rootmod.ldmod(featureModulesPath + 'html/headers');
   var cloudServices = [];
   var verbose = config.verbose || { cloudServices: false };
 
   var syncCloudServiceConfig = function(cb) {
     if (verbose.cloudServices) console.log('syncing cloud service config');
-    setupMod(pathToCoreProxyFunctionality + '../../plugin/http/api', config, {}, function (outcome) {
+    setupMod(featureModulesPath + '../../plugin/http/api', config, {}, function (outcome) {
       if (!outcome.success) return cb(outcome);
       var mod = outcome.data;
       mod.processQueries({action: 'load'}, function (outcome) {
@@ -46,19 +46,26 @@ module.exports = function (config, pluginName) {
       return false;
     },
     handle: function (req, res, serverObjs, sessionObjs) {
-      setupMod(sessionObjs.cloudService.handlerMod, config, {}, function (outcome) {
-        try {
-          if (outcome.success) {
-            return outcome.data.handle(serverObjs);
+      try {
+        setupMod(sessionObjs.cloudService.handlerMod, config, {}, function (outcome) {
+          try {
+            if (outcome.success) {
+              return outcome.data.handle(serverObjs);
+            }
+          } catch (e) {
+            outcome = {reason: e.message};
           }
-        } catch (e) {
-          outcome = {reason: e.message};
-        }
+          return serverObjs.sendStatus({
+            status: 500,
+            subsystem: name
+          }, outcome.reason);
+        });
+      } catch(e) {
         return serverObjs.sendStatus({
           status: 500,
           subsystem: name
-        }, outcome.reason);
-      });
+        }, e.message);
+      }
     }
   };
 };
@@ -67,8 +74,8 @@ module.exports = function (config, pluginName) {
 var setupMod = function(path, config, session, cb) {
   // One per connection
   var rootmod = require('izymodtask').getRootModule();
-  var pkgmain = rootmod.ldmod(pathToCoreProxyFunctionality + 'pkg/main');
-  pkgmain.ldPath(path, function(outcome) {
+  var importProcessor = rootmod.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', config.__chainProcessorConfig.import);
+  importProcessor.ldPath(path, function(outcome) {
     if (!outcome.success) return cb(outcome);
     try {
       var mod = outcome.data;
@@ -77,18 +84,15 @@ var setupMod = function(path, config, session, cb) {
           // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
           cb = function() {}
         };
-        return rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/main').newChain({
+        return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
           name: 'socket',
           chainItems: chainItems,
           context: mod,
           chainHandlers: [
-            rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/basic'),
-            rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/import'),
-            rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/runpkg'),
-            // this should define frame_getnode, frame_importpkgs chain handlers
-            // see README file section on how to test this configuration via test/api in a deployed environment
-            rootmod.ldmod(config.chainHandlerMod),
-            // rootmod.ldmod(pathToCoreProxyFunctionality + '../../plugin/socket/chainprocessor').sp('session', session),
+            rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
+            rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
+            importProcessor,
+            rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg')
           ]
         }, cb);
       };

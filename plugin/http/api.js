@@ -32,8 +32,8 @@ modtask.actions.load = function(queryObject, cb, context) {
 					backaddress: 'handlerMod',
 					address: 'domain'
 				},
-				from: ' from ' + 'izyware.cloudservice',
-				condition: ' where servicetype = "' + 'HTTP' + '" and status = "Enabled"'
+				from: ' FROM ' + 'izyware.cloudservice',
+				condition: ' WHERE servicetype = "' + 'HTTP' + '" AND status = "Enabled"'
 			}, cb);
 		}
 	], cb);

@@ -28,6 +28,7 @@ function ldParsedPath(parsed, cb) {
 }
 
 function importPackageIfNotPresent(query, cb) {
+  if (modtask.verbose) console.log('[importPackageIfNotPresent] trying to import', query);
   var outcome = { success:true, reason: [] };
 
   var pkg = query.pkg;
@@ -40,6 +41,9 @@ function importPackageIfNotPresent(query, cb) {
   if (!modtask.modpkgloader) {
     return cb({ reason: 'please define modpkgloader to enable package importing' });
   }
+
+  if (modtask.verbose)  console.log('[importPackageIfNotPresent] package not loaded already so will use "' + modtask.modpkgloader.__myname + '" to load package');
+
   modtask.modpkgloader.getCloudMod(pkg).incrementalLoadPkg(
     // One of these per package :)
     function(pkgName, pkg, pkgString) {

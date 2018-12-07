@@ -1,4 +1,7 @@
 var modtask = {};
+
+var localConfigPath = '../../../configs/izy-proxy/config';
+
 modtask.simulateApiCall = function(path, jsonPayload) {
   if (!jsonPayload) jsonPayload = {};
   var handleRequest = require(__dirname + '/../../server').getHandleRequestInterface();
@@ -17,13 +20,14 @@ var testOutcome = function(outcome) {
 }
 
 modtask.simulateSocketIO = function(config) {
-  var pathToCoreProxyFunctionality = 'features/v2/';
-  var pkgmain = modtask.ldmod(pathToCoreProxyFunctionality + 'pkg/main');
+  var __chainProcessorConfig = require(localConfigPath).__chainProcessorConfig;
+  var featureModulesPath = 'features/v2/';
+  var importProcessor = modtask.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', __chainProcessorConfig.import);
   var testmod = config.testmod || '';
   if (!testmod) return testOutcome({ reason: 'bad test mod '});
 
-  pkgmain.ldPath(testmod, function(outcome) {
-    if (!outcome.success) return testOutcome({ reason: 'bad test mod '});
+  importProcessor.ldPath(testmod, function(outcome) {
+    if (!outcome.success) return testOutcome({ reason: 'bad test mod: ' + outcome.reason });
     modtask.run_simulateSocketIO(config, outcome.data);
   });
 }
@@ -100,8 +104,8 @@ modtask.connectTestSocket = function(config, testSocket) {
       systemLog: require('../../server').modtask.serverLog
     };
     setupHandlerMod(
-      {chainHandlerMod: 'configs/izy-proxy/context'},
-      {handlerPath: path},
+      { __chainProcessorConfig: require(localConfigPath).__chainProcessorConfig },
+      { handlerPath: path },
       sessionInfo,
       function (outcome) {
         if (!outcome.success) return testOutcome(outcome);

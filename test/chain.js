@@ -39,10 +39,6 @@ function testV2() {
     }],
     ['returnOnFail'],
 
-    // Make sure you have configs/izy-proxy/context locally
-    ['chain.importProcessor', 'configs/izy-proxy/context'],
-    ['returnOnFail'],
-
     ['log', 'test runpkg izyware'],
     ['//izyware/ui/w/shell/credsrecovey:api/forgotpassword', {
       email: 'this_email_address_should_not_exists@izyware.com'

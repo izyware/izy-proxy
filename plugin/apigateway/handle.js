@@ -18,13 +18,12 @@ module.exports = function (config, pluginName) {
 
       // For security reasons we virtualize each requests's load into its own root context
       // However, the file system caching (if present) will still allow sharing of context
-      var pathToCoreProxyFunctionality = 'features/v2/';
+      var featureModulesPath = 'features/v2/';
       var rootmod = require('izymodtask').getRootModule();
-      var pkgmain = rootmod.ldmod(pathToCoreProxyFunctionality + 'pkg/main');
-
+      var importProcessor = rootmod.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', config.__chainProcessorConfig.import);
       // fill my namespace with usable stuff
       serverObjs[name] = {};
-      serverObjs[name].ldPath = pkgmain.ldPath;
+      serverObjs[name].ldPath = importProcessor.ldPath;
       serverObjs[name].decodeBase64Content = function(base64str) {
         return decodeBase64Content(base64str, serverObjs);
       };
@@ -43,11 +42,7 @@ module.exports = function (config, pluginName) {
           }, 'invokeAuthorization token was invalid');
         }
         path = removePrefix(path, config.invokePrefix);
-
-        var parsedPath = rootmod.ldmod('kernel/path').parseInvokeString(path);
-        serverObjs[name].parsedPath = parsedPath;
-
-        return pkgmain.ldParsedPath(parsedPath, function(outcome) {
+        return importProcessor.ldPath(path, function(outcome) {
           if (outcome.success) {
             try {
               var mod = outcome.data;
@@ -56,17 +51,15 @@ module.exports = function (config, pluginName) {
                   // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
                   cb = function() {}
                 };
-                return rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/main').newChain({
+                return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
                   name: 'apiRoot',
                   chainItems: chainItems,
                   context: mod,
                   chainHandlers: [
-                    rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/basic'),
-                    rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/import'),
-                    rootmod.ldmod(pathToCoreProxyFunctionality + 'chain/processors/runpkg'),
-                    // this should define frame_getnode, frame_importpkgs chain handlers
-                    // see README file section on how to test this configuration via test/api in a deployed environment
-                    rootmod.ldmod(config.chainHandlerMod)
+                    rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
+                    rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
+                    importProcessor,
+                    rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg')
                   ]
                 }, cb);
               };

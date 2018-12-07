@@ -1,6 +1,5 @@
 var modtask = function(chainItem, cb, $chain) {
   if (!modtask.__chainProcessorConfig) modtask.__chainProcessorConfig = {};
-  modtask.verbose = modtask.__chainProcessorConfig.verbose;
   modtask.cacheImportedPackagesInMemory = modtask.__chainProcessorConfig.cacheImportedPackagesInMemory;
 
   var registerChainItemProcessor = function(chainItemProcessor, __chainProcessorConfig, cb) {
@@ -16,7 +15,7 @@ var modtask = function(chainItem, cb, $chain) {
             return cb({ success: true });
           });
         } catch (e) {
-          cb({ reason: 'Cannot register chainHandlerMod: "' + chainItemProcessor + '": ' + e.message });
+          cb({ reason: 'Cannot register chainItemProcessor: "' + chainItemProcessor + '": ' + e.message });
         }
         return ;
     }
@@ -26,6 +25,14 @@ var modtask = function(chainItem, cb, $chain) {
   var params = {};
   params.action = modtask.extractPrefix(chainItem[i++]);
   switch (params.action) {
+    case 'ldPath':
+    case 'ldpath':
+      modtask.ldPath(chainItem[i++], function(outcome) {
+        $chain.set('outcome', outcome);
+        cb();
+      });
+      return true;
+      break;
     case 'importPkgs':
     case 'importpkgs':
       modtask.importPkgs(chainItem[i++], function() {
@@ -55,6 +62,14 @@ modtask.extractPrefix = function(str) {
     }
   }
   return str;
+}
+
+modtask.ldPath = function(path, cb) {
+  try {
+    modtask.ldPkgMan().ldPath(path, cb);
+  } catch (e) {
+    cb({ reason: 'Cannot ldPath: "' + path + '": ' + e.message });
+  }
 }
 
 modtask.cacheImportedPackagesInMemory = false;
@@ -87,7 +102,9 @@ modtask.ldPkgMan = function() {
     modpkgloader.sp(p, cfg.pkgloadermodconfig[p]);
   }
   var featureModulesPath = 'features/v2/';
-  return modtask.ldmod(featureModulesPath + 'pkg/main').sp('verbose', modtask.verbose).sp('modpkgloader', modpkgloader);
+  return modtask.ldmod(featureModulesPath + 'pkg/main').sp('verbose', modtask.__chainProcessorConfig.verbose).sp('modpkgloader', modpkgloader);
 }
 
-modtask.verbose = false;
+modtask.__chainProcessorConfig = {
+  verbose: false
+};
