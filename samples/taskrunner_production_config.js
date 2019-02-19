@@ -1,4 +1,16 @@
 module.exports = {
+     taskrunnerProcessor: {
+          // values: 'izyware', 'inline'
+          // 'inline' would require izynode configuration ('frame_getnode') when package that is not available locally needs to be loaded
+          // 'izyware' would require import.pkgloadermodconfig.auth to import from the cloud
+          apiExecutionContext: 'izyware',
+          verbose: false
+     },
+     taskrunner: {
+          loopMode: true,
+          readOnlyMode: false,
+          delay: 5000
+     },
      runpkg: {
           verbose: false,
           // When it tries to run a module in the 'inline' mode, should the we try to use the in memory version or import the package everytime?
@@ -23,21 +35,9 @@ module.exports = {
           transportmodule: 'qry/transport/http',
           verbose: false
      },
-     taskApi: {
-          // values: 'izyware', 'inline'
-          // Note that 'inline' would require 'frame_getnode' to be availbe
-          apiExecutionContext: 'izyware',
-          verbose: false
-     },
      authenticate: {
           izyware_taskrunner_key_id: 'FROM_IZYCLOUD_DASHBOARD__access_key',
           izyware_taskrunner_secret_access_key: 'FROM_IZYCLOUD_DASHBOARD__secret_key'
      },
-     izyware_runtime_id: 'FROM_IZYCLOUD_DASHBOARD_runtime_id',
-     runner: {
-          loopMode: true,
-          readOnlyMode: false,
-          delay: 5000
-     },
-     verbose: false
+     izyware_runtime_id: 'FROM_IZYCLOUD_DASHBOARD_runtime_id'
 };

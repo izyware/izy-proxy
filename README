@@ -438,5 +438,17 @@ Use the http plug-in to handle the domain based requests. The http plug-in will 
 ## NOTE
 for more details, visit [izyware]
 
+# Known Issues
+* customers have reported that sometimes the outcome key upon the execution of `//chain/xxx` calls gets tampered with. See gmailsync customer issue: 3512aed7e0a354ecd803efcec7b3ce30cb004e35
+
+# Changelog
+* added options for cacheImportedPackagesInMemory and noReimportIfAlreadyLoaded to the runpkg, and import chains to allow dynamic remote updating of the modules in the task runner.
+    * If this is not turned on, the module updates will only be picked up on taskrestarts which is not desirable.
+* restructured the taskrunner component and added sample config file for standalone deployment of the taskrunner. 
+    * added `apiExecutionContext` to taskrunnerProcessor config for remote and local configurations and deployments.
+    * added samples/pkgloader/izycloud that uses POST `ui/ide:cloudstorage/api` with auth token to do package loading inside the Chains (i.e. when using the taskrunnder)
+* added the ability to configure chain processors
+
+
 [izyware]: https://izyware.com
 [izy-proxy-help-article]: https://izyware.com/help/article/izy-proxy-readme
