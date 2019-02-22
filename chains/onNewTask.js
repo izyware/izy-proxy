@@ -13,7 +13,7 @@ var modtask = function(chain) {
         [path]
       ]);
     },
-    // return the outcome
+    // return the outcome to the taskrunner system to be recorded in the taskoutcome database
     ['return']
   ]);
 }

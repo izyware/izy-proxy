@@ -3,6 +3,7 @@
 var featureModulesPath = 'features/v2/';
 module.exports = function (config, pluginName) {
   var name = 'http';
+  var healthcheckpath = '/7fe2de1a5c919314f6f5dcfeb94a91ec4195d200';
   var rootmod = require('izymodtask').getRootModule();
   var modHeader = rootmod.ldmod(featureModulesPath + 'html/headers');
   var cloudServices = [];
@@ -37,6 +38,7 @@ module.exports = function (config, pluginName) {
     canHandle: function(req, sessionObjs) {
       sessionObjs = sessionObjs || {};
       sessionObjs.parsed = modHeader.parseClientRequest(req, config);
+      if (sessionObjs.parsed.path == healthcheckpath) return true;
       for(var i = 0; i < cloudServices.length; ++i) {
         if (sessionObjs.parsed.domain == cloudServices[i].domain) {
           sessionObjs.cloudService = cloudServices[i];
@@ -46,6 +48,12 @@ module.exports = function (config, pluginName) {
       return false;
     },
     handle: function (req, res, serverObjs, sessionObjs) {
+      if (sessionObjs.parsed.path == healthcheckpath) {
+        return serverObjs.sendStatus({
+          status: 200,
+          subsystem: name
+        }, 'Total HTTP services: ' + cloudServices.length);
+      }
       try {
         setupMod(sessionObjs.cloudService.handlerMod, config, {}, function (outcome) {
           try {

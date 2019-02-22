@@ -7,4 +7,4 @@ var uncaughtException = function(err) {
 };
 process.on('uncaughtException', uncaughtException);
 
-require('./server').run();
+require('../server').run();

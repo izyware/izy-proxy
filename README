@@ -33,15 +33,16 @@ cd ~/izyware;npm update
 
 ## Running
 
-### HTTP Server Mode
+### TCP Server Mode
 ```
 cd node_modules/izy-proxy
-node app.js (or if you are using pm2, do pm2 start app.js)
+node tcpserver/app.js (or if you are using pm2, do pm2 tcpserver/app.js)
 ```
 
-Make sure the the *cwd* for the server process is set to the location for the izy-proxy/app.js installation. This is important because the *cwd* is used in locating plugin, thirdparty modules and the configuration.
+Make sure the the *cwd* for the server process is set to the location for the izy-proxy installation. This is important because the *cwd* is used in locating plugin, thirdparty modules and the configuration.
 
 After the server is running, the following should work:
+
 ```
 GET /izyproxystatus
 
@@ -53,8 +54,38 @@ You may also run the tool in the task runner configuration. Please make sure tha
 
 ```
 cd node_modules/izy-proxy
-node taskrunner.js (or if you are using pm2, do pm2 start taskrunner.js)
+node taskrunner/app.js  (or if you are using pm2, do pm2 start node taskrunner/app.js)
 ```
+
+For testing your deployment, you can overwrite the default config options by launching the taskrunner in the interactive mode
+
+```
+node cli.js method taskrunner taskrunner.readOnlyMode true taskrunner.loopMode false taskrunnerProcessor.verbose true
+```
+
+See the configuration reference for taskrunner for the list of command line options.
+
+#### Periodically Running Dynamic Code
+The task runner will run the following chain command:
+
+    [taskParameters]
+    
+where taskParameters is defined in the Izy Cloud Dashboard. This will allow for flexibility in terms of what/where to run the tasks:
+
+
+To run mypackage:mymodule as JSONIO API Interface (what), inline (transport), inside the context of the izy-proxy process (where), simply set the taskParameters to:
+
+    ///mypackage:mymodule
+
+To run mypackage:mymodule as JSONIO API Interface (what), over HTTPS (transport), inside the context server.com (where), simply set the taskParameters to:
+
+    //myserver.com/mypackage:mymodule
+    
+To run mypackage:mymodule as a chain (what), inline (transport), inside the context of the izy-proxy process (where), simply set the taskParameters to:
+
+    //chain/mypackage:mymodule
+
+
 
 ### IZY TIP
 When upgrading or deploying a node (ec2-node or a docker container), you should deep clone the directory as a backup and switch back/forth with pm2 until things work:
@@ -68,46 +99,84 @@ pm2 start 2
 
 Notice that you should put your containers behind a load balancer (i.e. AWS elb) to avoid ending up with broken connections.
 
+## Testing and QA
+Since the izy-proxy contains a heterogeneous set of component, full testing will entail running each test piece seperately.
+
+```
+
+### Test the chaining engine functionality
+node test/all.js
+
+### Test the API plug-in
+node cli.js method api api.path :test/api
+
+### Test the Socket plug-in
+node cli.js method socket socket.path izy-pop3/proxypkg:directdb socket.testmod izy-pop3/proxypkg/test/android socket.user user@yourdomain.com socket.pass your_password socket.verbose.writes true socket.verbose.ondata true
+
+### Test remote servers over TCP/SSL
+node cli.js method socket socket.path pop3.izyware.com socket.port 110 socket.testmod izy-pop3/proxypkg/test/android socket.user user  socket.pass 'password!' socket.verbose.mock true
+```
+
+### Using the assertion library 
+You can use the assertion library to to quickly write integrate tests for your service endpoints:
+
+
+    ['chain.importProcessor', 'components/net/http:chain'],
+    ['chain.importProcessor', 'izy-proxy/test/assert:chain'],
+    ['net.httprequest', { url: 'https://myservice/endpoint' }],
+    ['assert.value', {
+       /* optional */
+       __contextName__: 'Provide the explanation and contet when an assertion failure is reported',
+       /* Optional */
+      __operators__: {
+        success: 'equal',
+        status: 'equal'
+        // reason: 'contain'
+      },
+      success: true,
+      status: 200
+    }],
+
+the system will deserialize the api.queryObject.* into a JSON queryObject that gets passed into the JSONIO api handlers.
+
+
 ### Container Deployment Configuration Verification For Enterprise Customers
 
 Use the commandline interface to simulate calling the forgot-password POST api call from your enterprise container:
 
 ```
  node cli.js method verifyconfig api.email <youremail>
-````
+```
 
 If everything is successful, you should be able to replicate the online behavior locally.
 
-## Testing The Functionality
-Since the izy-proxy contains a heterogeneous set of component, full testing will entail running each test piece seperately.
+### Continious Testing Via Tasks
+It is recommended the you test the live deployment for configuration and infrastructure issues using the task engine and the following module:
+
+    //chain/izy-proxy/test:cloudwatch/base
+    
+    
+
+## Using the CLI (Commandline Interface) for launching and testing components
+While enterprise gold customers have access to Izyware Studio, the standard users can still use the command line for launching and debugging components that may be launched in the taskrunner context or in the TCP server context.
 
 ```
-
-# Test the chaining engine functionality
-node test/all.js
-
-# Test the API plug-in
-node cli.js method api api.path :test/api
-
-# Test the Socket plug-in
-node cli.js method socket socket.path izy-pop3/proxypkg:directdb socket.testmod izy-pop3/proxypkg/test/android socket.user user@yourdomain.com socket.pass your_password socket.verbose.writes true socket.verbose.ondata true
-
-# Test remote servers over TCP/SSL
-node cli.js method socket socket.path pop3.izyware.com socket.port 110 socket.testmod izy-pop3/proxypkg/test/android socket.user user  socket.pass 'password!' socket.verbose.mock true
-```
-
-### Using the Commandline Interface For Testing And Developing Chain-based APIs
-While enterprise gold customers have access to Izyware Studio, the standard users can still use the command line to implement their chain based apis:
-
-```
+node cli.js method verifyconfig userdata...
 node cli.js method api api.path <path/to/api/module> api.queryObject.key1 value1 ...
+node cli.js method socket ...
+node cli.js method taskrunner ...
+node cli.js method chain ...  
 ```
 
-the system will deserialize the api.queryObject.* into a JSON queryObject that gets passed into the JSONIO api handlers.
+Of all the methods, the chain is the most powerful, because it will allow you to run remote, local and other types of modules using a JSON API style interface or just chain:
+
+```
+node cli.js method chain chain.action "//chain/izy-proxy/test/chain" chain.p1.name 123456 chain.p1.value 991
+```
 
 ## Configuration for the artifact
 
-The HTTP server expects the configuration file to be at:
+The TCP server expects the configuration file to be at:
 
 ```
 ../configs/izy-proxy/config.js relative to app.js
@@ -117,7 +186,7 @@ so in the example above, the config.js would go in:
 
 ```
 node_modules/configs/izy-proxy/config.js
-````
+```
 
 It is best to keep the configurations in a seperate location and just copy them over as shown in the deployment section.
 
@@ -130,92 +199,16 @@ The Taskrunner expects the configuration file to be at:
 
 ### Sample TaskRunner Server taskrunner.js config file
 
-```
-module.exports = {
-    authenticate: {
-        izyware_taskrunner_key_id: 'your_access_key',
-        izyware_taskrunner_secret_access_key: 'your_secret_key'
-    },
-    izyware_runtime_id: 'your_izyware_runtime_id'
-};
-```
+Please refer to the following sample file:
 
-### Sample HTTP Server config.js file
+    samples/taskrunner_production_config.js
 
-```
+### Sample TCP Server config.js file
+Please refer to the following sample file:
 
-var __chainProcessorConfig = {
-	'import': {
-		pkgloadermodname: 'pkgloader',
-		pkgloadermodconfig: {},
-		verbose: false
-	},
-	izynode: {
-		accesstoken: '_PASTE_FROM_DASHBOARD_',
-		dataservice: '_PASTE_FROM_DASHBOARD_',
-		// Other options for restricted sandboxes are:
-		// - qry/transport/scrsrc
-		// - qry/transport/toolbar (message queue based)
-		transportmodule: 'qry/transport/http',
-		verbose: false
-	}
-};
+    samples/tcpserver_production_config.js
 
-
-module.exports = {
-	// Just expose this here so that the tests can access this :-)
-	__chainProcessorConfig: __chainProcessorConfig,
-  port: {
-    http: 80,
-    https: 443
-  },
-  proxy: {
-    timeoutInMs: 60000
-  },
-	// Array of plug-in definitions 
-	plugins: [
-	{
-		// Only do this while developing plug-ins
-		// This will reload the node modules for plug-in per request 
-		reloadPerRequest: false, 
-		name: 'apigateway',
-
-		// invoke pkg prefix. If set it will allow server side extensibility
-		// If you set this, it is STRONGLY recommended that you also enforce HTTP authentication (see Authorization below).
-		// Only enable this if you fully under the security risks involved.
-		invokePrefix: 'cryptokey',
-		// the Authotization header to be used in a typical HTTP authentication scheme.
-		// If you have Izy Identity Management system setup, set this to 'idm'
-		invokeAuthorization: 'access_token',
-
-	    __chainProcessorConfig: __chainProcessorConfig,
-	},
-	{
-		// case sensitive
-		testUrl: '/izycircustest',
-
-		// case in-sensitive
-		acceptedPaths: [
-			'/path1',
-			'/',
-			'/path2'
-		],
-		aliases: ['.domain_to_alias_to_izyware.com'],
-		// Only do this while developing plug-ins
-		// This will reload the node modules for plug-in per request 
-		reloadPerRequest: false, 
-		name: 'circus',
-		bootstrapUrl: 'https://izyware.com/chrome_extension.js',
-		cache: {
-			folder: '/tmp/izy-circus'
-		}
-	}
-	]
-};
-```
-
-
-### __chainProcessorConfig For Chain Processing
+#### __chainProcessorConfig For Chain Processing
 Chain processing is optional and should be used when heterogeneous development across multiple platforms is needed.
 
 To support chain processing in the izy-proxy container execution context, simply drop the __chainProcessorConfig in the config file.
@@ -224,7 +217,6 @@ The chain handler should be configued based on the following criteria:
 * Security Context
 * Network Configuration
 * Performance Considerations
-
 
 ## Plugins
 
@@ -439,15 +431,70 @@ Use the http plug-in to handle the domain based requests. The http plug-in will 
 for more details, visit [izyware]
 
 # Known Issues
+* Sockets plugin does not have tests inside test/cloudwatch/base 
 * customers have reported that sometimes the outcome key upon the execution of `//chain/xxx` calls gets tampered with. See gmailsync customer issue: 3512aed7e0a354ecd803efcec7b3ce30cb004e35
+* publish (izy-proxy/features/v2) as independent packages
+* improve izy-proxy doChain so that:
+    * allow labels / goto functionality
+    * setTimoue internally
 
 # Changelog
+* added test/cloudwatch/base for running service tests on a live version
+    * this will enable an automated task for doing tests on the live service from the IzyCloud enterprise dashboard
+    * The following plug-ins are covered
+        * APIs 
+        * http
+        * circus
+* added assertion library to enable simple smoke tests
+    * consolidated from toolbar and other libraries
 * added options for cacheImportedPackagesInMemory and noReimportIfAlreadyLoaded to the runpkg, and import chains to allow dynamic remote updating of the modules in the task runner.
     * If this is not turned on, the module updates will only be picked up on taskrestarts which is not desirable.
 * restructured the taskrunner component and added sample config file for standalone deployment of the taskrunner. 
     * added `apiExecutionContext` to taskrunnerProcessor config for remote and local configurations and deployments.
     * added samples/pkgloader/izycloud that uses POST `ui/ide:cloudstorage/api` with auth token to do package loading inside the Chains (i.e. when using the taskrunnder)
 * added the ability to configure chain processors
+* added the ability to 'replay' a chain and thus looping through easy
+    * this is important for processing data sets:
+    
+            ['newChain', {
+              chainName: modtask.__myname + '.loop',
+              chainItems: [
+                function(chain) {
+                  if (offset >= maxOffset) {
+                    return chain([
+                      ['log', 'ran ' + maxOffset + ' sets of queries'],
+                      ['set', 'lastOutcome', {
+                        data: queryResults,
+                        success: true
+                      }],
+                      ['return']
+                    ]);
+                  }
+                  chain([
+                    ['log', (offset+1) + ' of ' + maxOffset]
+                  ]);
+                },
+                ['ROF'],
+                ['replay']
+              ]
+    
+* the seperation of contexts, ability to import and doChain/newChain will enable the apps/tasks/api feature
+    * The taskprocessor will define procesor commands (apps/tasks/api/chain) and will be imported
+        * process seqs.onNewTask and capture the outcome if error without CONTAMINATING itself
+    * The task itself will have a chain seqs.onNewTask (see izy-proxy/taskrunner/main.js)
+        * pre import relevant processors (task.*) 
+* improved doChain so that it will create the context (dataspace, callbacks) on the fly so that the chain processors can also have doChain internally and the 'finally' part can be optionally localized (similar to how the try/catch works. The layer that has the catch will work). 
+    * This will allow us to have nested chains, and subchains, etc.
+* pass the $chain to the chain handler that would allow access to chain context as well as doing doChain, newChain, etc.
+    * being able to doChain internally is important because the chain handlers may need to utilized other commands inside the current context.
+    * having newChain is also important to be able to isolate a set of commands (for example the task manager running an external module).
+    * virtually, doChain/newChain will allow differentiation on the following:
+        * will it have a new context or will it share the context with parent?
+        * will it have an outcome handler or will it go to parent?
+* improved chain management so that we can 'importProcessor' processors, since chain 'actions' will be 'processed' by processors.
+    * this will open up implementation by chain.
+    * if a handler is redeclared, it will process instead of the parent context
+
 
 
 [izyware]: https://izyware.com

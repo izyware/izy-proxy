@@ -88,7 +88,7 @@ modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString,
                     if (!outcome.success) {
                         cbWhenLaunchDone({
                             recordOutcome: true,
-                            outcome: { reason: 'error running module: \r\n"' + parsed.mod + '"\r\n as chain: ' + outcome.reason }
+                            outcome: { reason: outcome.reason }
                         });
                     } else {
                         cbWhenLaunchDone({ recordOutcome: false });

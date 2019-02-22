@@ -9,12 +9,12 @@
   },
   "dependencies": {
     "izy-circus": "^1.0.13",
-    "izymodtask": "^1.0.17"
+    "izymodtask": "^2.0.0"
   },
   "files": [
     "README.md",
-    "app.js",
-    "taskrunner.js",
+    "tcpserver",
+    "taskrunner",
     "favicon.ico",
     "server.js",
     "modtask",

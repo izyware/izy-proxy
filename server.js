@@ -1,6 +1,6 @@
 "use strict";
 
-var config = require('../configs/izy-proxy/config');
+var config = require('../configs/izy-proxy/tcpserver');
 var handlers = [];
 var modtask = {};
 modtask.logEntries = [];
