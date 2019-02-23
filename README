@@ -12,10 +12,10 @@ If you happen to use an older version of npm, the work around is shown below:
 To build an artifact for cloud deployment (i.e. docker container), in any clean subdirectory use:
 
 ```
-mkdir ~/izyware (or any location you would like have izyware tools deployed to)
-cd ~/izyware
-npm init -f; npm install --save izy-proxy; mkdir -p node_modules/configs;
-mkdir -p node_modules/configs/izy-proxy;cp node_modules/izy-proxy/samples/taskrunner_production_config.js node_modules/configs/izy-proxy/taskrunner.js 
+
+mkdir ~/srv/<type>/_version_ (or any location you would like have izyware tools deployed to)
+cd ~/srv/<type>/_version_
+npm init -f; npm install --save izy-proxy; mkdir -p node_modules/configs/izy-proxy;
 ```
 
 If you are using npm < 3.10.6, you must also do:
@@ -26,12 +26,18 @@ cp -r node_modules/izy-proxy/node_modules/* node_modules/; cp -r node_modules/iz
 
 
 ### Update
-
-```
-cd ~/izyware;npm update
-```
+To update, just rebuild a new side by side version. This will allow you to roll back to an older version in case there is a failure.
 
 ## Running
+
+### Picking the correct configuration
+The samples directory contains sample configuration files that you can use for tcpserver, taskrunner, ... modes:
+
+```
+cp node_modules/izy-proxy/samples/taskrunner_production_config.js node_modules/configs/izy-proxy/taskrunner.js 
+```
+
+Note that some configurations may require additional local packages. For example pkgloader/dbnode, depends on components/pkgman/dbnode being locally present. Make sure to include the relevant components locally and add a search path reference under modtask/config/kernel/extstores/file.js to the appropriate location.
 
 ### TCP Server Mode
 ```
@@ -431,6 +437,9 @@ Use the http plug-in to handle the domain based requests. The http plug-in will 
 for more details, visit [izyware]
 
 # Known Issues
+* When there is chain crash in taskrunner (i.e. request package is missing) the dashboard wont report it
+    * metascope task is an example
+    * The error gets initially captured but overwritten by the total number
 * Sockets plugin does not have tests inside test/cloudwatch/base 
 * customers have reported that sometimes the outcome key upon the execution of `//chain/xxx` calls gets tampered with. See gmailsync customer issue: 3512aed7e0a354ecd803efcec7b3ce30cb004e35
 * publish (izy-proxy/features/v2) as independent packages

@@ -33,6 +33,7 @@ module.exports = {
           // - qry/transport/scrsrc
           // - qry/transport/toolbar (message queue based)
           transportmodule: 'qry/transport/http',
+          encryptqueries : false,
           verbose: false
      },
      authenticate: {

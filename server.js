@@ -5,6 +5,11 @@ var handlers = [];
 var modtask = {};
 modtask.logEntries = [];
 modtask.maxLogLength = 1000;
+modtask.verbose = config.verbose || {
+  WARNING: false,
+  INFO: false,
+  ERROR: true
+};
 modtask.serverLog = function (msg, type, plugin) {
   if (!type) type = "WARNING";
   if (!plugin) plugin = {name: ''};
@@ -19,7 +24,7 @@ modtask.serverLog = function (msg, type, plugin) {
     modtask.logEntries.length = modtask.maxLogLength;
   }
   var msg = '[' + item.ts + '] (' + item.type + ')(' + item.plugin.name + ') ' + item.msg;
-  console.log(msg);
+  if (modtask.verbose[type]) console.log(msg);
 }
 
 modtask.loadPlugin = function (pluginConfig, noCaching) {

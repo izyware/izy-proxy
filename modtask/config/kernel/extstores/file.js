@@ -23,7 +23,7 @@ var modtask =
 			// For the circus plug-in,
 			currentdir + '../izy-circus/',
 			// For the apigateway plug-in
-			currentdir + '../configs/izy-proxy/plugin/apigateway/',
+			currentdir + '../configs/izy-proxy/',
 			'rel:/',
 			'rel:/../thirdparty/',
 			'rel:/../../'

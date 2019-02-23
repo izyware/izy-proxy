@@ -13,6 +13,7 @@ var modtask = function(chain) {
     ['chain.importProcessor', 'components/net/http:chain'],
     ['chain.importProcessor', 'izy-proxy/test/assert:chain'],
 
+    ['task.progress', progress++],
     function(chain) {
       url = state.url + '';
       chain(['net.httprequest', {
@@ -37,6 +38,7 @@ var modtask = function(chain) {
     },
     ['ROF'],
 
+    ['task.progress', progress++],
     function(chain) {
       url = state.url + '7fe2de1a5c919314f6f5dcfeb94a91ec4195d200';
       chain(['net.httprequest', {
@@ -62,6 +64,7 @@ var modtask = function(chain) {
     ['ROF'],
 
 
+    ['task.progress', progress++],
     function(chain) {
       url = state.url + 'apigateway/:ui/ide:cloudstorage/api';
       chain(['net.httprequest', {
@@ -95,6 +98,7 @@ var modtask = function(chain) {
     },
     ['ROF'],
 
+    ['task.progress', progress++],
     function(chain) {
       url = state.url + 'izyproxystatus';
       return chain(['net.httprequest', {

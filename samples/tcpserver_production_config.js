@@ -1,22 +1,45 @@
-var __chainProcessorConfig = {
-	'import': {
-		pkgloadermodname: 'pkgloader',
-		pkgloadermodconfig: {},
-		verbose: false
+var __izyNodeConfig = {
+	// WARNING: Super Admin Token, derived from account #2
+	accesstoken: '_PASTE_FROM_DASHBOARD_',
+	dataservice: '_PASTE_FROM_DASHBOARD_',
+	// Other options for restricted sandboxes are:
+	// - qry/transport/scrsrc
+	// - qry/transport/toolbar (message queue based)
+	groupidobject: {
+		transportmodule: 'qry/transport/http'
 	},
-	izynode: {
-		accesstoken: '_PASTE_FROM_DASHBOARD_',
-		dataservice: '_PASTE_FROM_DASHBOARD_',
-		// Other options for restricted sandboxes are:
-		// - qry/transport/scrsrc
-		// - qry/transport/toolbar (message queue based)
-		transportmodule: 'qry/transport/http',
-		verbose: false
-	}
+	encryptqueries : true,
+	verbose: false
 };
 
+var __chainProcessorConfig = {
+	verbose: false,
+	'import': {
+		cacheImportedPackagesInMemory: true,
+		verbose: false,
+		/******************** Import Configuration for IzyCloud Pkg Loader *********************/
+		/*
+		 pkgloadermodname: 'samples/pkgloader/izycloud',
+		 pkgloadermodconfig: {
+		 auth: '_PASTE_FROM_DASHBOARD_'
+		 }
+		 */
+
+		/******************** Import Configuration for DbNode Pkg Loader *********************/
+		pkgloadermodname: 'samples/pkgloader/dbnode',
+		pkgloadermodconfig: {
+			__izyNodeConfig: __izyNodeConfig
+		}
+	},
+	izynode: __izyNodeConfig
+};
 
 module.exports = {
+	verbose: {
+		WARNING: false,
+		INFO: true,
+		ERROR: true
+	},
 	// Just expose this here so that the tests can access this :-)
 	__chainProcessorConfig: __chainProcessorConfig,
   port: {
