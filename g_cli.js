@@ -61,6 +61,10 @@ modtask.cmdlineverbs[commandLineKey] = function() {
       main.run(runnerConfig);
       break;
     case 'chain':
+      var _chainConfig = {};
+      try {
+        _chainConfig = izymodtask.relRequire('../configs/izy-proxy/taskrunner');
+      } catch(e) { console.log('Warning no config found', e); }
       izymodtask.relRequire('index').newChain([
         [config.chain.action, config.chain.p1, config.chain.p2],
         function(chain) {
@@ -68,7 +72,12 @@ modtask.cmdlineverbs[commandLineKey] = function() {
         }
       ], function(outcome) {
         if (!outcome.success) console.log('Error running chain: ' + outcome.reason);
-      }, {});
+      }, {
+        // Configuration for each processor
+        'import': _chainConfig.import,
+        izynode: _chainConfig.izynode,
+        runpkg: _chainConfig.runpkg
+      });
       break;
     default:
       modtask.Log(modtask.helpStr);

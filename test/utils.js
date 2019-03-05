@@ -1,6 +1,6 @@
 var modtask = {};
 
-var localConfigPath = '../../../configs/izy-proxy/config';
+var localConfigPath = '../../../configs/izy-proxy/tcpserver';
 
 modtask.simulateApiCall = function(path, jsonPayload) {
   if (!jsonPayload) jsonPayload = {};
