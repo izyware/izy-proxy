@@ -14,7 +14,6 @@ modtask.resolveAuthorization = function(authorizationToken, cb) {
   try {
     var fs = require('fs');
     var content = fs.readFileSync(fname, 'ascii');
-    console.log(content);
     data.ownerId = parseInt(content.split('__SESSION_FILE__')[1]);
   } catch(e) {}
 
