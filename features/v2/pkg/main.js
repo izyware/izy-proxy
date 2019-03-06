@@ -44,6 +44,12 @@ function importPackageIfNotPresent(query, cb) {
 
   if (modtask.verbose)  console.log('[importPackageIfNotPresent] package not loaded already so will use "' + modtask.modpkgloader.__myname + '" to load package');
 
+  // The modToPkgMap is used by
+  // 1) ldmod('kernel/path').toInvokeString
+  // 2) IDE
+  var modToPkgMap = modtask.ldmod('kernel/mod').ldonce('kernel/extstores/import').modToPkgMap || {};
+  modtask.ldmod('kernel/mod').ldonce('kernel/extstores/import').modToPkgMap = modToPkgMap;
+
   modtask.modpkgloader.getCloudMod(pkg).incrementalLoadPkg(
     // One of these per package :)
     function(pkgName, pkg, pkgString) {
@@ -53,6 +59,13 @@ function importPackageIfNotPresent(query, cb) {
           pkg,
           modtask.ldmod('kernel/extstores/inline/import'),
           function (ops) {
+            var i;
+            for(i=0; i < ops.length; ++i) {
+              if (ops[i].path.indexOf(pkgName) == 0) {
+                modToPkgMap[ops[i].path] = pkgName;
+              }
+            }
+
             if (modtask.verbose) {
               console.log(ops.length + ' modules installed for = ' + pkgName);
             }

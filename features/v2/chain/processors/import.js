@@ -83,7 +83,10 @@ modtask.importPkgs = function(pkgs, cb) {
     });
   };
   try {
-    modtask.ldPkgMan().importPackge(pkgName, cb);
+    modtask.ldPkgMan().importPackge(pkgName, function(outcome) {
+      if (outcome.success) modtask.__importCache[pkgName] = true;
+      cb(outcome);
+    });
   } catch (e) {
     cb({ reason: 'Cannot importPkgs: "' + pkgName + '": ' + e.message });
   }
