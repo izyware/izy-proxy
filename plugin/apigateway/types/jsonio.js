@@ -39,8 +39,8 @@ modtask.handle = function(serverObjs, mod) {
 }
 
 modtask.processQuery = function(query, serverObjs, mod) {
-    var headers = serverObjs.getCORSHeaders();
     var jcbEncode = function(outcome) {
+        var headers = serverObjs.getCORSHeaders();
         headers['Content-Type'] = 'text/html';
         serverObjs.res.writeHead(200, headers);
         serverObjs.res.end(JSON.stringify(outcome));
@@ -54,7 +54,8 @@ modtask.processQuery = function(query, serverObjs, mod) {
     }
 
     try {
-        return mod.processQueries(queryObject, jcbEncode);
+        var context = { session: modtask.ldmod('features/v2/session/main').get() };
+        return mod.processQueries(queryObject, jcbEncode, context);
     } catch (e) {
         return jcbEncode({ reason: 'Cannot process query: ' + e.message });
     }

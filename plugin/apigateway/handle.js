@@ -1,5 +1,7 @@
 "use strict";
 
+var featureModulesPath = 'features/v2/';
+
 module.exports = function (config, pluginName) {
   var name = 'apigateway';
   var basePath = '/' + name + '/';
@@ -18,7 +20,6 @@ module.exports = function (config, pluginName) {
 
       // For security reasons we virtualize each requests's load into its own root context
       // However, the file system caching (if present) will still allow sharing of context
-      var featureModulesPath = 'features/v2/';
       var rootmod = require('izymodtask').getRootModule();
       var importProcessor = rootmod.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', config.__chainProcessorConfig.import);
       // fill my namespace with usable stuff
@@ -35,35 +36,11 @@ module.exports = function (config, pluginName) {
       path = decodeURIComponent(path);
 
       if (config.invokePrefix && path.indexOf(config.invokePrefix) === 0) {
-        if (config.invokeAuthorization && serverObjs.req.headers['Authorization'] != config.invokeAuthorization) {
-          return serverObjs.sendStatus({
-            status: 401,
-            subsystem: name
-          }, 'invokeAuthorization token was invalid');
-        }
         path = removePrefix(path, config.invokePrefix);
-        return importProcessor.ldPath(path, function(outcome) {
+        return setupApiModule(path, importProcessor, config, rootmod, serverObjs, function(outcome) {
           if (outcome.success) {
             try {
               var mod = outcome.data;
-              mod.doChain = function(chainItems, cb) {
-                if (!cb) {
-                  // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
-                  cb = function() {}
-                };
-                return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
-                  name: 'apiRoot',
-                  chainItems: chainItems,
-                  context: mod,
-                  chainHandlers: [
-                    rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
-                    rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
-                    importProcessor,
-                    rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg')
-                  ]
-                }, cb);
-              };
-
               switch (mod.__apiInterfaceType) {
                 case 'jsonio':
                   return rootmod.ldmod('plugin/apigateway/types/' + mod.__apiInterfaceType).handle(serverObjs, mod);
@@ -71,9 +48,9 @@ module.exports = function (config, pluginName) {
                   return mod.handle(serverObjs);
               }
             } catch (e) {
-              outcome = { reason : e.message };
+              outcome = { reason: e.message };
             }
-          }
+          };
           return serverObjs.sendStatus({
             status: 500,
             subsystem: name
@@ -85,6 +62,41 @@ module.exports = function (config, pluginName) {
     }
   };
 };
+
+function setupApiModule(path, importProcessor, config, rootmod, serverObjs, cb) {
+  return importProcessor.ldPath(path, function(outcome) {
+    if (!outcome.success) return cb(outcome);
+    try {
+      var mod = outcome.data;
+      mod.doChain = function (chainItems, _cb) {
+        if (!_cb) {
+          // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
+          _cb = function () {}
+        };
+        return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
+          name: 'apiRoot',
+          chainItems: chainItems,
+          context: mod,
+          chainHandlers: [
+            rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
+            rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
+            importProcessor,
+            rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg')
+          ]
+        }, _cb);
+      };
+      var req = serverObjs.req;
+      rootmod.ldmod('features/v2/auth/localfs').resolveAuthorization(req.headers['authorization'], function(outcome) {
+        if (outcome.success) {
+          rootmod.ldmod('features/v2/session/main').set(outcome.data);
+        }
+        return cb({ success: true, data: mod });
+      });
+    } catch (e) {
+      return cb({ reason: e.message });
+    }
+  });
+}
 
 function parseClientRequest(req, config) {
   config = config || {};

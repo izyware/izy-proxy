@@ -76,6 +76,7 @@ modtask.handlers = {};
 modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString, payload, chainMode) {
     var parsed = modtask.ldmod('kernel/path').parseInvokeString(parsedLaunchString.invokeString);
     var runModule = function() {
+        var context = { session: modtask.ldmod('features/v2/session/main').get() };
         try {
             if (chainMode) {
                 $chain.newChain({
@@ -100,7 +101,7 @@ modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString,
                         recordOutcome: true,
                         outcome: outcome
                     });
-                });
+                }, context);
             }
         } catch (e) {
             return cbWhenLaunchDone({
