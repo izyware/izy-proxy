@@ -1,6 +1,6 @@
 {
   "name": "izy-proxy",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "IZY PROXY MODULE",
   "main": "index.js",
   "repository": {
