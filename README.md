@@ -123,7 +123,21 @@ node cli.js method socket socket.path izy-pop3/proxypkg:directdb socket.testmod 
 node cli.js method socket socket.path pop3.izyware.com socket.port 110 socket.testmod izy-pop3/proxypkg/test/android socket.user user  socket.pass 'password!' socket.verbose.mock true
 ```
 
-### Using the assertion library 
+### Test Automation 
+
+#### Data Library
+Enterprise customers can take advantage of thousands of data samples for testing. Data samples include real world data for:
+
+* Mobile devices interacting with standard protocol stacks
+* User browsing history analytics data
+* ...
+
+#### The mock library 
+You can use the mock library for simulating raw sockets, protocols (HTTP, etc.), databases, browser extension environments, etc. 
+
+You can use the mock libraries in conjuction with the data library to improve your test coverage.
+
+#### The assertion library
 You can use the assertion library to to quickly write integrate tests for your service endpoints:
 
 
@@ -448,6 +462,10 @@ for more details, visit [izyware]
     * setTimoue internally
 
 # Changelog
+* Pass in the current session when making inline requests. 
+* New impementation of Authorization header security
+    * Accept Bearer autorization tokens sent via the HTTP headers
+    * Updated the OPTIONS response to indicate that authorization headers are accepted when making cross domain calls.
 * added test/cloudwatch/base for running service tests on a live version
     * this will enable an automated task for doing tests on the live service from the IzyCloud enterprise dashboard
     * The following plug-ins are covered
