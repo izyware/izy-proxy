@@ -1,12 +1,12 @@
 var modtask = function() {}
-modtask.resolveAuthorization = function(authorizationToken, cb) {
+modtask.resolveAuthorization = function(bearerToken, cb) {
   var path = '/opt/lampp/htdocs/apps/izyware/auth';
-  var authorization = authorizationToken;
-  authorization = (authorization + '').split(' ')[1] + '';
-  var fname = 'session' + authorization + '.txt';
+  var authorizationToken = (bearerToken + '').split(' ')[1] + '';
+  var fname = 'session' + authorizationToken + '.txt';
   fname = path + '/' + fname;
 
   var data = {
+    authorizationToken: authorizationToken,
     ownerType: 1, // user
     ownerId: null // user.id
   };

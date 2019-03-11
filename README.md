@@ -462,6 +462,14 @@ for more details, visit [izyware]
     * setTimoue internally
 
 # Changelog
+* implement universalHTTP transport layer to allow reusing izy-proxy components in the browser and other environments.
+* add support for relative paths in the pkgrunner luanch string
+
+        ['//izyware.com/rel:modname', {}, mod]
+        
+* add dontDefaultToHttpWhenServiceNameUnrecognized flag to pkgrunner
+* Pass in authorization token as part of the session object to the pkgrunner
+    * The token might be used for making HTTP based (not inline) calls
 * Pass in the current session when making inline requests. 
 * New impementation of Authorization header security
     * Accept Bearer autorization tokens sent via the HTTP headers
