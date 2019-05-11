@@ -40,7 +40,15 @@ module.exports = function (config, pluginName) {
       sessionObjs.parsed = modHeader.parseClientRequest(req, config);
       if (sessionObjs.parsed.path == healthcheckpath) return true;
       for(var i = 0; i < cloudServices.length; ++i) {
-        if (sessionObjs.parsed.domain == cloudServices[i].domain) {
+        var matched = false;
+        var dm1 = cloudServices[i].domain, dm2 = sessionObjs.parsed.domain;
+        if (dm1.indexOf('*.') == 0) {
+          dm1 = dm1.substr(1);
+          matched = (dm2.indexOf(dm1) == dm2.length - dm1.length);
+        } else {
+          matched = (dm1 == dm2);
+        }
+        if (matched) {
           sessionObjs.cloudService = cloudServices[i];
           return true;
         }
