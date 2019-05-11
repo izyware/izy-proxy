@@ -462,6 +462,7 @@ for more details, visit [izyware]
     * setTimoue internally
 
 # Changelog
+* cloudservice: allow handling of wildcard for subdomains
 * implement universalHTTP transport layer to allow reusing izy-proxy components in the browser and other environments.
 * add support for relative paths in the pkgrunner luanch string
 
