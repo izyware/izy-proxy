@@ -122,12 +122,16 @@ modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString,
                     }
                 });
             } else {
-                modtask.ldmod(parsed.mod).sp('doChain', $chain.doChain).processQueries(payload, function(outcome) {
-                    cbWhenLaunchDone({
-                        recordOutcome: true,
-                        outcome: outcome
-                    });
-                }, context);
+                modtask.ldmod(parsed.mod).sp('doChain', $chain.doChain).processQueries(
+                    JSON.parse(JSON.stringify(payload)),
+                    function(outcome) {
+                        cbWhenLaunchDone({
+                            recordOutcome: true,
+                            outcome: outcome
+                        });
+                    },
+                    context
+                );
             }
         } catch (e) {
             return cbWhenLaunchDone({
