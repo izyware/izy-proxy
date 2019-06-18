@@ -123,7 +123,7 @@ modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString,
                 });
             } else {
                 modtask.ldmod(parsed.mod).sp('doChain', $chain.doChain).processQueries(
-                    JSON.parse(JSON.stringify(payload)),
+                    payload ? JSON.parse(JSON.stringify(payload)) : payload,
                     function(outcome) {
                         cbWhenLaunchDone({
                             recordOutcome: true,
