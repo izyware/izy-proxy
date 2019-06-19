@@ -2,7 +2,7 @@
 function importPackge(pkgPathWithoutColons, cb) {
   importPackageIfNotPresent({
     pkg: pkgPathWithoutColons,
-    mod: false
+    mod: pkgPathWithoutColons + '/package'
   }, cb);
 }
 
@@ -35,6 +35,7 @@ function importPackageIfNotPresent(query, cb) {
   var mod = query.mod;
 
   if (mod && modtask.ldmod('kernel\\selectors').objectExist(mod, {}, false)) {
+    if (modtask.verbose)  console.log('[importPackageIfNotPresent] will not load package because I found one of its modules: "' + mod + '"');
     return cb(outcome);
   }
   if (pkg === '') return cb(outcome);
