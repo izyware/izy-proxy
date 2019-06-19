@@ -26,7 +26,9 @@ var modtask =
 			currentdir + '../configs/izy-proxy/',
 			'rel:/',
 			'rel:/../thirdparty/',
-			'rel:/../../'
+			'rel:/../../',
+			// Uncomment this for local modtask development
+			// currentdir + '../plat/modtask/'
 		];			
 	} 
 }
