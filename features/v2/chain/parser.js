@@ -104,7 +104,7 @@ var modtask = {
             return chainReturnCB({ reason: "chainItem[0] must be a string." });
             break;
       }
-      modtask.$chain.chainItemBeingProcessed = chainItem;
+      modtask.setCallStackCurrentChainItem(chainItem, chainindex);
       if (chainItem[0] == 'replay') {
          return setTimeout(function() {
             processChainItemCallback(subChainToProcess, 0);
@@ -116,9 +116,26 @@ var modtask = {
    }
 }
 
+modtask.setCallstackDynamicFlag = function(dynamicEval) {
+   if (!modtask.$chain.chainItemBeingProcessed) {
+      // Chain beings with a dynamic element
+      modtask.setCallStackCurrentChainItem('Dynamic', 0);
+   }
+   modtask.$chain.chainItemBeingProcessed.dynamicEval = dynamicEval;
+}
+
+modtask.setCallStackCurrentChainItem = function(chainItem, chainindex) {
+   modtask.$chain.chainItemBeingProcessed = {
+      chainItem: chainItem,
+      chainindex: chainindex
+   };
+}
+
 modtask.evalDynamicItem = function(dynamicItemToBeEvaled, callback) {
    var chainContext = modtask.$chain.context;
+   modtask.setCallstackDynamicFlag(true);
    var pushfn = function(data) {
+      modtask.setCallstackDynamicFlag(false);
       callback({
          success: true,
          data: data
@@ -129,7 +146,7 @@ modtask.evalDynamicItem = function(dynamicItemToBeEvaled, callback) {
       dynamicItemToBeEvaled(pushfn, chainContext);
    } catch(e) {
       callback({
-         reason: e.message + ' when dynamicItemToBeEvaled = ' + dynamicItemToBeEvaled.toString()
+         reason: e.message + ' when evalDynamicItem. See callstack for details'
       });
    }
 };

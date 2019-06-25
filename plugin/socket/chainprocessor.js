@@ -1,6 +1,17 @@
 
 var modtask = function(chainItem, cb, $chain) {
-  var session = modtask.session || {};
+  if (!modtask.__chainProcessorConfig) modtask.__chainProcessorConfig = {};
+  var session = modtask.__chainProcessorConfig.session || {};
+
+  // Do this only once
+  if (!modtask.sockets) {
+    modtask.sockets = {};
+    var rawSockets =  modtask.__chainProcessorConfig.sockets || {};
+    for (var p in rawSockets) {
+      modtask.sockets[p] = modtask.socketWrapper(rawSockets[p], {name: p});
+    }
+  }
+
   if (!modtask.dt) modtask.dt = modtask.ldmod('core/datetime');
 
   modtask.verbose = session.verbose || modtask.verbose;
@@ -8,7 +19,6 @@ var modtask = function(chainItem, cb, $chain) {
   var i = 0;
   var params = {};
   params.action = chainItem[i++];
-
   modtask.sessionLog = function(msg, action, socketName) {
     var dt = modtask.dt;
     var totalWidth = 40;
@@ -62,22 +72,27 @@ var modtask = function(chainItem, cb, $chain) {
       modtask.sessionLog(chainItem[i++], chainItem[i++], chainItem[i++]);
       cb();
       return true;
-    case 'socket.write':
-      modtask.socketWrite(chainItem[i++], function(outcome) {
+    case 'socket.resetState':
+      modtask.resetState(chainItem[i++], function(outcome) {
+        if (!outcome.success) $chain.chainReturnCB(outcome);
         $chain.set('outcome', outcome);
         cb();
       });
       return true;
       break;
-    case 'socket.wrapraw':
-      var rawSocket = chainItem[i++];
-      var config = chainItem[i++];
-      $chain.set('outcome', { success: true, data: modtask.socketWrapper (rawSocket, config) });
-      cb();
+    case 'socket.write':
+      modtask.socketWrite(chainItem[i++], function(outcome) {
+        if (!outcome.success) $chain.chainReturnCB(outcome);
+        $chain.set('outcome', outcome);
+        cb();
+      });
       return true;
       break;
     case 'socket.terminate':
-      var socketWrapper = chainItem[i++];
+      var socketId = chainItem[i++];
+      if (!socketId || !modtask.sockets[socketId])
+        return $chain.chainReturnCB({ reason: 'socketId parameter should be a valid socketId' });
+      var socketWrapper = modtask.sockets[socketId];
       var socket = socketWrapper.socket;
       if (modtask.verbose.terminate) modtask.sessionLog('', 'socket.terminate', socketWrapper.name);
       try {
@@ -85,32 +100,77 @@ var modtask = function(chainItem, cb, $chain) {
         // this is hard disconnnect: no 'end' events will be fired and data trasnfer will immediately shutdown
         if (socket.destroy) socket.destroy();
         // of you can do socket.end which will flush the data, emit the 'end' event and then disconnect
-
         $chain.set('outcome', { success: true });
+        cb();
       } catch(e) {
         if (modtask.verbose.error) modtask.sessionLog(e.message, 'terminate.error', socketWrapper.name);
-        $chain.set('outcome', { reason: e.message });
+        $chain.chainReturnCB({ reason: e.message });
       }
-      cb();
       return true;
       break;
     case 'socket.while':
       modtask.socketWhile(chainItem[i++], function(outcome) {
+        if (!outcome.success) $chain.chainReturnCB(outcome);
+        $chain.set('outcome', outcome);
+        cb();
+      }, $chain);
+      return true;
+      break;
+    case 'socket.pipe':
+      var cfg = chainItem[i++];
+      modtask.socketPipe(modtask.sockets[cfg.s1].socket, modtask.sockets[cfg.s2].socket, cfg.verbose, function(outcome) {
+        if (!outcome.success) $chain.chainReturnCB(outcome);
         $chain.set('outcome', outcome);
         cb();
       });
       return true;
-      break;
+    case 'socket.mock':
+      var config = chainItem[i++] || { verbose: false, responses: [] };
+      var mockSocket = modtask.ldmod('rel:../../mock/socket')(config);
+      var socketId = 'mock' + '_' + (new Date()).getTime();
+      modtask.sockets[socketId] = modtask.socketWrapper(mockSocket, { name: socketId });
+      $chain.set('outcome', {
+        success: true,
+        socketId: socketId
+      });
+      cb();
+      return true;
     case 'socket.connect':
       var config = chainItem[i++] || { ip: '', port: 0, tls: false, name: 'newSocket' };
       if (modtask.verbose.connect) modtask.sessionLog('', 'verbose.connect', config.name);
       modtask.createSocketConnection(config, function(outcome) {
-        $chain.set('outcome', outcome);
+        if (!outcome.success) $chain.chainReturnCB(outcome);
+        var socketId = config.ip + '_' + config.port + '_' + (new Date()).getTime();
+        modtask.sockets[socketId] = outcome.data;
+        $chain.set('outcome', {
+          success: true,
+          socketId: socketId
+        });
         cb();
       });
       return true;
   }
   return false;
+}
+
+modtask.socketPipe = function(s1, s2, verbose, cb) {
+  var pipe = function(evtName, fnName) {
+    console.log('pipe', evtName, '->', fnName);
+    s1.on(evtName, function(p1, p2, p3) {
+      if (verbose.ondata && evtName == 'data') console.log('recieved from remote socket', JSON.stringify(p1.toString()));
+      s2[fnName](p1, p2, p3);
+    });
+    s2.on(evtName, function(p1, p2, p3) {
+      if (verbose.writes && fnName == 'write') console.log('sending to remote socket', JSON.stringify(p1.toString()));
+      s1[fnName](p1, p2, p3);
+    });
+  }
+
+  pipe('data', 'write');
+  pipe('close', 'close');
+  pipe('error', 'close');
+  pipe('end', 'destroy');
+  cb({ success: true });
 }
 
 modtask.socketWrite = function(config, cb) {
@@ -119,7 +179,10 @@ modtask.socketWrite = function(config, cb) {
     encoding: 'ascii',
     data: ''
   };
-  var socketWrapper = config.socket;
+
+  if (!config.socketId || !modtask.sockets[config.socketId])
+    return cb({ reason: 'socketId parameter should be a valid socketId' });
+  var socketWrapper = modtask.sockets[config.socketId];
   try {
     var data = config.data;
     if (config.encoding) {
@@ -137,20 +200,19 @@ modtask.socketWrite = function(config, cb) {
   }
 }
 
-modtask.socketWhile = function(config, cb) {
+modtask.socketWhile = function(config, cb, $chain) {
   config =  config || {};
   if (!config.timeOut) config.timeOut = 5000;
   if (!config.state) config.state = {};
-
   var timeOutStep = 1000;
   var totalTimeWaited = 0;
-  var socketWrapper = config.socketWrapper;
+  if (!config.socketId || !modtask.sockets[config.socketId])
+    return cb({ reason: 'socketId parameter should be a valid socketId' });
+  var socketWrapper = modtask.sockets[config.socketId];
   var check = function(handlerIndex) {
     if (!handlerIndex) handlerIndex = 0;
     if (handlerIndex >= config.handlers.length) handlerIndex = 0;
-    var handlerCollection = config.handlerCollection || {};
     var currentHandlerName = config.handlers[handlerIndex];
-    var currentHandler = handlerCollection[currentHandlerName];
 
     if (modtask.verbose.socketwhile) modtask.sessionLog('Scanning handler "' + currentHandlerName + '", totalTimeWaited=' + totalTimeWaited, 'socket.while', socketWrapper.name);
     try {
@@ -182,58 +244,41 @@ modtask.socketWhile = function(config, cb) {
           check(handlerIndex + 1);
         }, timeOutValue);
       }
-
-      if (typeof(currentHandler) != 'function') {
-        outcome = {reason: '"' + currentHandlerName + '" handler needs to be a function'}
-        if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while', socketWrapper.name);
-        return cb(outcome);
-      }
     } catch(e) {
       outcome.reason = e.message;
       if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while', socketWrapper.name);
       return cb(outcome);
     }
 
-    try {
-      currentHandler(bufferedData, config, function(outcome) {
-        if (outcome.success) {
-          if (modtask.verbose.socketwhile) modtask.sessionLog('Condition met for handler "' + currentHandlerName + '"', 'socket.while', socketWrapper.name);
-          if (modtask.verbose.socketwhile) modtask.sessionLog('should break?', 'socket.while', socketWrapper.name);
-          try {
-            config.test(function (outcome) {
-              if (outcome.success) {
-                if (modtask.verbose.socketwhile) modtask.sessionLog('yeah break', 'socket.while', socketWrapper.name);
-                return cb(outcome);
-              } else {
-                if (outcome.stillWaiting) {
-                  scanNextHandler();
-                } else {
-                  if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while error in test', socketWrapper.name);
-                  return cb(outcome);
-                }
-              }
-            }, config);
-          } catch(e) {
-            outcome.reason = e.message;
-            if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while [TEST]', socketWrapper.name);
-            return cb(outcome);
-          }
-        } else {
-          if (outcome.stillWaiting) {
-            scanNextHandler();
-          } else {
-            if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while error in handler "' + currentHandlerName + '"', socketWrapper.name);
-            return cb(outcome);
-          }
+    $chain.newChainForModule(modtask, cb, {}, [
+      ['//inline/' + currentHandlerName, {
+        str: bufferedData,
+        state: config.state,
+        socketId: config.socketId
+      }],
+      function(chain) {
+        config.state = chain.get('outcome').state;
+        chain(['//inline/' + config.test, {
+          state: config.state
+        }]);
+      },
+      function(chain) {
+        if (chain.get('outcome').stillWaiting) {
+          return scanNextHandler();
         }
-      });
-    } catch(e) {
-      outcome.reason = e.message;
-      if (modtask.verbose.socketwhile) modtask.sessionLog(outcome.reason, 'socket.while error, handler=' + currentHandlerName, socketWrapper.name);
-      return cb(outcome);
-    };
+        chain(['set', 'outcome', { success: true, state: config.state }]);
+      }
+    ]);
   }
   check(0);
+}
+
+modtask.resetState = function(socketId, cb) {
+  if (!socketId || !modtask.sockets[socketId])
+    return cb({ reason: 'socketId parameter should be a valid socketId' });
+  var socketWrapper = modtask.sockets[socketId];
+  socketWrapper.reset();
+  cb({ success: true });
 }
 
 modtask.socketWrapper = function(socket, config) {

@@ -1,6 +1,7 @@
 var modtask = {};
 
 var localConfigPath = '../../../configs/izy-proxy/tcpserver';
+var featureModulesPath = 'features/v2/';
 
 modtask.simulateApiCall = function(path, jsonPayload) {
   if (!jsonPayload) jsonPayload = {};
@@ -15,13 +16,16 @@ modtask.simulateApiCall = function(path, jsonPayload) {
 }
 
 var testOutcome = function(outcome) {
-  if (!outcome.success) console.log('Tests failed: "' + outcome.reason + '"');
+  if (!outcome.success) {
+    console.log('Tests failed');
+    console.log(outcome.reason);
+    console.log(outcome.__callstackStr);
+  }
   else console.log('Tests successful');
 }
 
 modtask.simulateSocketIO = function(config) {
   var __chainProcessorConfig = require(localConfigPath).__chainProcessorConfig;
-  var featureModulesPath = 'features/v2/';
   var importProcessor = modtask.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', __chainProcessorConfig.import);
   var testmod = config.testmod || '';
   if (!testmod) return testOutcome({ reason: 'bad test mod '});
@@ -40,84 +44,78 @@ modtask.run_simulateSocketIO = function(config, modtest) {
     function(outcome) {
       if (!outcome.success) return testOutcome(outcome);
       var incomingSocketTestConfig = outcome.data;
-      var testSocket = modtask.ldmod('rel:../mock/socket')({
+      var cfg = {
         verbose: verbose.mock,
         responses: incomingSocketTestConfig.responses
-      });
-      modtask.connectTestSocket(config, testSocket);
+      };
+      var testSocket = modtask.ldmod('rel:../mock/socket')(cfg);
+      modtask.connectTestSocket(config, testSocket, cfg);
     }
   );
 }
 
-modtask.streamSocketUI = function(s1, s2, verbose) {
-  var pipe = function(evtName, fnName) {
-    console.log('pipe', evtName, '->', fnName);
-    s1.on(evtName, function(p1, p2, p3) {
-      if (verbose.ondata && evtName == 'data') console.log('recieved from remote socket', JSON.stringify(p1.toString()));
-      s2[fnName](p1, p2, p3);
-    });
-    s2.on(evtName, function(p1, p2, p3) {
-      if (verbose.writes && fnName == 'write') console.log('sending to remote socket', JSON.stringify(p1.toString()));
-      s1[fnName](p1, p2, p3);
-    });
-  }
-
-  pipe('data', 'write');
-  pipe('close', 'close');
-  pipe('error', 'close');
-  pipe('end', 'destroy');
-}
-
-modtask.connectTestSocket = function(config, testSocket) {
+modtask.connectTestSocket = function(config, testSocket, testSocketConfig) {
   var path = config.path;
   var verbose = config.verbose || {};
   var shouldConnectOverSocket = config.path && config.port;
 
   console.log('********************************************');
   if (shouldConnectOverSocket) {
-    console.log('connecting to: ' + config.path + ':' + config.port);
-    if (config.tls) {
-      const tls = require('tls');
-      var stream = tls.connect(config.port, config.path);
-      stream.once('secureConnect', function () {
-        modtask.streamSocketUI(stream, testSocket, verbose);
-      });
-    } else {
-      var net = require('net');
-      var stream = new net.Socket();
-      stream.connect(config.port, config.path);
-      stream.once('connect', function () {
-        modtask.streamSocketUI(stream, testSocket, verbose);
-      });
-    };
-  } else {
-    var setupHandlerMod = require(__dirname + '/../../plugin/socket/handle').setupHandlerMod;
-    var sessionInfo = {
+    var pluginCfg = {
       verbose: verbose,
-      sessionId: 'sessionid',
-      startTime: modtask.ldmod('core/datetime').getDateTime(),
-      handler: {
-        plugin: {
-          name: 'test'
-        }
-      },
-      systemLog: require('../../server').modtask.serverLog
+      __chainProcessorConfig: require(localConfigPath).__chainProcessorConfig
     };
-    setupHandlerMod(
-      { __chainProcessorConfig: require(localConfigPath).__chainProcessorConfig },
-      { handlerPath: path },
-      sessionInfo,
-      function (outcome) {
-        if (!outcome.success) return testOutcome(outcome);
-        var mod = outcome.data;
-        mod.processQueries(
-          {action: 'newIncoming', socket: testSocket},
-          testOutcome,
-          {
-            session: sessionInfo
-          }
-        );
-      });
+
+    var rootmod = require('izymodtask').getRootModule();
+    var serverRuntime = { serverLog: require('../../server').modtask.serverLog };
+    var socket = testSocket;
+    var cfg = { handlerPath: path };
+    var session = {};
+    var chainHandlers = require(__dirname + '/../../plugin/socket/handle').getChainHandlers(
+      rootmod,
+      pluginCfg, session, {});
+
+    console.log('connecting to: ' + config.path + ':' + config.port);
+    var sockets = {};
+    rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
+      chainName: 'testutil',
+      chainAttachedModule: rootmod,
+      chainItems: [
+        ['socket.connect', { ip: config.path, port: config.port, tls: config.tls, name: 'newSocket' }],
+        function(chain) {
+          sockets.real = chain.get('outcome').socketId;
+          chain(['socket.mock', testSocketConfig]);
+        },
+        function(chain) {
+          sockets.mock = chain.get('outcome').socketId;
+          chain(['socket.pipe', { s1: sockets.real, s2: sockets.mock, verbose: verbose }]);
+        }
+      ],
+      context: {},
+      chainHandlers: chainHandlers
+    }, function(outcome) {
+      if (!outcome.success) {
+        return console.log(outcome);
+      }
+      console.log('connected');
+    });
+  } else {
+    var pluginCfg = {
+      verbose: verbose,
+      __chainProcessorConfig: require(localConfigPath).__chainProcessorConfig
+    };
+    var handler = {
+      plugin: {
+        name: 'test'
+      }
+    };
+    var serverRuntime = { serverLog: require('../../server').modtask.serverLog };
+    var socket = testSocket;
+    var cfg = { handlerPath: path };
+    require(__dirname + '/../../plugin/socket/handle').onNewConnection(socket,
+      serverRuntime,
+      handler,
+      cfg, pluginCfg, testOutcome);
   }
 }
 

@@ -42,12 +42,16 @@ modtask.cmdlineverbs[commandLineKey] = function() {
   var config = izymodtask.extractConfigFromCmdLine(commandLineKey);
   var method = config[commandLineKey];
   delete config[commandLineKey];
+
+  var meta = {};
+  if (config.meta) {
+    meta = config.meta;
+    delete config.meta;
+  }
+
+
+
   switch(method) {
-    case 'verifyconfig':
-      modtask.ldmod('rel:test/utils').simulateApiCall('ui/w/shell/credsrecovey:api/forgotpassword', {
-        email: config.userdata.email
-      });
-      break;
     case 'api':
       modtask.ldmod('rel:test/utils').simulateApiCall(config.api.path, config.api.queryObject);
       break;
@@ -58,25 +62,30 @@ modtask.cmdlineverbs[commandLineKey] = function() {
       var main = izymodtask.relRequire('taskrunner/main');
       var runnerConfig = izymodtask.relRequire('../configs/izy-proxy/taskrunner');
       modtask.augmentConfig(runnerConfig, config);
+      if (meta.action == 'checkconfig') {
+        return console.log(runnerConfig);
+      }
       main.run(runnerConfig);
       break;
     case 'chain':
-      var _chainConfig = {};
+      var __chainProcessorConfig = {};
       try {
-        _chainConfig = izymodtask.relRequire('../configs/izy-proxy/taskrunner');
+        __chainProcessorConfig = izymodtask.relRequire('../configs/izy-proxy/taskrunner').__chainProcessorConfig;
       } catch(e) { console.log('Warning no config found', e); }
-      izymodtask.relRequire('index').newChain([
-        [config.chain.action, config.chain.p1, config.chain.p2],
-        function(chain) {
-          console.log(chain.get('outcome'));
+      izymodtask.relRequire('index').newChain({
+        chainItems: [
+          [config.chain.action, config.chain.queryObject]
+        ],
+        __chainProcessorConfig: __chainProcessorConfig
+      }, function(outcome) {
+        if (outcome.success) {
+          delete outcome.__callstack;
+          delete outcome.__callstackStr;
+          console.log(outcome);
+        } else {
+          console.log(outcome.reason);
+          console.log(outcome.__callstackStr);
         }
-      ], function(outcome) {
-        if (!outcome.success) console.log('Error running chain: ' + outcome.reason);
-      }, {
-        // Configuration for each processor
-        'import': _chainConfig.import,
-        izynode: _chainConfig.izynode,
-        runpkg: _chainConfig.runpkg
       });
       break;
     default:

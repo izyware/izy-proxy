@@ -1,26 +1,6 @@
 var modtask = function(chainItem, cb, $chain) {
   if (!modtask.__chainProcessorConfig) modtask.__chainProcessorConfig = {};
   modtask.cacheImportedPackagesInMemory = modtask.__chainProcessorConfig.cacheImportedPackagesInMemory;
-
-  var registerChainItemProcessor = function(chainItemProcessor, __chainProcessorConfig, cb) {
-    switch(typeof(chainItemProcessor)) {
-      case 'string':
-        try {
-          modtask.ldPkgMan().ldPath(chainItemProcessor, function(outcome) {
-            if (!outcome.success) return cb(outcome);
-            var mod = outcome.data;
-            mod.__chainProcessorConfig = __chainProcessorConfig || {};
-            // doTransition is for backwards compat
-            $chain.registerChainItemProcessor(mod.doTransition ? mod.doTransition : mod);
-            return cb({ success: true });
-          });
-        } catch (e) {
-          cb({ reason: 'Cannot register chainItemProcessor: "' + chainItemProcessor + '": ' + e.message });
-        }
-        return ;
-    }
-    return cb({ reason: 'Invalid chainItemProcessor for registerChainItemProcessor' });
-  }
   var i = 0;
   var params = {};
   params.action = modtask.extractPrefix(chainItem[i++]);
@@ -28,7 +8,7 @@ var modtask = function(chainItem, cb, $chain) {
     case 'ldPath':
     case 'ldpath':
       modtask.ldPath(chainItem[i++], function(outcome) {
-        $chain.set('outcome', outcome);
+        if (!outcome.success) return $chain.chainReturnCB(outcome);
         cb();
       });
       return true;
@@ -36,16 +16,14 @@ var modtask = function(chainItem, cb, $chain) {
     case 'importPkgs':
     case 'importpkgs':
       modtask.importPkgs(chainItem[i++], function() {
-        $chain.set('outcome', {
-          success: true
-        });
+        // hmm always returning success?
         cb();
       });
       return true;
       break;
     case 'importProcessor':
-      registerChainItemProcessor(chainItem[i++], chainItem[i++], function(outcome) {
-        $chain.set('outcome', outcome);
+      modtask.importConfigureAndRegisterProcessor(chainItem[i++], chainItem[i++], $chain, function(outcome) {
+        if (!outcome.success) return $chain.chainReturnCB(outcome);
         cb();
       });
       return true;
@@ -77,7 +55,7 @@ modtask.importPkgs = function(pkgs, cb) {
   modtask.__importCache = modtask.__importCache || {};
   var pkgName = pkgs[0];
   if (modtask.cacheImportedPackagesInMemory && modtask.__importCache[pkgName]) {
-    console.log('WARNING (importPkgs), using the cache version for: ' + pkgName);
+    if (modtask.__chainProcessorConfig.verbose) console.log('WARNING (importPkgs), using the cache version for: ' + pkgName);
     return cb({
       success: true
     });
@@ -111,3 +89,23 @@ modtask.ldPkgMan = function() {
 modtask.__chainProcessorConfig = {
   verbose: false
 };
+
+modtask.importConfigureAndRegisterProcessor = function(chainItemProcessor, __chainProcessorConfig, $chain, cb) {
+  switch(typeof(chainItemProcessor)) {
+    case 'string':
+      try {
+        modtask.ldPkgMan().ldPath(chainItemProcessor, function(outcome) {
+          if (!outcome.success) return cb(outcome);
+          var mod = outcome.data;
+          mod.__chainProcessorConfig = __chainProcessorConfig || {};
+          // doTransition is for backwards compat
+          $chain.registerChainItemProcessor(mod.doTransition ? mod.doTransition : mod);
+          return cb({ success: true });
+        });
+      } catch (e) {
+        cb({ reason: 'Cannot register chainItemProcessor: "' + chainItemProcessor + '": ' + e.message });
+      }
+      return ;
+  }
+  return cb({ reason: 'Invalid chainItemProcessor for importConfigureAndRegisterProcessor' });
+}

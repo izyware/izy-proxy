@@ -11,16 +11,17 @@ var modtask = function(chainItem, cb, $chain) {
 
     var i = 0;
     var str = chainItem[i++] + '';
+
+
     if (str.indexOf('//') == 0) {
         var queryObject = chainItem[i++];
-        var destinationObj = chainItem[i++] || $chain.context;
+        var destinationObj = chainItem[i++] || $chain.chainAttachedModule || $chain.context;
         modtask.doLaunchString($chain, str, {
             queryObject: queryObject,
             destinationObj: destinationObj
-        }, function(Outcome_cbWhenLaunchDone) {
-            if (!Outcome_cbWhenLaunchDone.recordOutcome) return cb();
-            $chain.set('outcome', Outcome_cbWhenLaunchDone.outcome);
-            // backwards compat for legacy APIs using modtask.doChain(['...', queryObject, modtask]) style components
+        }, function(Outcome_whenSuccesful) {
+            $chain.set('outcome', Outcome_whenSuccesful);
+            // backwards compat for legacy APIs using ['...', queryObject, modtask] style components
             if (destinationObj) destinationObj.outcome = $chain.get('outcome');
             cb();
         });
@@ -34,26 +35,19 @@ modtask.verbose = true;
 modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchDone) {
     var apiGatewayUrls = {
         'inline': 'inline',
-        'chain': 'chain',
         'localhost': 'https://localhost/apigateway/:',
         'izyware': 'https://izyware.com/apigateway/:'
     }
 
     var parsedLaunchString = modtask.parseLaunchString(launchString, payload);
-    if (!parsedLaunchString.success) return cbWhenLaunchDone({
-        outcome: parsedLaunchString,
-        recordOutcome: true
-    });
+    if (!parsedLaunchString.success) return modtask.exitChainWithMyStackTrace($chain, parsedLaunchString.reason);
     if (!parsedLaunchString.serviceName) parsedLaunchString.serviceName = 'inline';
     var url = apiGatewayUrls[parsedLaunchString.serviceName];
     if (!url) {
         if (modtask.dontDefaultToHttpWhenServiceNameUnrecognized) {
-            return cbWhenLaunchDone({
-                outcome: {
-                    reason: 'Cannot find the proper gateway for:' + parsedLaunchString.serviceName
-                },
-                recordOutcome: true
-            });
+            return modtask.exitChainWithMyStackTrace($chain,
+              'Cannot find the proper gateway for:' + parsedLaunchString.serviceName
+            );
         }
         url = 'https://' + parsedLaunchString.serviceName + '/apigateway/:';
     }
@@ -64,10 +58,8 @@ modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchDon
     if (url == 'inline') {
         return modtask.handlers.inline($chain, cbWhenLaunchDone, parsedLaunchString, queryObject, false);
     }
-    if (url == 'chain') {
-        return modtask.handlers.inline($chain, cbWhenLaunchDone, parsedLaunchString, queryObject, true);
-    }
-    return modtask.handlers.http(cbWhenLaunchDone, parsedLaunchString, queryObject, url);
+
+    return modtask.handlers.http($chain, cbWhenLaunchDone, parsedLaunchString, queryObject, url);
 }
 
 modtask.parseLaunchString = function(url, payload) {
@@ -87,76 +79,96 @@ modtask.parseLaunchString = function(url, payload) {
     if (outcome.invokeString.indexOf('rel:') == 0) {
         var destinationObj = payload.destinationObj || {};
         if (!destinationObj.ldmod) return {
-            reason: 'rel: specified in the invokeString, but the context is not a module.' + outcome.invokeString
+            reason: 'rel: specified in the invokeString, but the context is not a module. (' + outcome.invokeString + ')'
         };
         var modname = outcome.invokeString
-        var _outcome = destinationObj.ldmod('kernel/path').toInvokeString(modname);
-        if (!_outcome.success) return _outcome;
-        outcome.invokeString = _outcome.data;
+
+        if (outcome.serviceName == 'inline') {
+            // We dont really need a full package name for inline
+            outcome.invokeString = destinationObj.ldmod('kernel/path').rel(modname.substr(4, modname.length-4));
+        } else {
+            var _outcome = destinationObj.ldmod('kernel/path').toInvokeString(modname);
+            if (!_outcome.success) return _outcome;
+            outcome.invokeString = _outcome.data;
+        }
     };
+
     return outcome;
+}
+
+modtask.exitChainWithMyStackTrace = function($chain, reason) {
+    var outcome = { reason: reason };
+    $chain.addStackTrace(outcome, {
+        module: modtask.__myname,
+        chainItem: $chain.chainItemBeingProcessed.chainItem,
+        chainindex: $chain.chainItemBeingProcessed.chainindex,
+        executionContext: 'chainHandler'
+    });
+    return $chain.chainReturnCB(outcome);
 }
 
 modtask.handlers = {};
 
-modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString, payload, chainMode) {
-    var parsed = modtask.ldmod('kernel/path').parseInvokeString(parsedLaunchString.invokeString);
-    var runModule = function() {
+modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString, queryObject) {
+    var parsed = {};
+    var doNotLoadPackage = false;
+
+    if (parsedLaunchString.invokeString == '' || parsedLaunchString.invokeString.indexOf('?') == 0) {
+        doNotLoadPackage = true;
+        parsed = {
+            mod: $chain.chainAttachedModule.__myname + parsedLaunchString.invokeString
+        };
+    } else {
+        parsed = modtask.ldmod('kernel/path').parseInvokeString(parsedLaunchString.invokeString);
+    }
+
+    // If no package specified (//inline/direct/nocolon/module), just try running it
+    if (parsed.pkg == '') doNotLoadPackage = true;
+
+    var runModule = function(moduleName) {
+        var methodToCall = '';
+        if (moduleName.indexOf('?') > -1) {
+            moduleName = moduleName.split('?');
+            methodToCall = moduleName[1];
+            moduleName = moduleName[0];
+        }
         var context = { session: modtask.sessionMod.get() };
         try {
-            if (chainMode) {
-                $chain.newChain({
-                    chainName: parsed.mod,
-                    chainItems: modtask.ldmod(parsed.mod),
-                    context: $chain.context,
-                    chainHandlers: $chain.chainHandlers
-                },
-                function(outcome) {
-                    if (!outcome.success) {
-                        cbWhenLaunchDone({
-                            recordOutcome: true,
-                            outcome: { reason: outcome.reason }
-                        });
-                    } else {
-                        cbWhenLaunchDone({ recordOutcome: false });
-                    }
-                });
-            } else {
-                modtask.ldmod(parsed.mod).sp('doChain', $chain.doChain).processQueries(
-                    payload ? JSON.parse(JSON.stringify(payload)) : payload,
-                    function(outcome) {
-                        cbWhenLaunchDone({
-                            recordOutcome: true,
-                            outcome: outcome
-                        });
-                    },
-                    context
-                );
-            }
-        } catch (e) {
-            return cbWhenLaunchDone({
-                recordOutcome: true,
-                outcome: {
-                    reason: e.message
-                }
+            var myMod = modtask.ldmod(moduleName);
+            queryObject = queryObject ? JSON.parse(JSON.stringify(queryObject)) : queryObject;
+            modtask.ldmod('rel:../../pkg/run').runJSONIOModuleInlineWithChainFeature(
+              myMod,
+              methodToCall,
+              queryObject,
+              context,
+              $chain.chainHandlers,
+              function(outcome) {
+                if (!outcome.success) return $chain.chainReturnCB(outcome);
+                cbWhenLaunchDone(outcome);
             });
+        } catch (e) {
+            return modtask.exitChainWithMyStackTrace($chain, e.message);
         }
     }
-    
+
     // If it is already loaded 'inline' (which means either it is being managed by the IDE or someone pulled it in), just run it
     if (modtask.noReimportIfAlreadyLoaded && modtask.ldmod('kernel\\selectors').objectExist(parsed.mod, {}, false)) {
-        runModule();
-        return;
+        return runModule(parsed.mod);
     }
 
-    $chain.doChain([
+    if (doNotLoadPackage) {
+        return runModule(parsed.mod);
+    }
+
+    $chain.newChainForProcessor(modtask, function() {
+        runModule(parsed.mod);
+    }, {},[
         ['frame_importpkgs', [parsed.pkg]],
-        ['returnOnFail'],
-        runModule
-     ]);
+        ['set', 'outcome', { success: true }]
+    ]);
 }
 
-modtask.handlers.http = function(cbWhenLaunchDone, parsedLaunchString, payload, url) {
+modtask.handlers.http = function($chain, cbWhenLaunchDone, parsedLaunchString, payload, url) {
     var connectionString = url + parsedLaunchString.invokeString;
 
     var headers = {};
@@ -175,19 +187,17 @@ modtask.handlers.http = function(cbWhenLaunchDone, parsedLaunchString, payload, 
       },
       function(_outcome) {
           var outcome = {};
+          // Becuase we use JSON/IO it will always be 200 (no 201, etc.)
           if (_outcome.status != 200) {
               outcome = {
                   success: false,
-                  reason: _outcome.responseText,
+                  reason: _outcome.responseText || _outcome.reason,
                   status: _outcome.status
               };
               if (outcome.status == 0 || outcome.reason == '') {
                   outcome.reason = 'Can not establish a network connection to ' + url;
               }
-              return cbWhenLaunchDone({
-                  recordOutcome: true,
-                  outcome: outcome
-              });
+              return modtask.exitChainWithMyStackTrace($chain, outcome.reason);
           }
 
           var obj;
@@ -203,10 +213,7 @@ modtask.handlers.http = function(cbWhenLaunchDone, parsedLaunchString, payload, 
                   reason: 'non outcome object returned from gateway ' + parsedLaunchString.serviceName
               };
           }
-          return cbWhenLaunchDone({
-              recordOutcome: true,
-              outcome: outcome
-          });
+          return cbWhenLaunchDone(outcome);
       });
 }
 
@@ -276,7 +283,7 @@ modtask.universalHTTP = function() {
                       cb({
                           success: true,
                           responseText: str,
-                          status: 200
+                          status: response.statusCode
                       });
                   });
               }

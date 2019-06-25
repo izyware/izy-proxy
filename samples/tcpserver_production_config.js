@@ -1,5 +1,4 @@
 var __izyNodeConfig = {
-	// WARNING: Super Admin Token, derived from account #2
 	accesstoken: '_PASTE_FROM_DASHBOARD_',
 	dataservice: '_PASTE_FROM_DASHBOARD_',
 	// Other options for restricted sandboxes are:
@@ -43,13 +42,12 @@ module.exports = {
 	// Just expose this here so that the tests can access this :-)
 	__chainProcessorConfig: __chainProcessorConfig,
   port: {
-    http: 80,
-    https: 443
-  },
-  proxy: {
-    timeoutInMs: 60000
+    http: 20080,
+    https: 20443
   },
 
+	// Array of plug-in definitions
+	plugins: [
 	{
 		name: 'http',
 		verbose: {
@@ -81,12 +79,10 @@ module.exports = {
 		],
 		__chainProcessorConfig: __chainProcessorConfig
 	},
-	// Array of plug-in definitions 
-	plugins: [
 	{
 		// Only do this while developing plug-ins
-		// This will reload the node modules for plug-in per request 
-		reloadPerRequest: false, 
+		// This will reload the node modules for plug-in per request
+		reloadPerRequest: false,
 		name: 'apigateway',
 
 		// invoke pkg prefix. If set it will allow server side extensibility
@@ -111,8 +107,8 @@ module.exports = {
 		],
 		aliases: ['.domain_to_alias_to_izyware.com'],
 		// Only do this while developing plug-ins
-		// This will reload the node modules for plug-in per request 
-		reloadPerRequest: false, 
+		// This will reload the node modules for plug-in per request
+		reloadPerRequest: false,
 		name: 'circus',
 		bootstrapUrl: 'https://izyware.com/chrome_extension.js',
 		cache: {

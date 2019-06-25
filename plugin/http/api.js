@@ -1,5 +1,4 @@
 var modtask = {};
-var modtask = {};
 modtask.__apiInterfaceType = 'jsonio';
 modtask.processQueries = function(queryObject, cb, context) {
 	context = context || {};

@@ -14,22 +14,18 @@ var modtask = function(chainItem, cb, $chain) {
       // we wont call the cb function here.
       $chain.chainReturnCB(outcome);
       return true;
-    case 'log':
-      console.log('[' + $chain.chainName + '] ' + chainItem[i++]);
-      cb();
+    case 'outcome':
+      var outcome = chainItem[i++];
+      if (typeof(outcome) != 'object') {
+        $chain.chainReturnCB({ reason: 'outcome needs to be an object'});
+        return true;
+      }
+      $chain.set('outcome', outcome);
+      $chain.chainReturnCB(outcome);
       return true;
-    case 'newChain':
-      params.chainConfig = chainItem[i++];
-      var chainConfig = {
-        chainName: params.chainConfig.chainName,
-        chainItems: params.chainConfig.chainItems,
-        context: params.chainConfig.context || $chain.context,
-        chainHandlers: params.chainConfig.chainHandlers || $chain.chainHandlers
-      };
-      $chain.newChain(chainConfig, function(outcome) {
-        $chain.set('outcome', outcome);
-        cb();
-      });
+    case 'log':
+      console.log(chainItem[i++]);
+      cb();
       return true;
     case 'set':
       $chain.set(chainItem[i++], chainItem[i++]);

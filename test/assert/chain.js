@@ -1,4 +1,4 @@
-var modtask = function(chainItem, cb, $chain) {
+var modtask = function(chainItem, next, $chain) {
   var i = 0;
   var params = {};
   params.action = chainItem[i++];
@@ -9,11 +9,11 @@ var modtask = function(chainItem, cb, $chain) {
       var testCondition = params.test;
       var objectToCheckAgainst = previousOutcome;
       var newOutcome = testObjectValues(testCondition, objectToCheckAgainst);
-      $chain.set('outcome', newOutcome)
+      $chain.set('outcome', newOutcome);
       if (!newOutcome.success) {
           return $chain.chainReturnCB(newOutcome);
       };
-      cb();
+      next();
       return true;
   }
   return false;

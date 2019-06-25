@@ -9,17 +9,39 @@ module.exports = function (config, pluginName) {
   var cloudServices = [];
   var verbose = config.verbose || { cloudServices: false };
 
+  var getImportProcessor = function(_rootmod) {
+    return _rootmod.ldmod(featureModulesPath + 'chain/processors/import').sp(
+      '__chainProcessorConfig', config.__chainProcessorConfig.import);
+  }
+
+  var getChainHandlers = function(_rootmod) {
+    return [_rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
+      _rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
+      getImportProcessor(_rootmod),
+      _rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg')
+    ];
+  };
+
   var syncCloudServiceConfig = function(cb) {
     if (verbose.cloudServices) console.log('syncing cloud service config');
-    setupMod(featureModulesPath + '../../plugin/http/api', config, {}, function (outcome) {
-      if (!outcome.success) return cb(outcome);
-      var mod = outcome.data;
-      mod.processQueries({action: 'load'}, function (outcome) {
-        if (!outcome.success) return cb(outcome);
-        cloudServices = outcome.data;
-        if (verbose.cloudServices) console.log('cloudServices', cloudServices);
-        return cb({ success: true });
-      })
+    rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
+      chainName: 'httphandle',
+      chainAttachedModule: rootmod,
+      chainItems: [
+        '//inline/' + featureModulesPath + '../../plugin/http/api?load', {}
+      ],
+      context: {},
+      chainHandlers: getChainHandlers(rootmod)
+    }, function(outcome) {
+      if (!outcome.success) {
+        if (verbose.cloudServices) {
+          console.log(outcome.reason, outcome.__callstackStr);
+        }
+        return cb(outcome);
+      }
+      cloudServices = outcome.data;
+      if (verbose.cloudServices) console.log('cloudServices', cloudServices);
+      return cb({ success: true });
     });
   };
 
@@ -63,10 +85,29 @@ module.exports = function (config, pluginName) {
         }, 'Total HTTP services: ' + cloudServices.length);
       }
       try {
-        setupMod(sessionObjs.cloudService.handlerMod, config, {}, function (outcome) {
+        var _rootmod = require('izymodtask').getRootModule();
+        getImportProcessor(_rootmod).ldPath(sessionObjs.cloudService.handlerMod, function(outcome) {
           try {
             if (outcome.success) {
-              return outcome.data.handle(serverObjs);
+              var mod = outcome.data;
+              mod.doChain = function (chainItems, _cb) {
+                if (!_cb) {
+                  _cb = function (outcome) {
+                    return serverObjs.sendStatus({
+                      status: 500,
+                      subsystem: name
+                    }, mod.__myname + ' did not specify a callback for chain');
+                  }
+                };
+                return _rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
+                  chainName: mod.__myname,
+                  chainAttachedModule: mod,
+                  chainItems: chainItems,
+                  context: mod,
+                  chainHandlers: getChainHandlers(_rootmod)
+                }, _cb);
+              };
+              return mod.handle(serverObjs);
             }
           } catch (e) {
             outcome = {reason: e.message};
@@ -85,36 +126,3 @@ module.exports = function (config, pluginName) {
     }
   };
 };
-
-
-var setupMod = function(path, config, session, cb) {
-  // One per connection
-  var rootmod = require('izymodtask').getRootModule();
-  var importProcessor = rootmod.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', config.__chainProcessorConfig.import);
-  importProcessor.ldPath(path, function(outcome) {
-    if (!outcome.success) return cb(outcome);
-    try {
-      var mod = outcome.data;
-      mod.doChain = function(chainItems, cb) {
-        if (!cb) {
-          // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
-          cb = function() {}
-        };
-        return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
-          name: 'socket',
-          chainItems: chainItems,
-          context: mod,
-          chainHandlers: [
-            rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
-            rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
-            importProcessor,
-            rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg')
-          ]
-        }, cb);
-      };
-      return cb( { success: true, data: mod });
-    } catch (e) {
-      return cb({ reason : e.message });
-    }
-  });
-}

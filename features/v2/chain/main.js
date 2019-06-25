@@ -1,6 +1,6 @@
 var modtask = {};
 
-modtask.newChain = function(cfg, _chainReturnCB) {
+modtask.wrapChainReturnCB = function(_chainReturnCB, $chain) {
   var chainReturnCB = function(outcome) {
     if (chainReturnCB.blockFurtherCallbacksToChain) {
       // this could happen for example if there was a failure early that change the execution sequence
@@ -11,36 +11,83 @@ modtask.newChain = function(cfg, _chainReturnCB) {
 
     try {
       if (!outcome.success && !outcome.chain) outcome.chain = $chain;
+
+      //
+      // If chain processing was successful (i.e. parser successfully processed everything), report context.outcome ...
+      // Not going this would
+      //  * require everyone to add a ['return'] to the end of every chain to pump the outcome to the CB which is annoying
+      //  * make for a better stacktrace because the place where things failed at would be shown, not ['ROF']
+      if (outcome.success) {
+        var contextOutcome = $chain.get('outcome');
+        if (typeof(contextOutcome) != 'object') contextOutcome = { reason: 'Chain outcome not specify and the chain is completed.' };
+        outcome = contextOutcome;
+      }
+
+      $chain.addStackTrace(outcome, {
+        module: $chain.chainName,
+        chainItem: $chain.chainItemBeingProcessed.chainItem,
+        chainindex: $chain.chainItemBeingProcessed.chainindex,
+        dynamicEval: $chain.chainItemBeingProcessed.dynamicEval,
+        executionContext: 'chainItem'
+      });
+
       if (_chainReturnCB) _chainReturnCB(outcome);
     } catch(e) {
-      return console.log('Warning. chain return function threw an exception. Capturing it here to avoid multiple calls. chainName: ', $chain.chainName);
+      return console.log('Warning. chain return function threw an exception. Capturing it here to avoid multiple calls. chainName: ', $chain.chainName, ' error: ', e.message);
     }
   }
+  return chainReturnCB;
+}
+
+modtask.newChain = function(cfg, _chainReturnCB, doNotRun) {
   var chainContext = typeof(cfg.context) == 'object' ?  cfg.context : {};
 
-  // doChain can be used to run chains in the same context as the caller i.e. features/v2/chain/processors/runpkg.js, taskrunner, etc.
-  // If cb is provided it will be called, otherwise the caller's callback will be launched
+  // should this be deprecated?
   var $chain = function(chainItems, cb) {
     if (!cb) {
       cb = chainReturnCB;
     };
     return modtask.newChain({
-      chainName: $chain.chainName + '.doChain',
+      chainName: $chain.chainName + '.chainRunner (--- this is deprecated ---)',
       chainItems: chainItems,
       context: $chain.context,
       chainHandlers: $chain.chainHandlers
     }, cb);
   };
 
+  var chainReturnCB = modtask.wrapChainReturnCB(_chainReturnCB, $chain);
+
+  var newChainForProcessor = function(processorModule, next, __context, chainItems) {
+    return newChainForModule(processorModule, function(outcome) {
+      if (!outcome.success) return $chain.chainReturnCB(outcome);
+      next();
+    }, __context, chainItems);
+  }
+
+  var newChainForModule = function(module, cb, __context, chainItems) {
+    return $chain.newChain({
+      chainName: module.__myname,
+      context: __context,
+      chainHandlers: $chain.chainHandlers,
+      chainAttachedModule: module,
+      chainItems: chainItems
+    }, cb);
+  }
+
   var propsToAdd = {
     chainName: cfg.chainName || '',
     verbose: {
       logChainItemsBeingProcessed: false
     },
-    // doChain can be used to run chains in the same context as the caller i.e. features/v2/chain/processors/runpkg.js, taskrunner, etc.
-    doChain: $chain,
+
+    doChain: function() {
+      chainReturnCB({ reason: '$chain.doChain is deprecated. Use newChainForModule/Processor instead' });
+    },
+    newChainForProcessor: newChainForProcessor,
+    newChainForModule: newChainForModule,
     newChain: modtask.newChain,
     chainReturnCB: chainReturnCB,
+    addStackTrace: modtask.addStackTrace,
     set: function(key, val) {
       chainContext[key] = val;
     },
@@ -50,7 +97,8 @@ modtask.newChain = function(cfg, _chainReturnCB) {
     registerChainItemProcessor: function() { console.log('registerChainItemProcessor_stub'); },
     chainHandlers: cfg.chainHandlers || [],
     chainItems: cfg.chainItems,
-    context: chainContext
+    context: chainContext,
+    chainAttachedModule: cfg.chainAttachedModule
   };
 
   $chain.copyKeysToNewContext = function(newContext) {
@@ -61,15 +109,19 @@ modtask.newChain = function(cfg, _chainReturnCB) {
   }
 
   $chain.copyKeysToNewContext($chain);
-
-  // This will add the 'registerChainItemProcessor' to the $chain and update chainHandlers if necceessary
-  // Will also add processChainItem
   create_processChainItemAndRegisterProcessorFunctions($chain);
-  var parser = modtask.ldmod('rel:parser').sp('$chain', $chain);
-  return parser.doChain(
-    $chain.chainItems,
-    $chain.chainReturnCB
-  );
+  var doChain = modtask.ldmod('rel:parser').sp('$chain', $chain).doChain;
+
+  if (doNotRun) {
+    return function(chainItems, cb) {
+      if (!cb) {
+        cb = _chainReturnCB;
+      };
+      return doChain(chainItems, modtask.wrapChainReturnCB(cb, $chain));
+    }
+  } else {
+    return doChain($chain.chainItems, $chain.chainReturnCB);
+  }
 }
 
 function create_processChainItemAndRegisterProcessorFunctions($chain) {
@@ -131,6 +183,31 @@ function create_processChainItemAndRegisterProcessorFunctions($chain) {
     return false;
   }
   $chain.processChainItem = processChainItem;
+}
+
+modtask.addStackTrace = function(outcome, callStackItem) {
+  if (!outcome.__callstack) outcome.__callstack = [];
+  if (!outcome.__callstackStr) outcome.__callstackStr = '';
+  outcome.__callstack.push(callStackItem);
+  var pad = function(str, n) {
+    while (str.length < n) str += ' ';
+    return str;
+  }
+  outcome.__callstackStr += '\r\n* ' + pad(callStackItem.module, 70) + ' ';
+  switch(callStackItem.executionContext) {
+    case 'chainHandler' :
+      outcome.__callstackStr += ' *CHAIN HANDLER* trying to process ';
+      break;
+    case 'chainItem':
+    default:
+      if (callStackItem.dynamicEval) {
+        outcome.__callstackStr += ' function at chain index ' + (callStackItem.chainindex * 1 + 1) + ' immediately following';
+      } else {
+        outcome.__callstackStr += ' chain index ' + callStackItem.chainindex;
+      }
+      break;
+  }
+  outcome.__callstackStr += ' [' + callStackItem.chainItem + ']';
 }
 
 

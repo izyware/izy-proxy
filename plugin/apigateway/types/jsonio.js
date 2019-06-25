@@ -1,4 +1,5 @@
-modtask.handle = function(serverObjs, mod) {
+var featureModulesPath = 'features/v2/';
+modtask.handle = function(serverObjs, mod, chainHandlers) {
     if (serverObjs.acceptAndHandleCORS()) return;
 
     var req = serverObjs.req;
@@ -17,7 +18,7 @@ modtask.handle = function(serverObjs, mod) {
             body += data;
         });
         req.on('end', function() {
-            modtask.processQuery(body, serverObjs, mod);
+            modtask.processQuery(body, serverObjs, mod, chainHandlers);
         });
         return;
     };
@@ -38,7 +39,7 @@ modtask.handle = function(serverObjs, mod) {
     }, 'Resource not found: ' + resource);
 }
 
-modtask.processQuery = function(query, serverObjs, mod) {
+modtask.processQuery = function(query, serverObjs, mod, chainHandlers) {
     var jcbEncode = function(outcome) {
         var headers = serverObjs.getCORSHeaders();
         headers['Content-Type'] = 'text/html';
@@ -55,7 +56,13 @@ modtask.processQuery = function(query, serverObjs, mod) {
 
     try {
         var context = { session: modtask.ldmod('features/v2/session/main').get() };
-        return mod.processQueries(queryObject, jcbEncode, context);
+        modtask.ldmod(featureModulesPath + 'pkg/run').runJSONIOModuleInlineWithChainFeature(
+          mod,
+          null, // methodToCall
+          queryObject,
+          context,
+          chainHandlers,
+          jcbEncode);
     } catch (e) {
         return jcbEncode({ reason: 'Cannot process query: ' + e.message });
     }

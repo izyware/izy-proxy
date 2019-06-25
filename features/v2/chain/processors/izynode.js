@@ -3,7 +3,7 @@ var modtask = function(chainItem, cb, $chain) {
   switch (chainItem[i++]) {
     case 'frame_getnode':
       $chain.set('outcome', { success: true, data: modtask.getNode() });
-      // backwards compat for modtask.doChain(['frame_getnode', modtask]) style components
+      // backwards compat for ['frame_getnode', modtask] style components
       var containerParam = chainItem[i++];
       if (containerParam) containerParam.node = $chain.get('outcome').data;
       cb();

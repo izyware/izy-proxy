@@ -36,6 +36,14 @@ module.exports = function (config, pluginName) {
       path = decodeURIComponent(path);
 
       if (config.invokePrefix && path.indexOf(config.invokePrefix) === 0) {
+
+        var chainHandlers = [
+          rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
+          rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
+          importProcessor,
+          rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg')
+        ];
+
         path = removePrefix(path, config.invokePrefix);
         return setupApiModule(path, importProcessor, config, rootmod, serverObjs, function(outcome) {
           if (outcome.success) {
@@ -43,8 +51,25 @@ module.exports = function (config, pluginName) {
               var mod = outcome.data;
               switch (mod.__apiInterfaceType) {
                 case 'jsonio':
-                  return rootmod.ldmod('plugin/apigateway/types/' + mod.__apiInterfaceType).handle(serverObjs, mod);
+                  return rootmod.ldmod('plugin/apigateway/types/' + mod.__apiInterfaceType).handle(serverObjs, mod, chainHandlers);
                 default:
+                  mod.doChain = function (chainItems, _cb) {
+                    if (!_cb) {
+                       _cb = function (outcome) {
+                         return serverObjs.sendStatus({
+                           status: 500,
+                           subsystem: name
+                         }, mod.__myname + ' did not specify a callback for chain');
+                       }
+                    };
+                    return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
+                      chainName: mod.__myname,
+                      chainAttachedModule: mod,
+                      chainItems: chainItems,
+                      context: mod,
+                      chainHandlers: chainHandlers
+                    }, _cb);
+                  };
                   return mod.handle(serverObjs);
               }
             } catch (e) {
@@ -57,7 +82,6 @@ module.exports = function (config, pluginName) {
           }, outcome.reason);
         });
       }
-
       return streamBase64Content(path, serverObjs);
     }
   };
@@ -68,23 +92,6 @@ function setupApiModule(path, importProcessor, config, rootmod, serverObjs, cb) 
     if (!outcome.success) return cb(outcome);
     try {
       var mod = outcome.data;
-      mod.doChain = function (chainItems, _cb) {
-        if (!_cb) {
-          // Optional callback function when the chain is 'returned' or errored. If no errors, outcome.success = true otherwise reason.
-          _cb = function () {}
-        };
-        return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
-          name: 'apiRoot',
-          chainItems: chainItems,
-          context: mod,
-          chainHandlers: [
-            rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
-            rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
-            importProcessor,
-            rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg')
-          ]
-        }, _cb);
-      };
       var req = serverObjs.req;
       rootmod.ldmod('features/v2/auth/localfs').resolveAuthorization(req.headers['authorization'], function(outcome) {
         if (outcome.success) {

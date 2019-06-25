@@ -192,7 +192,7 @@ function handleRequest(req, res, scheme, config) {
     return sendStatus(req, res, {
       status: 200,
       subsystem: 'server'
-    }, 'OK, version=2.0');
+    }, 'OK, version=3.0');
   }
 
   var i, handler;
