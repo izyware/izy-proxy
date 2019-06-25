@@ -44,7 +44,7 @@ Note that some configurations may require additional local packages. For example
 ### TCP Server Mode
 ```
 cd node_modules/izy-proxy
-node tcpserver/app.js (or if you are using pm2, do pm2 tcpserver/app.js)
+node tcpserver/app.js (or if you are using pm2, do pm2 start tcpserver/app.js)
 ```
 
 
@@ -514,6 +514,14 @@ for more details, visit [izyware]
 # Changelog
 
 ## V3
+* deprecated noReimportIfAlreadyLoaded since the forcepackagereload=1 for pkgrun
+* new features chain.deportPkgs and forcepackagereload=1
+    * for pkgrunner string you can do ///pkg:module?method&forcepackagereload=1
+    * this will force a chain.deportPkgs before importpkgs
+    * it will allow flexibility for customizing how the remote tasks can be updated
+    * it will work well with importpkgs and caching layer there
+        * INLINESTORE, Minicore, Kernel is scoped per rootmode  (thus so will ldonce)
+        * the __importCache is scoped per import processor
 * socket plugin and processor was upgraded to allow for an easier and more intuitive interface
     * using socketIds to communicate between the processor and clients. this should allow for embedded socket applications
     * added socket.mock ajd socket.pipe features

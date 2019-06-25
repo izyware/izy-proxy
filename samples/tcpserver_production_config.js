@@ -14,6 +14,7 @@ var __izyNodeConfig = {
 var __chainProcessorConfig = {
 	verbose: false,
 	'import': {
+		// ['importpkgs'] behavior. caches per chain instance
 		cacheImportedPackagesInMemory: true,
 		verbose: false,
 		/******************** Import Configuration for IzyCloud Pkg Loader *********************/

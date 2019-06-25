@@ -3,7 +3,6 @@ var modtask = function(chainItem, cb, $chain) {
     if (!modtask.__chainProcessorConfig) modtask.__chainProcessorConfig = {};
     modtask.dontDefaultToHttpWhenServiceNameUnrecognized = modtask.__chainProcessorConfig.dontDefaultToHttpWhenServiceNameUnrecognized;
     modtask.verbose = modtask.__chainProcessorConfig.verbose;
-    modtask.noReimportIfAlreadyLoaded = modtask.__chainProcessorConfig.noReimportIfAlreadyLoaded;
     modtask.sessionMod = modtask.__chainProcessorConfig.sessionMod || 'features/v2/session/main';
     if (typeof(modtask.sessionMod) == 'string') {
         modtask.sessionMod = modtask.ldmod(modtask.sessionMod);
@@ -53,7 +52,7 @@ modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchDon
     }
     var queryObject = payload.queryObject;
     if (modtask.verbose) {
-        console.log('runpkg(url,launchString): ', url, launchString);
+        console.log('[runpkg(url,launchString)]: ', url, launchString);
     }
     if (url == 'inline') {
         return modtask.handlers.inline($chain, cbWhenLaunchDone, parsedLaunchString, queryObject, false);
@@ -112,11 +111,29 @@ modtask.handlers = {};
 modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString, queryObject) {
     var parsed = {};
     var doNotLoadPackage = false;
+    var forcepackagereload = false;
+    var methodToCall = '';
+    var methodCallOptions = '';
 
-    if (parsedLaunchString.invokeString == '' || parsedLaunchString.invokeString.indexOf('?') == 0) {
+    if (parsedLaunchString.invokeString.indexOf('?') > -1) {
+        var options = parsedLaunchString.invokeString.split('?');
+        parsedLaunchString.invokeString = options[0];
+        methodToCall = options[1] + '';
+    };
+
+    if (methodToCall.indexOf('&') > -1) {
+        var options = methodToCall.split('&');
+        methodToCall = options[0];
+        methodCallOptions = options[1] + '';
+        if (methodCallOptions.indexOf('forcepackagereload') == 0) {
+            forcepackagereload = true;
+        }
+    }
+
+    if (parsedLaunchString.invokeString == '') {
         doNotLoadPackage = true;
         parsed = {
-            mod: $chain.chainAttachedModule.__myname + parsedLaunchString.invokeString
+            mod: $chain.chainAttachedModule.__myname
         };
     } else {
         parsed = modtask.ldmod('kernel/path').parseInvokeString(parsedLaunchString.invokeString);
@@ -126,12 +143,6 @@ modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString,
     if (parsed.pkg == '') doNotLoadPackage = true;
 
     var runModule = function(moduleName) {
-        var methodToCall = '';
-        if (moduleName.indexOf('?') > -1) {
-            moduleName = moduleName.split('?');
-            methodToCall = moduleName[1];
-            moduleName = moduleName[0];
-        }
         var context = { session: modtask.sessionMod.get() };
         try {
             var myMod = modtask.ldmod(moduleName);
@@ -151,8 +162,14 @@ modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString,
         }
     }
 
+    if (modtask.verbose) console.log('[runpkg,inline]', {
+        forcepackagereload: forcepackagereload,
+        doNotLoadPackage: doNotLoadPackage,
+        parsed: parsed
+    });
+
     // If it is already loaded 'inline' (which means either it is being managed by the IDE or someone pulled it in), just run it
-    if (modtask.noReimportIfAlreadyLoaded && modtask.ldmod('kernel\\selectors').objectExist(parsed.mod, {}, false)) {
+    if (!forcepackagereload && modtask.ldmod('kernel\\selectors').objectExist(parsed.mod, {}, false)) {
         return runModule(parsed.mod);
     }
 
@@ -163,6 +180,7 @@ modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString,
     $chain.newChainForProcessor(modtask, function() {
         runModule(parsed.mod);
     }, {},[
+        forcepackagereload ? ['chain.deportpkgs', [parsed.pkg]] : ['nop'],
         ['frame_importpkgs', [parsed.pkg]],
         ['set', 'outcome', { success: true }]
     ]);

@@ -13,6 +13,14 @@ var modtask = function(chainItem, cb, $chain) {
       });
       return true;
       break;
+    case 'deportPkgs':
+    case 'deportpkgs':
+      modtask.deportPkgs(chainItem[i++], function(outcome) {
+        if (!outcome.success) return $chain.chainReturnCB(outcome);
+        cb();
+      });
+      return true;
+      break;
     case 'importPkgs':
     case 'importpkgs':
       modtask.importPkgs(chainItem[i++], function() {
@@ -51,17 +59,34 @@ modtask.ldPath = function(path, cb) {
 }
 
 modtask.cacheImportedPackagesInMemory = false;
+modtask.deportPkgs = function(pkgs, cb) {
+  modtask.__importCache = modtask.__importCache || {};
+  var pkgName = pkgs[0];
+  try {
+    modtask.ldPkgMan().deportPackage(pkgName, function(outcome) {
+      if (!outcome.success) return cb(outcome);
+      delete modtask.__importCache[pkgName];
+      if (modtask.__chainProcessorConfig.verbose) console.log('[chain.deportPkgs]: ' + pkgName);
+      cb({ success: true });
+    });
+  } catch (e) {
+      cb({ reason: 'Cannot deportPkgs: "' + pkgName + '": ' + e.message });
+  }
+  return true;
+}
+
 modtask.importPkgs = function(pkgs, cb) {
   modtask.__importCache = modtask.__importCache || {};
   var pkgName = pkgs[0];
   if (modtask.cacheImportedPackagesInMemory && modtask.__importCache[pkgName]) {
-    if (modtask.__chainProcessorConfig.verbose) console.log('WARNING (importPkgs), using the cache version for: ' + pkgName);
+    if (modtask.__chainProcessorConfig.verbose) console.log('[chain.importPkgs] cash hit: ' + pkgName);
     return cb({
       success: true
     });
-  };
+  }
+  if (modtask.__chainProcessorConfig.verbose) console.log('[chain.importPkgs] cash miss: ' + pkgName);
   try {
-    modtask.ldPkgMan().importPackge(pkgName, function(outcome) {
+    modtask.ldPkgMan().forceImportPackage(pkgName, function(outcome) {
       if (outcome.success) modtask.__importCache[pkgName] = true;
       cb(outcome);
     });

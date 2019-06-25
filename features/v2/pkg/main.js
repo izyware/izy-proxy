@@ -1,9 +1,23 @@
 
-function importPackge(pkgPathWithoutColons, cb) {
+// Always import package even if it has already been imported before
+function forceImportPackage(pkgPathWithoutColons, cb) {
   importPackageIfNotPresent({
     pkg: pkgPathWithoutColons,
-    mod: pkgPathWithoutColons + '/package'
+    // importPackageIfNotPresent uses mod to see if package has already been imported
+    mod: null
   }, cb);
+}
+
+function deportPackage(pkgPathWithoutColons, cb) {
+  var modToPkgMap = get_modToPkgMap();
+  for(var p in modToPkgMap) {
+    if (modToPkgMap[p] == pkgPathWithoutColons) {
+      // todo: this needs to be in kernel/extstores/inline/deport
+      delete INLINESTORE[p];
+      delete modToPkgMap[p];
+    }
+  }
+  cb({ success: true });
 }
 
 function ldPath(path, cb) {
@@ -27,6 +41,16 @@ function ldParsedPath(parsed, cb) {
   });
 }
 
+// The modToPkgMap is used by
+// 1) ldmod('kernel/path').toInvokeString
+// 2) IDE
+// 3) deportPackage
+function get_modToPkgMap() {
+  var modToPkgMap = modtask.ldmod('kernel/mod').ldonce('kernel/extstores/import').modToPkgMap || {};
+  modtask.ldmod('kernel/mod').ldonce('kernel/extstores/import').modToPkgMap = modToPkgMap;
+  return modToPkgMap;
+}
+
 function importPackageIfNotPresent(query, cb) {
   if (modtask.verbose) console.log('[importPackageIfNotPresent] trying to import', query);
   var outcome = { success:true, reason: [] };
@@ -34,10 +58,13 @@ function importPackageIfNotPresent(query, cb) {
   var pkg = query.pkg;
   var mod = query.mod;
 
-  if (mod && modtask.ldmod('kernel\\selectors').objectExist(mod, {}, false)) {
+  if (!mod) {
+    if (modtask.verbose) console.log('[importPackageIfNotPresent] forcing import');
+  } else if (modtask.ldmod('kernel\\selectors').objectExist(mod, {}, false)) {
     if (modtask.verbose)  console.log('[importPackageIfNotPresent] will not load package because I found one of its modules: "' + mod + '"');
     return cb(outcome);
   }
+
   if (pkg === '') return cb(outcome);
   if (!modtask.modpkgloader) {
     return cb({ reason: 'please define modpkgloader to enable package importing' });
@@ -45,12 +72,7 @@ function importPackageIfNotPresent(query, cb) {
 
   if (modtask.verbose)  console.log('[importPackageIfNotPresent] package not loaded already so will use "' + modtask.modpkgloader.__myname + '" to load package');
 
-  // The modToPkgMap is used by
-  // 1) ldmod('kernel/path').toInvokeString
-  // 2) IDE
-  var modToPkgMap = modtask.ldmod('kernel/mod').ldonce('kernel/extstores/import').modToPkgMap || {};
-  modtask.ldmod('kernel/mod').ldonce('kernel/extstores/import').modToPkgMap = modToPkgMap;
-
+  var modToPkgMap = get_modToPkgMap();
   modtask.modpkgloader.getCloudMod(pkg).incrementalLoadPkg(
     // One of these per package :)
     function(pkgName, pkg, pkgString) {
@@ -91,4 +113,5 @@ modtask.verbose = false;
 modtask.modpkgloader = null;
 modtask.ldPath = ldPath;
 modtask.ldParsedPath = ldParsedPath;
-modtask.importPackge = importPackge;
+modtask.forceImportPackage = forceImportPackage;
+modtask.deportPackage = deportPackage;

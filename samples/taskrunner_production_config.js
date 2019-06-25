@@ -16,14 +16,11 @@ module.exports.taskrunnerProcessor = {
 
 module.exports.__chainProcessorConfig = {
      runpkg: {
-          verbose: false,
-          // When it tries to run a module in the 'inline' mode, should the we try to use the in memory version or import the package everytime?
-          // This can have performance implications but it is neccessary for remote update applications
-          // This is also closely related to the 'cacheImportedPackagesInMemory' in the import chain
-          noReimportIfAlreadyLoaded: false
+          verbose: false
      },
      'import': {
-          cacheImportedPackagesInMemory: false,
+          // ['importpkgs'] behavior. caches per chain instance
+          cacheImportedPackagesInMemory: true,
           pkgloadermodname: 'samples/pkgloader/izycloud',
           pkgloadermodconfig: {
                auth: 'FROM_IZYCLOUD_DASHBOARD_pkgloader_auth_token'
