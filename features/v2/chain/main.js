@@ -19,7 +19,7 @@ modtask.wrapChainReturnCB = function(_chainReturnCB, $chain) {
       //  * make for a better stacktrace because the place where things failed at would be shown, not ['ROF']
       if (outcome.success) {
         var contextOutcome = $chain.get('outcome');
-        if (typeof(contextOutcome) != 'object') contextOutcome = { reason: 'Chain outcome not specify and the chain is completed.' };
+        if (typeof(contextOutcome) != 'object') contextOutcome = { reason: 'WARNING, returning from a chain that did not have the "outcome" property set.' };
         outcome = contextOutcome;
       }
 

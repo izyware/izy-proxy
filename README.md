@@ -426,12 +426,15 @@ You should then edit the modtask/config/kernel/extstores/file.js and add the har
 Finally you can do:
 
 ```
+var argv = process.argv.slice(0);
 require('izy-proxy').doChain([
 	['log', 'hello world'],
 	['frame_importpkgs', 'izy.machinelearning.moduleSim'],
 	....
 ]);
 ```
+
+NOTE: require('izy-proxy') will manipulate the argv. you should always make a copy before the call as shown above.
 
 ## Enabling your apps via the Izy-Chaining scripting environment
 Your application functionality may be consumed via the universal scripting environment.

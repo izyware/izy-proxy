@@ -9,6 +9,9 @@ modtask.getCloudMod = function(pkgname) {
 }
 
 modtask.incrementalLoadPkg = function(pkgName, loadpush, okpush, failpush) {
+   if (!modtask.auth) {
+     failpush({ reason: 'pkgloader auth token is not specified. You must configure the pkgloader.' });
+   }
    return modtask.ldmod(Kernel.getModulePath('http')).callXmlHttpObject(modtask,
      'POST',
      'https://izyware.com/apigateway/:ui/ide:cloudstorage/api',
