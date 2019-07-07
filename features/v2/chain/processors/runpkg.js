@@ -31,7 +31,7 @@ var modtask = function(chainItem, cb, $chain) {
 
 modtask.verbose = true;
 
-modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchDone) {
+modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchSuccessful) {
     var apiGatewayUrls = {
         'inline': 'inline',
         'localhost': 'http://localhost/apigateway/:',
@@ -55,10 +55,10 @@ modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchDon
         console.log('[runpkg(url,launchString)]: ', url, launchString);
     }
     if (url == 'inline') {
-        return modtask.handlers.inline($chain, cbWhenLaunchDone, parsedLaunchString, queryObject, false);
+        return modtask.handlers.inline($chain, cbWhenLaunchSuccessful, parsedLaunchString, queryObject, false);
     }
 
-    return modtask.handlers.http($chain, cbWhenLaunchDone, parsedLaunchString, queryObject, url);
+    return modtask.handlers.http($chain, cbWhenLaunchSuccessful, parsedLaunchString, queryObject, url);
 }
 
 modtask.parseLaunchString = function(url, payload) {
@@ -108,7 +108,7 @@ modtask.exitChainWithMyStackTrace = function($chain, reason) {
 
 modtask.handlers = {};
 
-modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString, queryObject) {
+modtask.handlers.inline = function($chain, cbWhenLaunchSuccessful, parsedLaunchString, queryObject) {
     var parsed = {};
     var doNotLoadPackage = false;
     var forcepackagereload = false;
@@ -155,7 +155,7 @@ modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString,
               $chain.chainHandlers,
               function(outcome) {
                 if (!outcome.success) return $chain.chainReturnCB(outcome);
-                cbWhenLaunchDone(outcome);
+                cbWhenLaunchSuccessful(outcome);
             });
         } catch (e) {
             return modtask.exitChainWithMyStackTrace($chain, e.message);
@@ -186,7 +186,7 @@ modtask.handlers.inline = function($chain, cbWhenLaunchDone, parsedLaunchString,
     ]);
 }
 
-modtask.handlers.http = function($chain, cbWhenLaunchDone, parsedLaunchString, payload, url) {
+modtask.handlers.http = function($chain, cbWhenLaunchSuccessful, parsedLaunchString, payload, url) {
     var connectionString = url + parsedLaunchString.invokeString;
 
     var headers = {};
@@ -231,7 +231,8 @@ modtask.handlers.http = function($chain, cbWhenLaunchDone, parsedLaunchString, p
                   reason: 'non outcome object returned from gateway ' + parsedLaunchString.serviceName
               };
           }
-          return cbWhenLaunchDone(outcome);
+          if (!outcome.success) return modtask.exitChainWithMyStackTrace($chain, outcome.reason)
+          return cbWhenLaunchSuccessful(outcome);
       });
 }
 
