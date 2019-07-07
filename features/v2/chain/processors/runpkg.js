@@ -34,7 +34,7 @@ modtask.verbose = true;
 modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchDone) {
     var apiGatewayUrls = {
         'inline': 'inline',
-        'localhost': 'https://localhost/apigateway/:',
+        'localhost': 'http://localhost/apigateway/:',
         'izyware': 'https://izyware.com/apigateway/:'
     }
 
