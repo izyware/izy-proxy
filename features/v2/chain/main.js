@@ -68,7 +68,7 @@ modtask.newChain = function(cfg, _chainReturnCB, doNotRun) {
     return $chain.newChain({
       chainName: module.__myname,
       context: __context,
-      chainHandlers: $chain.chainHandlers,
+      chainHandlers: $chain.chainHandlers.slice(0),
       chainAttachedModule: module,
       chainItems: chainItems
     }, cb);
