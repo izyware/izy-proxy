@@ -47,6 +47,12 @@ module.exports = {
     https: 20443
   },
 
+	// Only if you have https
+	sslConfig: {
+		privatekeyPath: '../configs/izy-proxy/certificates/privatekey.pem',
+		certificatePath: '../configs/izy-proxy/certificates/certificate.pem'
+	},
+
 	// Array of plug-in definitions
 	plugins: [
 	{
@@ -54,6 +60,10 @@ module.exports = {
 		verbose: {
 			cloudServices: false
 		},
+		// inline definitions
+		domains: [
+			{ handlerMod: 'pkg:path', domain: '*.domain.to.be.tested' }
+		],
 		// in seconds
 		reloadInterval: 60,
 		__chainProcessorConfig: __chainProcessorConfig

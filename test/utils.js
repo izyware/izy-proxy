@@ -5,7 +5,7 @@ var featureModulesPath = 'features/v2/';
 
 modtask.simulateApiCall = function(path, jsonPayload) {
   if (!jsonPayload) jsonPayload = {};
-  var handleRequest = require(__dirname + '/../../server').getHandleRequestInterface();
+  var handleRequest = require(__dirname + '/../../server').getHandleRequestInterface(require(localConfigPath));
   var req = modtask.ldmod('rel:../mock/req')({
     method: 'POST',
     url: '/apigateway/:' + path,

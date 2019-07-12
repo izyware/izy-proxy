@@ -7,6 +7,8 @@ module.exports = function (config, pluginName) {
   var rootmod = require('izymodtask').getRootModule();
   var modHeader = rootmod.ldmod(featureModulesPath + 'html/headers');
   var cloudServices = [];
+  var localDefinedDomains = config.domains || [];
+
   var verbose = config.verbose || { cloudServices: false };
 
   var getImportProcessor = function(_rootmod) {
@@ -24,6 +26,7 @@ module.exports = function (config, pluginName) {
 
   var syncCloudServiceConfig = function(cb) {
     if (verbose.cloudServices) console.log('syncing cloud service config');
+    cloudServices = localDefinedDomains;
     rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
       chainName: 'httphandle',
       chainAttachedModule: rootmod,
@@ -36,10 +39,11 @@ module.exports = function (config, pluginName) {
       if (!outcome.success) {
         if (verbose.cloudServices) {
           console.log(outcome.reason, outcome.__callstackStr);
+          console.log('cloudServices', cloudServices);
         }
         return cb(outcome);
       }
-      cloudServices = outcome.data;
+      cloudServices = cloudServices.concat(outcome.data);
       if (verbose.cloudServices) console.log('cloudServices', cloudServices);
       return cb({ success: true });
     });
