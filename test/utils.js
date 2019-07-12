@@ -70,12 +70,17 @@ modtask.connectTestSocket = function(config, testSocket, testSocketConfig) {
     var serverRuntime = { serverLog: require('../../server').modtask.serverLog };
     var socket = testSocket;
     var cfg = { handlerPath: path };
-    var session = {};
+    var session = {
+      systemLog: console.log,
+      handler: {
+        plugin: 'testSocketSystem'
+      }
+    };
     var chainHandlers = require(__dirname + '/../../plugin/socket/handle').getChainHandlers(
       rootmod,
       pluginCfg, session, {});
 
-    console.log('connecting to: ' + config.path + ':' + config.port);
+    console.log('connecting to: ' + config.path + ':' + config.port + ' (tls=' + config.tls + ')');
     var sockets = {};
     rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
       chainName: 'testutil',
@@ -84,11 +89,16 @@ modtask.connectTestSocket = function(config, testSocket, testSocketConfig) {
         ['socket.connect', { ip: config.path, port: config.port, tls: config.tls, name: 'newSocket' }],
         function(chain) {
           sockets.real = chain.get('outcome').socketId;
-          chain(['socket.mock', testSocketConfig]);
+          chain([
+            ['log', 'connected: ' + sockets.real],
+            ['socket.mock', testSocketConfig]
+          ]);
         },
         function(chain) {
           sockets.mock = chain.get('outcome').socketId;
-          chain(['socket.pipe', { s1: sockets.real, s2: sockets.mock, verbose: verbose }]);
+          chain(['socket.pipe', { s1: sockets.real, s2: sockets.mock,
+            verbose: verbose.pipe
+          }]);
         }
       ],
       context: {},
@@ -97,7 +107,7 @@ modtask.connectTestSocket = function(config, testSocket, testSocketConfig) {
       if (!outcome.success) {
         return console.log(outcome);
       }
-      console.log('connected');
+      console.log('piping done successfully.');
     });
   } else {
     var pluginCfg = {

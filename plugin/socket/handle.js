@@ -41,7 +41,7 @@ modtask.onNewConnection = function(socket, serverRuntime, handler, cfg, pluginCf
 
   var session = {
     verbose: pluginCfg.verbose,
-    sessionId: modtask.connectionCounter++,
+    sessionId: 'sess_' + cfg.handlerPath + '_' + modtask.connectionCounter++,
     startTime: dt.getDateTime(),
     handler: handler,
     systemLog: serverRuntime.serverLog

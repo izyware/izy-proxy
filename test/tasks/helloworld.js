@@ -7,4 +7,3 @@ var modtask = function(chain) {
     ['set', 'outcome', { success: true, reason : 'Hello World' }]
   ]);
 }
- 

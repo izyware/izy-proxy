@@ -1,8 +1,11 @@
 
 var modtask = function(chainItem, cb, $chain) {
   if (!modtask.__chainProcessorConfig) modtask.__chainProcessorConfig = {};
-  var session = modtask.__chainProcessorConfig.session || {};
-
+  var session = modtask.__chainProcessorConfig.session || { };
+  var pluginInfo = '';
+  if (session.handler) {
+    pluginInfo = session.handler.plugin;
+  };
   // Do this only once
   if (!modtask.sockets) {
     modtask.sockets = {};
@@ -63,8 +66,9 @@ var modtask = function(chainItem, cb, $chain) {
         str += ' ' + str1;
       }
       return str;
+      return str;
     }
-    session.systemLog(`[${formatData()}] ${msg}`, 'INFO', session.handler.plugin);
+    session.systemLog(`[${formatData()}] ${msg}`, 'INFO', pluginInfo);
   }
 
   switch (params.action) {
@@ -74,7 +78,7 @@ var modtask = function(chainItem, cb, $chain) {
       return true;
     case 'socket.resetState':
       modtask.resetState(chainItem[i++], function(outcome) {
-        if (!outcome.success) $chain.chainReturnCB(outcome);
+        if (!outcome.success) return $chain.chainReturnCB(outcome);
         $chain.set('outcome', outcome);
         cb();
       });
@@ -82,48 +86,36 @@ var modtask = function(chainItem, cb, $chain) {
       break;
     case 'socket.write':
       modtask.socketWrite(chainItem[i++], function(outcome) {
-        if (!outcome.success) $chain.chainReturnCB(outcome);
+        if (!outcome.success) return $chain.chainReturnCB(outcome);
         $chain.set('outcome', outcome);
         cb();
       });
       return true;
       break;
     case 'socket.terminate':
-      var socketId = chainItem[i++];
-      if (!socketId || !modtask.sockets[socketId])
-        return $chain.chainReturnCB({ reason: 'socketId parameter should be a valid socketId' });
-      var socketWrapper = modtask.sockets[socketId];
-      var socket = socketWrapper.socket;
-      if (modtask.verbose.terminate) modtask.sessionLog('', 'socket.terminate', socketWrapper.name);
-      try {
-        if (socket.close) socket.close();
-        // this is hard disconnnect: no 'end' events will be fired and data trasnfer will immediately shutdown
-        if (socket.destroy) socket.destroy();
-        // of you can do socket.end which will flush the data, emit the 'end' event and then disconnect
-        $chain.set('outcome', { success: true });
+      modtask.socketTerminate(chainItem[i++], function(outcome) {
+        if (!outcome.success) return $chain.chainReturnCB(outcome);
+        $chain.set('outcome', outcome);
         cb();
-      } catch(e) {
-        if (modtask.verbose.error) modtask.sessionLog(e.message, 'terminate.error', socketWrapper.name);
-        $chain.chainReturnCB({ reason: e.message });
-      }
+      });
       return true;
       break;
     case 'socket.while':
       modtask.socketWhile(chainItem[i++], function(outcome) {
-        if (!outcome.success) $chain.chainReturnCB(outcome);
+        if (!outcome.success) return $chain.chainReturnCB(outcome);
         $chain.set('outcome', outcome);
         cb();
       }, $chain);
       return true;
       break;
     case 'socket.pipe':
-      var cfg = chainItem[i++];
-      modtask.socketPipe(modtask.sockets[cfg.s1].socket, modtask.sockets[cfg.s2].socket, cfg.verbose, function(outcome) {
-        if (!outcome.success) $chain.chainReturnCB(outcome);
+      modtask.socketPipe(chainItem[i++], function(outcome) {
+        if (!outcome.success) return $chain.chainReturnCB(outcome);
         $chain.set('outcome', outcome);
         cb();
       });
       return true;
+      break;
     case 'socket.mock':
       var config = chainItem[i++] || { verbose: false, responses: [] };
       var mockSocket = modtask.ldmod('rel:../../mock/socket')(config);
@@ -139,7 +131,7 @@ var modtask = function(chainItem, cb, $chain) {
       var config = chainItem[i++] || { ip: '', port: 0, tls: false, name: 'newSocket' };
       if (modtask.verbose.connect) modtask.sessionLog('', 'verbose.connect', config.name);
       modtask.createSocketConnection(config, function(outcome) {
-        if (!outcome.success) $chain.chainReturnCB(outcome);
+        if (!outcome.success) return $chain.chainReturnCB(outcome);
         var socketId = config.ip + '_' + config.port + '_' + (new Date()).getTime();
         modtask.sockets[socketId] = outcome.data;
         $chain.set('outcome', {
@@ -153,24 +145,76 @@ var modtask = function(chainItem, cb, $chain) {
   return false;
 }
 
-modtask.socketPipe = function(s1, s2, verbose, cb) {
-  var pipe = function(evtName, fnName) {
-    console.log('pipe', evtName, '->', fnName);
-    s1.on(evtName, function(p1, p2, p3) {
-      if (verbose.ondata && evtName == 'data') console.log('recieved from remote socket', JSON.stringify(p1.toString()));
-      s2[fnName](p1, p2, p3);
+modtask.socketTerminate = function(socketId, cb) {
+  if (!socketId || !modtask.sockets[socketId])
+    return cb({ reason: 'socketId parameter should be a valid socketId' });
+  var socketWrapper = modtask.sockets[socketId];
+  var socket = socketWrapper.socket;
+  if (modtask.verbose.terminate) modtask.sessionLog('', 'socket.terminate', socketWrapper.name);
+  try {
+    // this is hard disconnnect: no 'end' events will be fired and data trasnfer will immediately shutdown
+    if (socket.close) socket.close();
+    // or you can do socket.end which will flush the data, emit the 'end' event and then disconnect
+    if (socket.destroy) socket.destroy();
+    cb({ success: true });
+  } catch(e) {
+    if (modtask.verbose.error) modtask.sessionLog(e.message, 'terminate.error', socketWrapper.name);
+    cb({ reason: e.message });
+  }
+}
+
+modtask.socketPipe = function(cfg, cb) {
+  if (!modtask.sockets[cfg.s1]) return cb({ reason: 'Invalid socketId for s1: ' + cfg.s1 });
+  if (!modtask.sockets[cfg.s2]) return cb({ reason: 'Invalid socketId for s2: ' + cfg.s2 });
+
+
+  var s1 = modtask.sockets[cfg.s1].socket;
+  var s2 = modtask.sockets[cfg.s2].socket;
+  var verbose = cfg.verbose || {};
+
+  var terminationStepDone = false;
+  // This might get called a few times. The most typical would be 'end' -> 'close'
+  // Make sure we only do the termination step once
+  var tearDownConnection = function(socketIdThatEmitted, evtName, theOtherSocketId, hadError) {
+    if (verbose.teardown) console.log(socketIdThatEmitted, 'emitted', evtName);
+    if (terminationStepDone) return;
+    terminationStepDone = true;
+    modtask.socketTerminate(theOtherSocketId, function(outcome) {
+      if (hadError) return cb({ reason: 'hadError was set '});
+      return cb(outcome);
     });
-    s2.on(evtName, function(p1, p2, p3) {
-      if (verbose.writes && fnName == 'write') console.log('sending to remote socket', JSON.stringify(p1.toString()));
-      s1[fnName](p1, p2, p3);
+  }
+
+  var pipe = function(evtName, fnName) {
+    s1.on(evtName, function(data, p2, p3) {
+      if (fnName == 'close') { // must close the connection
+        tearDownConnection(cfg.s1, evtName, cfg.s2);
+        return ;
+      }
+      if (verbose.s1data && evtName == 'data') console.log('(' + cfg.s1 + '->' + cfg.s2 + ')', data.length, JSON.stringify(data.toString()));
+      s2[fnName](data, p2, p3);
+    });
+    s2.on(evtName, function(data, p2, p3) {
+      if (fnName == 'close') { // must close the connection
+        tearDownConnection(cfg.s2, evtName, cfg.s1, p2);
+        return ;
+      }
+      if (verbose.s2data && evtName == 'data') console.log('(' + cfg.s2 + '->' + cfg.s1 + ')', data.length, JSON.stringify(data.toString()));
+      s1[fnName](data, p2, p3);
     });
   }
 
   pipe('data', 'write');
+
+  // Emitted once the socket is fully closed. The argument hadError is a boolean which says if the socket was closed due to a transmission error.
   pipe('close', 'close');
+
+  /* we dont need these
+  // Emitted when an error occurs. The 'close' event will be called directly following this event.
   pipe('error', 'close');
-  pipe('end', 'destroy');
-  cb({ success: true });
+  // Emitted when the other end of the socket sends a FIN packet, thus ending the readable side of the socket
+  pipe('end', 'close');
+  */
 }
 
 modtask.socketWrite = function(config, cb) {
@@ -324,7 +368,7 @@ modtask.socketWrapper = function(socket, config) {
     };
     state.bufferedData = Buffer.concat([state.bufferedData, data]);
   });
-
+  
   var ret = {
     changed: false,
     name: config.name,
@@ -367,7 +411,7 @@ modtask.verbose = {
   writes: false,
   ondata: false,
   connect: false,
-  terminate: true,
+  terminate: false,
   error: true,
   close: false,
   end: false
