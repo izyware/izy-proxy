@@ -112,22 +112,14 @@ modtask.handlers.inline = function($chain, cbWhenLaunchSuccessful, parsedLaunchS
     var parsed = {};
     var doNotLoadPackage = false;
     var forcepackagereload = false;
-    var methodToCall = '';
-    var methodCallOptions = '';
 
-    if (parsedLaunchString.invokeString.indexOf('?') > -1) {
-        var options = parsedLaunchString.invokeString.split('?');
-        parsedLaunchString.invokeString = options[0];
-        methodToCall = options[1] + '';
-    };
+    var methodOutcome = modtask.ldmod('rel:../../pkg/run').parseMethodOptionsFromInvokeString(parsedLaunchString.invokeString);
+    var methodToCall = methodOutcome.methodToCall;
+    var methodCallOptions = methodOutcome.methodCallOptions;
+    parsedLaunchString.invokeString = methodOutcome.invokeString;
 
-    if (methodToCall.indexOf('&') > -1) {
-        var options = methodToCall.split('&');
-        methodToCall = options[0];
-        methodCallOptions = options[1] + '';
-        if (methodCallOptions.indexOf('forcepackagereload') == 0) {
-            forcepackagereload = true;
-        }
+    if (methodCallOptions.indexOf('forcepackagereload') == 0) {
+        forcepackagereload = true;
     }
 
     if (parsedLaunchString.invokeString == '') {

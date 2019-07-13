@@ -27,34 +27,51 @@ modtask.runJSONIOModuleInlineWithChainFeature = function(myMod, methodToCall, qu
       return wrapError('"' + moduleName + '" does not implement method: ' + methodToCall);
     }
 
-    if (theMethod) {
-      var doChain = chainMain.newChain({
-        chainName: moduleName,
-        chainItems: [],
-        context: {},
-        chainHandlers: chainHandlers,
-        chainAttachedModule: myMod
-      }, cb, true);
+    var doChain = chainMain.newChain({
+      chainName: moduleName,
+      chainItems: [],
+      context: {
+        queryObject: queryObject,
+        context: context
+      },
+      chainHandlers: chainHandlers,
+      chainAttachedModule: myMod
+    }, cb, true);
+    myMod.sp('doChain', doChain);
 
-      myMod.sp('doChain', doChain);
+    if (theMethod) {
       return theMethod(
         queryObject,
         cb,
         context
       );
     } else {
-      return chainMain.newChain({
-        chainName: moduleName,
-        chainItems: myMod,
-        context: {
-          queryObject: queryObject,
-          context: context
-        },
-        chainHandlers: chainHandlers,
-        chainAttachedModule: myMod
-      }, cb);
+      doChain(myMod, cb);
     }
   } catch (e) {
     return wrapError(e.message);
   }
+}
+
+modtask.parseMethodOptionsFromInvokeString = function(invokeString) {
+  var methodToCall = '';
+  var methodCallOptions = '';
+
+  if (invokeString.indexOf('?') > -1) {
+    var options = invokeString.split('?');
+    invokeString = options[0];
+    methodToCall = options[1] + '';
+  };
+
+  if (methodToCall.indexOf('&') > -1) {
+    var options = methodToCall.split('&');
+    methodToCall = options[0];
+    methodCallOptions = options[1] + '';
+  }
+
+  return {
+    invokeString: invokeString,
+    methodToCall: methodToCall,
+    methodCallOptions: methodCallOptions
+  };
 }

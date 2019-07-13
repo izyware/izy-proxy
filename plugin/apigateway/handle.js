@@ -25,9 +25,6 @@ module.exports = function (config, pluginName) {
       // fill my namespace with usable stuff
       serverObjs[name] = {};
       serverObjs[name].ldPath = importProcessor.ldPath;
-      serverObjs[name].decodeBase64Content = function(base64str) {
-        return decodeBase64Content(base64str, serverObjs);
-      };
 
       var outcome = {};
       outcome = parseClientRequest(req, config);
@@ -35,7 +32,13 @@ module.exports = function (config, pluginName) {
       path = removePrefix(path, basePath);
       path = decodeURIComponent(path);
 
+      var methodOutcome = rootmod.ldmod(featureModulesPath + 'pkg/run').parseMethodOptionsFromInvokeString(path);
+      var methodToCall = methodOutcome.methodToCall;
+      var methodCallOptions = methodOutcome.methodCallOptions;
+      path = methodOutcome.invokeString;
+
       if (config.invokePrefix && path.indexOf(config.invokePrefix) === 0) {
+        path = removePrefix(path, config.invokePrefix);
 
         var chainHandlers = [
           rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
@@ -44,33 +47,15 @@ module.exports = function (config, pluginName) {
           rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg')
         ];
 
-        path = removePrefix(path, config.invokePrefix);
         return setupApiModule(path, importProcessor, config, rootmod, serverObjs, function(outcome) {
           if (outcome.success) {
             try {
               var mod = outcome.data;
-              switch (mod.__apiInterfaceType) {
-                case 'jsonio':
-                  return rootmod.ldmod('plugin/apigateway/types/' + mod.__apiInterfaceType).handle(serverObjs, mod, chainHandlers);
-                default:
-                  mod.doChain = function (chainItems, _cb) {
-                    if (!_cb) {
-                       _cb = function (outcome) {
-                         return serverObjs.sendStatus({
-                           status: 500,
-                           subsystem: name
-                         }, mod.__myname + ' did not specify a callback for chain');
-                       }
-                    };
-                    return rootmod.ldmod(featureModulesPath + 'chain/main').newChain({
-                      chainName: mod.__myname,
-                      chainAttachedModule: mod,
-                      chainItems: chainItems,
-                      context: mod,
-                      chainHandlers: chainHandlers
-                    }, _cb);
-                  };
-                  return mod.handle(serverObjs);
+              if (mod.handle) {
+                return rootmod.ldmod('plugin/apigateway/types/rawhttp').handle(rootmod, serverObjs, mod, chainHandlers);
+              } else {
+                return rootmod.ldmod('plugin/apigateway/types/jsonio').handle(
+                  serverObjs, mod, chainHandlers, methodToCall);
               }
             } catch (e) {
               outcome = { reason: e.message };
@@ -82,7 +67,10 @@ module.exports = function (config, pluginName) {
           }, outcome.reason);
         });
       }
-      return streamBase64Content(path, serverObjs);
+      return serverObjs.sendStatus({
+        status: 404,
+        subsystem: name
+      }, 'api endpoint');
     }
   };
 };
@@ -109,48 +97,11 @@ function parseClientRequest(req, config) {
   config = config || {};
   var outcome = {};
   var domain = req.headers.host.split(':')[0];
-  var path = req.url.split('?')[0].split('#')[0];
+  var path = req.url;
   if (path.indexOf('/') != 0) {
     path = '/' + path;
   }
   outcome.path = path;
   outcome.domain = domain;
   return outcome;
-}
-
-var decodeBase64Content = function (base64str, serverObjs) {
-  // data:image/jpg;base64,....
-  var token = ';base64,';
-  var index = base64str.indexOf(token);
-  index += token.length;
-  var base64Pixels = base64str.substr(index, base64str.length - index);
-  // data:image/jpg
-  var header = base64str.substr(0, index);
-  // image/jpg
-  var contentType = header.substr(5, header.length - 5);
-
-  // Node < v6
-  var buf = new Buffer(base64Pixels, 'base64');
-
-  /* Node v6.0.0 and beyond
-  var buf = Buffer.from(base64Pixels, 'base64');
-  */
-  serverObjs.res.writeHead(200, serverObjs.getCORSHeaders({'Content-Type': contentType}));
-  return serverObjs.res.end(buf, 'binary');
-}
-
-var streamBase64Content = function(path, serverObjs)  {
-  serverObjs.apigateway.ldPath(path, function (outcome) {
-    if (outcome.success) {
-      try {
-        return decodeBase64Content(outcome.data.getImageUrl(), serverObjs);
-      } catch(e) {
-        outcome = { reason: e.message };
-      }
-    }
-    return serverObjs.sendStatus({
-      status: 500,
-      subsystem: 'streamBase64Content'
-    }, outcome.reason);
-  });
 }
