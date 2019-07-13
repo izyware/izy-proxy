@@ -274,6 +274,10 @@ function initModtask(config) {
   return modtask;
 };
 
+module.exports.instantiateWithConfig = function(config) {
+  return initModtask(config);
+}
+
 module.exports.run = function run(config) {
   var modtask = initModtask(config);
   modtask.serverLog(`Run`, 'INFO');
