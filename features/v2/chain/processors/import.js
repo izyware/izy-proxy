@@ -97,18 +97,18 @@ modtask.importPkgs = function(pkgs, cb) {
 
 modtask.ldPkgMan = function() {
   var cfg = modtask.__chainProcessorConfig || {};
-  if (!cfg.pkgloadermodname) {
-    throw new Error('processors.import cannot find a package loader. you must specify a pkgloader in the configuration');
-  }
-  if (!cfg.pkgloadermodconfig) cfg.pkgloadermodconfig = {};
-  var modpkgloader = modtask.ldmod(cfg.pkgloadermodname);
+  var modpkgloader = null;
+  if (cfg.pkgloadermodname) {
+    if (!cfg.pkgloadermodconfig) cfg.pkgloadermodconfig = {};
+    modpkgloader = modtask.ldmod(cfg.pkgloadermodname);
 
-  var p;
-  for(var p in cfg.pkgloadermodconfig) {
-    modpkgloader.sp(p, cfg.pkgloadermodconfig[p]);
+    var p;
+    for (var p in cfg.pkgloadermodconfig) {
+      modpkgloader.sp(p, cfg.pkgloadermodconfig[p]);
+    }
   }
   var featureModulesPath = 'features/v2/';
-  return modtask.ldmod(featureModulesPath + 'pkg/main').sp('verbose', modtask.__chainProcessorConfig.verbose).sp('modpkgloader', modpkgloader);
+  return modtask.ldmod(featureModulesPath + 'pkg/main').sp('verbose', cfg.verbose).sp('modpkgloader', modpkgloader);
 }
 
 modtask.__chainProcessorConfig = {
