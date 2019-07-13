@@ -3,9 +3,17 @@ var modtask = {};
 var localConfigPath = '../../../configs/izy-proxy/tcpserver';
 var featureModulesPath = 'features/v2/';
 
+modtask.getServerModule = function() {
+  return require(__dirname + '/../../server');
+}
+
+modtask.getServerConfig = function() {
+  return require(localConfigPath);
+}
+
 modtask.simulateApiCall = function(path, jsonPayload) {
   if (!jsonPayload) jsonPayload = {};
-  var handleRequest = require(__dirname + '/../../server').getHandleRequestInterface(require(localConfigPath));
+  var handleRequest = modtask.getServerModule().getHandleRequestInterface(modtask.getServerConfig());
   var req = modtask.ldmod('rel:../mock/req')({
     method: 'POST',
     url: '/apigateway/:' + path,
@@ -67,7 +75,6 @@ modtask.connectTestSocket = function(config, testSocket, testSocketConfig) {
     };
 
     var rootmod = require('izymodtask').getRootModule();
-    var serverRuntime = { serverLog: require('../../server').modtask.serverLog };
     var socket = testSocket;
     var cfg = { handlerPath: path };
     var session = {
@@ -119,7 +126,8 @@ modtask.connectTestSocket = function(config, testSocket, testSocketConfig) {
         name: 'test'
       }
     };
-    var serverRuntime = { serverLog: require('../../server').modtask.serverLog };
+
+    var serverRuntime = modtask.getServerModule().instantiateWithConfig(modtask.getServerConfig());
     var socket = testSocket;
     var cfg = { handlerPath: path };
     require(__dirname + '/../../plugin/socket/handle').onNewConnection(socket,
