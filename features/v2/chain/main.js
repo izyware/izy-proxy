@@ -1,6 +1,6 @@
 var modtask = {};
 
-modtask.wrapChainReturnCB = function(_chainReturnCB, $chain) {
+modtask.wrapChainReturnCB = function(_chainReturnCB, $chain, handlerWhenChainReturnCBThrows) {
   var chainReturnCB = function(outcome) {
     if (chainReturnCB.blockFurtherCallbacksToChain) {
       // this could happen for example if there was a failure early that change the execution sequence
@@ -33,13 +33,16 @@ modtask.wrapChainReturnCB = function(_chainReturnCB, $chain) {
 
       if (_chainReturnCB) _chainReturnCB(outcome);
     } catch(e) {
+      if (handlerWhenChainReturnCBThrows) {
+        return handlerWhenChainReturnCBThrows({ reason: e.message })
+      }
       return console.log('Warning. chain return function threw an exception. Capturing it here to avoid multiple calls. chainName: ', $chain.chainName, ' error: ', e.message);
     }
-  }
+  };
   return chainReturnCB;
 }
 
-modtask.newChain = function(cfg, _chainReturnCB, doNotRun) {
+modtask.newChain = function(cfg, _chainReturnCB, doNotRun, handlerWhenChainReturnCBThrows) {
   var chainContext = typeof(cfg.context) == 'object' ?  cfg.context : {};
 
   // should this be deprecated?
@@ -55,7 +58,7 @@ modtask.newChain = function(cfg, _chainReturnCB, doNotRun) {
     }, cb);
   };
 
-  var chainReturnCB = modtask.wrapChainReturnCB(_chainReturnCB, $chain);
+  var chainReturnCB = modtask.wrapChainReturnCB(_chainReturnCB, $chain, handlerWhenChainReturnCBThrows);
 
   var newChainForProcessor = function(processorModule, next, __context, chainItems) {
     return newChainForModule(processorModule, function(outcome) {
@@ -117,7 +120,7 @@ modtask.newChain = function(cfg, _chainReturnCB, doNotRun) {
       if (!cb) {
         cb = _chainReturnCB;
       };
-      return doChain(chainItems, modtask.wrapChainReturnCB(cb, $chain));
+      return doChain(chainItems, modtask.wrapChainReturnCB(cb, $chain, handlerWhenChainReturnCBThrows));
     }
   } else {
     return doChain($chain.chainItems, $chain.chainReturnCB);
