@@ -26,7 +26,6 @@ modtask.connectionCounter  = 0;
 modtask.onNewConnection = function(socket, serverRuntime, handler, cfg, pluginCfg, cb) {
   var rootmod = require('izymodtask').getRootModule();
   var dt = rootmod.ldmod('core/datetime');
-
   if (!cb) {
     cb = function(outcome) {
       if (!outcome.success) {
@@ -37,8 +36,8 @@ modtask.onNewConnection = function(socket, serverRuntime, handler, cfg, pluginCf
         }
       }
     }
-  }
-
+  };
+  
   var session = {
     verbose: pluginCfg.verbose,
     sessionId: 'sess_' + cfg.handlerPath + '_' + modtask.connectionCounter++,
@@ -47,21 +46,21 @@ modtask.onNewConnection = function(socket, serverRuntime, handler, cfg, pluginCf
     systemLog: serverRuntime.serverLog
   };
 
-  setupHandlerMod(pluginCfg, cfg, session, function(outcome) {
+  var chainHandlers = module.exports.getChainHandlers(
+    rootmod,
+    pluginCfg,
+    session, {
+      newIncoming: socket
+    }
+  );
+  var importProcessor = chainHandlers[0];
+  setupHandlerMod(importProcessor, pluginCfg, cfg, session, function(outcome) {
     if (!outcome.success) return cb(outcome);
     var mod = outcome.data;
-    var chainHandlers = module.exports.getChainHandlers(
-      rootmod,
-      pluginCfg,
-      session, {
-        newIncoming: socket
-      }
-    );
-
     rootmod.ldmod(featureModulesPath + 'pkg/run').runJSONIOModuleInlineWithChainFeature(
       mod,
-      null, // methodToCall
-      { action: 'newIncoming', socketId: 'newIncoming' },
+      'newIncoming',
+      { socketId: 'newIncoming' },
       { session: session },
       chainHandlers,
       cb);
@@ -89,12 +88,9 @@ module.exports = function (config, pluginName) {
   };
 };
 
-var setupHandlerMod = function(config, portCfg, session, cb) {
+var setupHandlerMod = function(importProcessor, config, portCfg, session, cb) {
   // One per connection
-  var rootmod = require('izymodtask').getRootModule();
-  var pkgmain = rootmod.ldmod(featureModulesPath + 'pkg/main');
-
-  pkgmain.ldPath(portCfg.handlerPath, function(outcome) {
+  importProcessor.ldPath(portCfg.handlerPath, function(outcome) {
     if (!outcome.success) return cb(outcome);
     try {
       var mod = outcome.data;
@@ -109,14 +105,14 @@ module.exports.onNewConnection = modtask.onNewConnection;
 
 module.exports.getChainHandlers = function(rootmod, pluginCfg, session, sockets) {
   var ret = [
+    rootmod.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', pluginCfg.__chainProcessorConfig.import),
     rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
     rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', pluginCfg.__chainProcessorConfig.izynode),
-    rootmod.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', pluginCfg.__chainProcessorConfig.import),
     rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg'),
     rootmod.ldmod(featureModulesPath + '../../plugin/socket/chainprocessor').sp('__chainProcessorConfig', {
       session: session,
       sockets: sockets
-    }),
+    })
   ];
   return ret;
 }
