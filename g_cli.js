@@ -49,8 +49,6 @@ modtask.cmdlineverbs[commandLineKey] = function() {
     delete config.meta;
   }
 
-
-
   switch(method) {
     case 'api':
       modtask.ldmod('rel:test/utils').simulateApiCall(config.api.path, config.api.queryObject);
@@ -69,8 +67,12 @@ modtask.cmdlineverbs[commandLineKey] = function() {
       break;
     case 'chain':
       var __chainProcessorConfig = {};
+      if (!config.chain.relConfigFile) {
+        config.chain.relConfigFile = '../configs/izy-proxy/taskrunner';
+      }
       try {
-        __chainProcessorConfig = izymodtask.relRequire('../configs/izy-proxy/taskrunner').__chainProcessorConfig;
+        console.log('Loading config: ', config.chain.relConfigFile);
+        __chainProcessorConfig = izymodtask.relRequire(config.chain.relConfigFile).__chainProcessorConfig;
       } catch(e) { console.log('Warning no config found', e); }
       izymodtask.relRequire('index').newChain({
         chainItems: [
