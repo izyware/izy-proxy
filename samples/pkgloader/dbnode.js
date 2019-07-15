@@ -18,6 +18,7 @@ modtask.getCloudMod = function(remote_pkgname) {
       releaseEnabled: false
     });
   } catch(e) {
+    console.log('**** WARNING ****: getCloudModule for dbnode: (' + e.message + ')');
     return {
       incrementalLoadPkg: function(loadpush, okpush, failpush) {
         return failpush({ reason: e.message });

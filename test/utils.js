@@ -112,6 +112,7 @@ modtask.connectTestSocket = function(config, testSocket, testSocketConfig) {
       chainHandlers: chainHandlers
     }, function(outcome) {
       if (!outcome.success) {
+        delete outcome.chain;
         return console.log(outcome);
       }
       console.log('piping done successfully.');
