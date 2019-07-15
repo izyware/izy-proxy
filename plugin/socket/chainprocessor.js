@@ -173,7 +173,7 @@ modtask.socketPipe = function(cfg, cb) {
   var verbose = cfg.verbose || {};
 
   var terminationStepDone = false;
-  // This might get called a few times. The most typical would be 'end' -> 'close'
+  // This might get called a few times ??? (if nodejs framework bugs, etc.)
   // Make sure we only do the termination step once
   var tearDownConnection = function(socketIdThatEmitted, evtName, theOtherSocketId, hadError) {
     if (verbose.teardown) console.log(socketIdThatEmitted, 'emitted', evtName);
@@ -185,36 +185,32 @@ modtask.socketPipe = function(cfg, cb) {
     });
   }
 
-  var pipe = function(evtName, fnName) {
-    s1.on(evtName, function(data, p2, p3) {
-      if (fnName == 'close') { // must close the connection
-        tearDownConnection(cfg.s1, evtName, cfg.s2);
-        return ;
-      }
-      if (verbose.s1data && evtName == 'data') console.log('(' + cfg.s1 + '->' + cfg.s2 + ')', data.length, JSON.stringify(data.toString()));
-      s2[fnName](data, p2, p3);
-    });
-    s2.on(evtName, function(data, p2, p3) {
-      if (fnName == 'close') { // must close the connection
-        tearDownConnection(cfg.s2, evtName, cfg.s1, p2);
-        return ;
-      }
-      if (verbose.s2data && evtName == 'data') console.log('(' + cfg.s2 + '->' + cfg.s1 + ')', data.length, JSON.stringify(data.toString()));
-      s1[fnName](data, p2, p3);
-    });
+  var copyBufferAndConnect = function(socketIdFrom, socketIdTo, _verbose) {
+    var izySocketFrom = modtask.sockets[socketIdFrom];
+    var izySocketTo = modtask.sockets[socketIdTo];
+    izySocketFrom.onData = function(data) {
+      if (_verbose) console.log('(' + socketIdFrom + '->' + socketIdTo + ')', data.length, JSON.stringify(data.toString()));
+      izySocketTo.socket.write(data);
+    };
+    var bufferedData = izySocketFrom.state.bufferedData;
+    if (bufferedData.length) {
+      izySocketTo.socket.write(bufferedData);
+      izySocketFrom.reset();
+    }
+  };
+
+  copyBufferAndConnect(cfg.s1, cfg.s2, verbose.s1data);
+  copyBufferAndConnect(cfg.s2, cfg.s1, verbose.s2data);
+
+  // close is emitted once the socket is fully closed. The argument hadError is a boolean which says if the socket was closed due to a transmission error.
+  // note we dont really need to subscribe to 'error' and 'end' events because they will eventually call close
+  modtask.sockets[cfg.s1].onClose = function(hadError) {
+    tearDownConnection(cfg.s1, 'close', cfg.s2, hadError);
   }
 
-  pipe('data', 'write');
-
-  // Emitted once the socket is fully closed. The argument hadError is a boolean which says if the socket was closed due to a transmission error.
-  pipe('close', 'close');
-
-  /* we dont need these
-  // Emitted when an error occurs. The 'close' event will be called directly following this event.
-  pipe('error', 'close');
-  // Emitted when the other end of the socket sends a FIN packet, thus ending the readable side of the socket
-  pipe('end', 'close');
-  */
+  modtask.sockets[cfg.s2].onClose = function(hadError) {
+    tearDownConnection(cfg.s2, 'close', cfg.s1, hadError);
+  }
 }
 
 modtask.socketWrite = function(config, cb) {
@@ -344,11 +340,11 @@ modtask.socketWrapper = function(socket, config) {
     };
   });
 
-  socket.on('close', function () {
+  socket.on('close', function (hadError) {
     if (modtask.verbose.close) modtask.sessionLog('socket connection was closed', 'socket.close', ret.name);
     ret.changed = true;
     if (ret.onClose) {
-      return ret.onClose();
+      return ret.onClose(hadError);
     };
   });
 
