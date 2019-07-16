@@ -6,7 +6,7 @@ modtask.getCloudMod = function(remote_pkgname) {
     packagename :  remote_pkgname,
     url : 'dbnode',
     mode : 'dbnode',
-    idtoken : '1234567890abcde',
+    idtoken : '0000000000000000',
     apptoken : remote_pkgname
   };
   try {
