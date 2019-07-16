@@ -55,7 +55,7 @@ modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchSuc
         console.log('[runpkg(url,launchString)]: ', url, launchString);
     }
     if (url == 'inline') {
-        return modtask.handlers.inline($chain, cbWhenLaunchSuccessful, parsedLaunchString, queryObject, false);
+        return modtask.handlers.inline($chain, cbWhenLaunchSuccessful, parsedLaunchString, queryObject);
     }
 
     return modtask.handlers.http($chain, cbWhenLaunchSuccessful, parsedLaunchString, queryObject, url);
@@ -138,6 +138,9 @@ modtask.handlers.inline = function($chain, cbWhenLaunchSuccessful, parsedLaunchS
         var context = { session: modtask.sessionMod.get() };
         try {
             var myMod = modtask.ldmod(moduleName);
+            if (typeof(queryObject) == 'undefined' || queryObject == null) {
+                queryObject = {};
+            }
             queryObject = queryObject ? JSON.parse(JSON.stringify(queryObject)) : queryObject;
             modtask.ldmod('rel:../../pkg/run').runJSONIOModuleInlineWithChainFeature(
               myMod,
@@ -178,8 +181,17 @@ modtask.handlers.inline = function($chain, cbWhenLaunchSuccessful, parsedLaunchS
     ]);
 }
 
-modtask.handlers.http = function($chain, cbWhenLaunchSuccessful, parsedLaunchString, payload, url) {
+modtask.handlers.http = function($chain, cbWhenLaunchSuccessful, parsedLaunchString, queryObject, url) {
     var connectionString = url + parsedLaunchString.invokeString;
+
+    /* when //service/?method */
+    var methodOutcome = modtask.ldmod('rel:../../pkg/run').parseMethodOptionsFromInvokeString(parsedLaunchString.invokeString);
+    if (methodOutcome.invokeString == '') {
+        var modname = $chain.chainAttachedModule.__myname;
+        var _outcome = modtask.ldmod('kernel/path').toInvokeString(modname);
+        if (!_outcome.success) return modtask.exitChainWithMyStackTrace($chain, _outcome.reason);
+        connectionString = url + _outcome.data + '?' + methodOutcome.methodToCall;
+    }
 
     var headers = {};
     headers['Content-type'] = 'application/x-www-form-urlencoded';
@@ -189,11 +201,22 @@ modtask.handlers.http = function($chain, cbWhenLaunchSuccessful, parsedLaunchStr
     } catch (e) {}
     if (authorization) headers['authorization'] = authorization;
 
+    if (typeof(queryObject) == 'undefined' || queryObject == null) {
+        queryObject = {};
+    }
+    var bodyStr = '';
+    try {
+        bodyStr = JSON.stringify(queryObject);
+        if (!bodyStr) bodyStr = JSON.stringify({});
+    } catch(e) {
+        return modtask.exitChainWithMyStackTrace($chain, { reason: 'Invalid queryObject parameter: ' + e.message });
+    }
+
     modtask.universalHTTP().sendRequest({
           method: 'POST',
           url: connectionString,
           headers: headers,
-          body: JSON.stringify(payload)
+          body: bodyStr
       },
       function(_outcome) {
           var outcome = {};
