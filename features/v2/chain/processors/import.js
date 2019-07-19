@@ -91,7 +91,9 @@ modtask.importPkgs = function(pkgs, cb) {
       cb(outcome);
     });
   } catch (e) {
-    cb({ reason: 'Cannot importPkgs: "' + pkgName + '": ' + e.message });
+    var outcome = { reason: 'Cannot importPkgs: "' + pkgName + '": ' + e.message };
+    if (modtask.__chainProcessorConfig.verbose) console.log('[chain.importPkgs] error: ' + outcome.reason);
+    cb(outcome);
   }
 }
 
@@ -107,8 +109,7 @@ modtask.ldPkgMan = function() {
       modpkgloader.sp(p, cfg.pkgloadermodconfig[p]);
     }
   }
-  var featureModulesPath = 'features/v2/';
-  return modtask.ldmod(featureModulesPath + 'pkg/main').sp('verbose', cfg.verbose).sp('modpkgloader', modpkgloader);
+  return modtask.ldmod('rel:../../pkg/main').sp('verbose', cfg.verbose).sp('modpkgloader', modpkgloader);
 }
 
 modtask.__chainProcessorConfig = {
