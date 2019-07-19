@@ -73,7 +73,10 @@ function importPackageIfNotPresent(query, cb) {
   if (modtask.verbose)  console.log('[importPackageIfNotPresent] package not loaded already so will use "' + modtask.modpkgloader.__myname + '" to load package');
 
   var modToPkgMap = get_modToPkgMap();
-  modtask.modpkgloader.getCloudMod(pkg).incrementalLoadPkg(
+  modtask.modpkgloader.getCloudMod(pkg, {
+    loadDeps: true,
+    releaseEnabled: true
+  }).incrementalLoadPkg(
     // One of these per package :)
     function(pkgName, pkg, pkgString) {
       try {

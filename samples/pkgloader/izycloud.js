@@ -1,14 +1,16 @@
 
 var modtask = function() {};
-modtask.getCloudMod = function(pkgname) {
+modtask.getCloudMod = function(pkgname, options) {
    return {
       incrementalLoadPkg: function(loadpush, okpush, failpush) {
-         return modtask.incrementalLoadPkg(pkgname, loadpush, okpush, failpush);
+         return modtask.incrementalLoadPkg(pkgname, options, loadpush, okpush, failpush);
       }
    };
 }
 
-modtask.incrementalLoadPkg = function(pkgName, loadpush, okpush, failpush) {
+modtask.incrementalLoadPkg = function(pkgName, options, loadpush, okpush, failpush) {
+   if (!options) options = {};
+
    if (!modtask.auth) {
      return failpush({ reason: 'pkgloader auth token is not specified. You must configure the pkgloader.' });
    }
@@ -20,7 +22,10 @@ modtask.incrementalLoadPkg = function(pkgName, loadpush, okpush, failpush) {
         action: 'incrementalLoadPkg',
         pkgName: pkgName,
         // todo, this needs to be passed as HTTP header (cookie, auth header, etc.)
-        auth: modtask.auth
+        auth: modtask.auth,
+        ide: options.ide,
+        loadDeps: options.loadDeps,
+        releaseEnabled: options.releaseEnabled
      }),
      'application/x-www-form-urlencoded', // contenttype,
      null, // auth,
