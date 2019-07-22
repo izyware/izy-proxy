@@ -1,7 +1,7 @@
 
 var modtask = function() {};
 modtask.getCloudMod = function(remote_pkgname) {
-  var node = modtask.ldmod('ui/node/direct').sp(modtask.__izyNodeConfig).sp('verbose', modtask.__izyNodeConfig.verbose);
+  var node = modtask.ldmod('features/v2/node/generic').getNode(modtask.__izyNodeConfig);
   var state = {
     packagename :  remote_pkgname,
     url : 'dbnode',
@@ -9,6 +9,7 @@ modtask.getCloudMod = function(remote_pkgname) {
     idtoken : '0000000000000000',
     apptoken : remote_pkgname
   };
+
   try {
     return modtask.ldmod('components/pkgman/dbnode').sp({
       node: node,
