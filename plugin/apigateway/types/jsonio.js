@@ -32,7 +32,7 @@ modtask.processQuery = function(query, serverObjs, mod, chainHandlers, methodToC
             retStr = JSON.stringify({ reason: e.message });
         }
         var headers = serverObjs.getCORSHeaders();
-        headers['Content-Type'] = 'text/html';
+        headers['Content-Type'] = 'text/html; charset=utf-8';
         serverObjs.res.writeHead(200, headers);
         serverObjs.res.end(retStr);
     };
