@@ -250,7 +250,7 @@ function initModtask(config) {
 
   function sendStatus(req, res, info, msg) {
     msg = msg || '';
-    info.headers = info.headers || getCORSHeaders({'Content-Type': 'text/html'});
+    info.headers = info.headers || getCORSHeaders({'Content-Type': 'text/html; charset=utf-8'});
     res.writeHead(info.status, info.headers);
     info.host = req.headers.host;
     info.url = req.url;

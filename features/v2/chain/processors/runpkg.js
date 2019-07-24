@@ -194,7 +194,7 @@ modtask.handlers.http = function($chain, cbWhenLaunchSuccessful, parsedLaunchStr
     }
 
     var headers = {};
-    headers['Content-type'] = 'application/x-www-form-urlencoded';
+    headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
     var authorization = null;
     try {
         authorization = 'Bearer ' + modtask.sessionMod.get().authorizationToken;

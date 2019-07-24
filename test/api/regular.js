@@ -15,7 +15,7 @@ modtask.handle = function(serverObjs) {
         ['frame_importpkgs', ['kernel']]
     ], function(outcome) {
         var headers = serverObjs.getCORSHeaders();
-        headers['Content-Type'] = 'text/html';
+        headers['Content-Type'] = 'text/html; charset=utf-8';
         serverObjs.res.writeHead(200, headers);
         delete outcome.__callstack;
         serverObjs.res.end(JSON.stringify(outcome));
