@@ -37,9 +37,41 @@ modtask.augmentConfig = function(cfg, more) {
   }
 }
 
+modtask.expandStringEncodedConfigValues = function(config, outcome) {
+  if (!outcome) outcome = {};
+  var p;
+  for(p in config) {
+    switch(typeof(config[p])) {
+      case 'string':
+        var token = 'json:';
+        if (config[p].indexOf(token) == 0) {
+          try {
+            config[p] = JSON.parse(config[p].substr(token.length, config[p].length - token.length));
+          } catch(e) {
+            outcome.success = false;
+            outcome.reason = 'cannot parse ' + config[p] + ': ' + e.message;
+            return outcome;
+          }
+        }
+        break;
+      case 'object':
+        modtask.expandStringEncodedConfigValues(config[p], outcome);
+        if (!outcome.success) return outcome;
+        break;
+    }
+  }
+  outcome.success = true;
+  return outcome;
+}
+
 modtask.cmdlineverbs[commandLineKey] = function() {
   var izymodtask = modtask.ldmod('izymodtask/index');
   var config = izymodtask.extractConfigFromCmdLine(commandLineKey);
+  var outcome = modtask.expandStringEncodedConfigValues(config);
+  if (!outcome.success) {
+    return console.log(outcome);
+  }
+
   var method = config[commandLineKey];
   delete config[commandLineKey];
 
