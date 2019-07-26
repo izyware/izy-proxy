@@ -37,7 +37,7 @@ function ldParsedPath(parsed, cb) {
     } catch (e) {
       reason = e.message;
     }
-    return cb( { reason });
+    return cb( { reason: reason });
   });
 }
 
