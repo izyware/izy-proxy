@@ -23,8 +23,8 @@ var modtask = function(chainItem, cb, $chain) {
       break;
     case 'importPkgs':
     case 'importpkgs':
-      modtask.importPkgs(chainItem[i++], function() {
-        // hmm always returning success?
+      modtask.importPkgs(chainItem[i++], function(outcome) {
+        if (!outcome.success) return $chain.chainReturnCB(outcome);
         cb();
       });
       return true;
@@ -76,6 +76,9 @@ modtask.deportPkgs = function(pkgs, cb) {
 }
 
 modtask.importPkgs = function(pkgs, cb) {
+  if (typeof(pkgs) != 'object' || pkgs.length != 1) {
+    return cb({ reason: 'importpkgs only accepts and array of length 1' });
+  }
   modtask.__importCache = modtask.__importCache || {};
   var pkgName = pkgs[0];
   if (modtask.cacheImportedPackagesInMemory && modtask.__importCache[pkgName]) {
