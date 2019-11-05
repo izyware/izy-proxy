@@ -20,7 +20,7 @@ module.exports = function (config, pluginName) {
     return [_rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
       _rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
       getImportProcessor(_rootmod),
-      _rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg')
+      _rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg').sp('__chainProcessorConfig', config.__chainProcessorConfig.runpkg)
     ];
   };
 

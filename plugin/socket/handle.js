@@ -108,7 +108,7 @@ module.exports.getChainHandlers = function(rootmod, pluginCfg, session, sockets)
     rootmod.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', pluginCfg.__chainProcessorConfig.import),
     rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
     rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', pluginCfg.__chainProcessorConfig.izynode),
-    rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg'),
+    rootmod.ldmod(featureModulesPath + 'chain/processors/runpkg').sp('__chainProcessorConfig', pluginCfg.__chainProcessorConfig.runpkg),
     rootmod.ldmod(featureModulesPath + '../../plugin/socket/chainprocessor').sp('__chainProcessorConfig', {
       session: session,
       sockets: sockets
