@@ -111,7 +111,7 @@ module.exports = function (config, pluginName) {
                   chainHandlers: getChainHandlers(_rootmod)
                 }, _cb);
               };
-              return mod.handle(serverObjs);
+              return mod.handle(serverObjs, { sessionObjs: sessionObjs });
             }
           } catch (e) {
             outcome = {reason: e.message};
