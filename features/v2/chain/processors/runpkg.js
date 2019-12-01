@@ -39,8 +39,9 @@ modtask.doLaunchString = function($chain, launchString, payload, cbWhenLaunchSuc
     }
 
     var parsedLaunchString = modtask.parseLaunchString(launchString, payload);
+
     if (!parsedLaunchString.success) return modtask.exitChainWithMyStackTrace($chain, parsedLaunchString.reason);
-    if (!parsedLaunchString.serviceName) parsedLaunchString.serviceName = 'inline';
+    if (!parsedLaunchString.serviceName) return modtask.exitChainWithMyStackTrace($chain, '/// launch string is ambigous, did you mean //inline/?');
     var url = apiGatewayUrls[parsedLaunchString.serviceName];
     if (!url) {
         if (modtask.dontDefaultToHttpWhenServiceNameUnrecognized) {

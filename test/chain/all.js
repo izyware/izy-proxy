@@ -48,6 +48,31 @@ function testV3() {
       });
     },
 
+    ['log', '/// launch pattern should fail even if the module path is valid'],
+    ['set', 'outcome', { success: true }],
+    function(chain) {
+      chain.newChain({
+        chainName: 'fakeModule',
+        context: {},
+        chainHandlers: chain.chainHandlers,
+        chainAttachedModule: { __myname: 'fakeModule'},
+        chainItems: [
+          ['///izy-proxy/test/chain/module_setting_the_outcome', {
+            success: true,
+            reason: 'just testing'
+          }]
+        ]
+      }, function(outcome) {
+        if (outcome.success) {
+          return chain([
+            ['set', 'outcome', { reason: 'expected /// to fail' }],
+            ['return']
+          ]);
+        };
+        chain(['continue']);
+      });
+    },
+
     ['log', 'bad url should fail'],
     function(chain) {
       chain.newChain({
