@@ -88,6 +88,15 @@ modtask.cmdlineverbs[commandLineKey] = function() {
     case 'socket':
       modtask.ldmod('rel:test/utils').simulateSocketIO(config.socket);
       break;
+    case 'tcpserver':
+      var main = izymodtask.relRequire('server');
+      var runnerConfig = izymodtask.relRequire('../configs/izy-proxy/tcpserver');
+      modtask.augmentConfig(runnerConfig, config);
+      if (meta.action == 'checkconfig') {
+        return console.log(runnerConfig);
+      }
+      main.run(runnerConfig);
+      break;
     case 'taskrunner':
       var main = izymodtask.relRequire('taskrunner/main');
       var runnerConfig = izymodtask.relRequire('../configs/izy-proxy/taskrunner');
