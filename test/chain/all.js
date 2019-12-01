@@ -123,6 +123,49 @@ function testV3() {
       }
     },
 
+  ['log', 'delay and replay loop'],
+  function(chain) {
+    var startts = (new Date()).getTime();
+    var i = 0;
+    var sleepTime = 200;
+    var totalTime = 1000;
+    chain.newChain({
+      chainName: 'fakeModule',
+      context: {},
+      chainHandlers: chain.chainHandlers,
+      chainAttachedModule: { __myname: 'fakeModule'},
+      chainItems: [
+        ['nop'],
+        function(chain) {
+          if (i++ < totalTime / sleepTime) {
+            chain(['log', 'sleep for ' + sleepTime + ', iteration ' + i]);
+          } else {
+            chain([
+              ['set', 'outcome', { success: true }],
+              ['return']
+            ]);
+          }
+        },
+        ['delay', sleepTime],
+        ['log', 'after delay'],
+        ['replay']
+      ]
+    }, function(outcome) {
+      if (outcome.success) {
+        if ((new Date()).getTime() - startts < totalTime) {
+          outcome = { reason: 'exitted sooner than expected' };
+        }
+      }
+      if (!outcome.success) {
+        return chain([
+          ['set', 'outcome', { reason: outcome.reason }],
+          ['return']
+        ]);
+      };
+      chain(['continue']);
+    });
+  },
+
     ['log', 'test delay'],
     ['delay', 500],
     ['log', 'after delay']
