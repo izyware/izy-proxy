@@ -53,6 +53,17 @@ cp node_modules/izy-proxy/samples/tcpserver_production_config.js node_modules/co
 
 Note that some configurations may require additional local packages. For example pkgloader/dbnode, depends on components/pkgman/dbnode being locally present. Make sure to include the relevant components locally and add a search path reference under modtask/config/kernel/extstores/file.js to the appropriate location.
 
+## Checking The Package Import Configuration For your Service Dependencies
+Package import configuration issues may not come up at service start up but may be caused if your service is referencing a package that is not locally available. 
+
+To ensure that the package import configuration is setup correctly for service and the credentials are valid, try importing a the service handler package from the cli, using your config file:
+
+```
+node cli.js method chain chain.action "//inline/myservice:handler" chain.queryObject.success true chain.relConfigFile ../configs/izy-proxy/taskrunner
+
+node cli.js method chain chain.action "//inline/myservice:handler" chain.queryObject.success true chain.relConfigFile ../configs/izy-proxy/tcpserver
+```
+
 
 ## TCP Server Mode
 ```
@@ -62,6 +73,14 @@ node tcpserver/app.js (or if you are using pm2, do pm2 start tcpserver/app.js)
 
 
 Make sure the the *cwd* for the server process is set to the location for the izy-proxy installation. This is important because the *cwd* is used in locating plugin, thirdparty modules and the configuration.
+
+
+For testing your deployment, you can overwrite the default config options by launching the component in the interactive mode
+
+```
+node cli.js method tcpserver __chainProcessorConfig.runpkg.verbose true meta.action checkconfig
+node cli.js method tcpserver __chainProcessorConfig.runpkg.verbose true
+```
 
 After the server is running, the following should work:
 
@@ -91,12 +110,12 @@ You should customize the Access-Control-Allow-XXX headers for your own business 
 
 
 ## TaskRunner Mode
-You may also run the tool in the task runner configuration.
+You may also run the tool in the task runner configuration. 
 
 
 Make sure to edit ../configs/izy-proxy/taskrunner.js. At a minimum the following values need to be set:
 
-* pkgloadermodconfig.auth
+* pkgloadermodconfig.auth 
 * izyware_runtime_id
 
 ```
@@ -118,7 +137,7 @@ See the configuration reference for taskrunner for the list of command line opti
 The task runner will run the following chain command:
 
     [taskParameters]
-
+    
 where taskParameters is defined in the Izy Cloud Dashboard. This will allow for flexibility in terms of what/where to run the tasks:
 
 
@@ -129,7 +148,7 @@ To run mypackage:mymodule as JSONIO API Interface (what), inline (transport), in
 To run mypackage:mymodule as JSONIO API Interface (what), over HTTPS (transport), inside the context server.com (where), simply set the taskParameters to:
 
     //myserver.com/mypackage:mymodule?method
-
+    
 To run mypackage:mymodule as a chain (what), inline (transport), inside the context of the izy-proxy process (where), simply set the taskParameters to:
 
     //inline/mypackage:mymodule?method
@@ -142,7 +161,7 @@ Since the izy-proxy contains a heterogeneous set of component, full testing will
 ### Test the chaining engine functionality
 ### SHOULD ALWAYS WORK
 node test/chain/all.js
-node cli.js method chain chain.action "//inline/izy-proxy/test/chain:module_setting_the_outcome" chain.queryObject.success true chain.queryObject.testKey testValue
+node cli.js method chain chain.action "//inline/izy-proxy/test/chain:module_setting_the_outcome" chain.queryObject.success true chain.queryObject.testKey testValue chain.relConfigFile ../configs/izy-proxy/taskrunner
 
 ### Test chains, runpkg and API plug-in -- require localhost connection
 * node test/all.js
@@ -161,7 +180,7 @@ node cli.js method taskrunner taskrunnerProcessor.verbose true taskrunnerProcess
 
 ```
 
-## Test Automation
+## Test Automation 
 
 ### Data Library
 Enterprise customers can take advantage of thousands of data samples for testing. Data samples include real world data for:
@@ -170,8 +189,8 @@ Enterprise customers can take advantage of thousands of data samples for testing
 * User browsing history analytics data
 * ...
 
-### The mock library
-You can use the mock library for simulating raw sockets, protocols (HTTP, etc.), databases, browser extension environments, etc.
+### The mock library 
+You can use the mock library for simulating raw sockets, protocols (HTTP, etc.), databases, browser extension environments, etc. 
 
 You can use the mock libraries in conjuction with the data library to improve your test coverage.
 
@@ -202,8 +221,8 @@ the system will deserialize the api.queryObject.* into a JSON queryObject that g
 It is recommended the you test the live deployment for configuration and infrastructure issues using the task engine and the following module:
 
     //inline/izy-proxy/test:cloudwatch/base
-
-
+    
+    
 
 ## Using the CLI (Commandline Interface) for launching and testing components
 While enterprise gold customers have access to Izyware Studio, the standard users can still use the command line for launching and debugging components that may be launched in the taskrunner context or in the TCP server context.
@@ -212,7 +231,7 @@ While enterprise gold customers have access to Izyware Studio, the standard user
 node cli.js method api api.path <path/to/api/module> api.queryObject.key1 value1 ...
 node cli.js method socket ...
 node cli.js method taskrunner ...
-node cli.js method chain ...
+node cli.js method chain ...  
 ```
 
 Of all the methods, the chain is the most powerful, because it will allow you to any chain command (remote, local, etc.) while composing an arbitrary JSON queryObject
@@ -292,7 +311,7 @@ module.exports = {
 ```
 
 
-See the testing instructions above (under `Testing`) for howto test the service handler directly from the command line. The following verbose flags (and the default values) are available
+See the testing instructions above (under `Testing`) for howto test the service handler directly from the command line. The following verbose flags (and the default values) are available 
 
 
 ```
@@ -311,10 +330,10 @@ See the testing instructions above (under `Testing`) for howto test the service 
 ```
 
 ## Handling Domain Based Requests
-Use the http plug-in to handle the domain based requests. The http plug-in will use cloudservices data base to configure the raw http handlers.
+Use the http plug-in to handle the domain based requests. The http plug-in will use cloudservices data base to configure the raw http handlers. 
 
 
-# Platform Features
+# Platform Features 
 
 ## Uniform Local And Cloud Module Access
 
@@ -327,7 +346,7 @@ izy-proxy/modtask/config/kernel/extstores/file.js
 Please refer to the comments in the file to understand how to reference external modules.
 
 
-## Chain Processing
+## Chain Processing 
 Your application functionality may be consumed via the universal scripting environment.
 
 It is recommended that you expose the functionality via an importable chain module. As of version 2.0 the chaining library will support importing and registering new chain handlers.
@@ -356,20 +375,20 @@ starting with V3, new signature added to specify method in the invokeString
 
 to maintaine backward compatibility with V2, the following procedure is followed:
 
-* if method is defined, it will try to find it on modtask. and modtask.actions and if found, will launch with the following signature
+* if method is defined, it will try to find it on modtask. and modtask.actions and if found, will launch with the following signature 
 
-        function(queryObject, cb, context)
-
-* if method is not defined, it will probe for modtask.processQuery and if that is found it will launch. Otherwise, it will try to run the entire module as a chain, with
+        function(queryObject, cb, context) 
+        
+* if method is not defined, it will probe for modtask.processQuery and if that is found it will launch. Otherwise, it will try to run the entire module as a chain, with 
 
         context: {
           queryObject: queryObject,
           context: context
         }
+    
 
 
-
-### V1 and V2
+### V1 and V2 
 A typical implementatin would look like:
 
 ```
@@ -452,11 +471,18 @@ Finally you can do:
 
 ```
 var argv = process.argv.slice(0);
-require('izy-proxy').doChain([
-	['log', 'hello world'],
-	['frame_importpkgs', 'izy.machinelearning.moduleSim'],
-	....
-]);
+require('izy-proxy').newChain({
+      chainItems: [
+					['log', 'hello world'],
+					['outcome', { success: true }]
+//          ['sysview'],
+//          ['chain.importProcessor', 'apps/tasks/api:taskrunner_chain', {}]
+      ],
+      __chainProcessorConfig: {}
+  },
+  function(outcome) {
+		console.log('service chain outcome', outcome.success, outcome.reason);
+  });
 ```
 
 NOTE: require('izy-proxy') will manipulate the argv. you should always make a copy before the call as shown above.
@@ -497,65 +523,84 @@ for more details, visit [izyware]
 
 # Known Issues
 
-## Deployment
-* Concurrent releasing of the front-end framework packages is prone to breaking existing functionality, users have suggested that
-    * app root declare what version of the framework it is interested in
-    * group packages and version and label them for framework
-    * simplify the front-end model by using chains to ondeman load the UI
-* to allow visual service design, app model consolidation, using chains of
-    * toolbar app model
-    * SPA
-    * backend services development for tcp sockets and HTTP
-* users have suggested that we replace the front end chain processing with izy-proxy: transition.sourcepart.modcontroller.doChain is used which is not compatible with izy-proxy.
-    * the front-end chain handling (ui/transition, etc.) is worst than the backend features/v2/chain/parser because it does not even handle failures via Callbacks but instead throws exceptions.
-* put framework releasese on via CDN for fast access
+## Local Debugging
+* modtask.ldmod('kernel/path').toInvokeString will fail for locally loaded modules
+    * simple workaround is to manually edit the file and add the would be config object inside the toInvokeString function
+    
+        
+            modToPkgMap['module_path'] = 'packagepath';
+
+    
+    * because it wont know the name of the package for the module 
+    * 1 solution is to fork kernel/path inside izy-proxy (currently it is coming from izymodtask which will be replaced soon)
+        * from the config we can pass a manual module to package map for resolution
+    * another solution is to have the filesystem package manager search for package.js and determine the package automatically but that is risky
+    * the package names are used extensively for access control and customization. therefore we cannot assign arbitrary names to the packages
+* the difference between the context object (plugin/http/handle newChain method) and the context object that inside the chain gets constructed for //inline/ or //cloud/ calls (which uses the session package) is not clear
+    * how does the session get set manually for a http handler?
 
 ## Chains
-* delay and replay dont work
-
-
-        ['delay', retryDelay],
-        ['log', 'b'],
-        ['replay']
-
-
 * the get_node is essentially a get_sql service. best implementations would be
     * over HTTP to JSON (for all non master nodes)
     * (only master nodes) using sockets (no mysqlutil node package dependency) -- this will allow turning toolbar into master
-    * q/sql/jsonnode pacakge should provide a chain processor for chain level consumption
+    * q/sql/jsonnode pacakge should provide a chain processor for chain level consumption 
 
-
-## Miscelanous
-* Post V3, more internal server implementations can move to chains.
-* To test and verify the tcpserver configuration, you can try the interactive cli:
-
-    node cli.js method tcpserver meta.action checkconfig
 
 # Changelog
 
 ## V3
+* remove nodejs dependency to izy-circus
+* http plugin: pass in the full object to the http handler
+* add test for delay/replay combo
+* explicitly disallow /// launch strings
+* add interactive configuration for tcpserver through meta.action in the cli
+* pass in { sessionObjs } as context to the http handler
+    * not a good idea to mix sessionObjs up with serverObjs because sessionObjs can be used to share info across plug-ins and session handling
+    * this scheme is consistent with call signature for jsonio calls
+* pass in __chainProcessorConfig.runpkg to http and socket handlers to allow debugging issues
+* add parameter checking to importPkgs
+* add the ability to encode json objects at the commandline, i.e.
+
+        node cli.js method chain chain.action '//../...' chain.queryObject.provisioningConfig.type json:[\"domain_manager\"] chain.queryObject.provisioningConfig.userids json:[\"@userlastinsertid\"]
+    
+* open the universal HTTP library (in runpkg)
+    * can be consumed by all subsystems
+    * standard signature for handling errors, non 200s, etc.
+    * single lib working in all scripting environments
+* Explicitly send in the utf-8 character set in the HTTP headers
+* Added the new IzyNode type "izy-proxy" that uses hex encoding 
+    * This will work in environments that use older encodings on some areas of the stack (i.e. the HTTP server or Scripting)
+    * removes the dependency to ui/node/* libraries
+* When the query has the non latin unicode and encryption is turn on it happens
+    * In consistent between front-end and backend.
+* fix bug in izyNode config is not correctly transffered to getNode
+* add more tests coverage for parity across //network/ and //local/
+    * added tests to ensure that parameter types are being serialized and deserlized correctly across context boundaries
+* improve error reporting and diagnostics
+* make sure pkgloader is configured correctly for socket handler loader
+* add chain.relConfigFile option to chain cli
 * improve socket.pipe to copy cached data
     * this will allow the developers to write socket chains without worrying about timing bugs, etc.
 * fix JSON encoding bug where  outcome.__callstack would call circular referencing error
 * retire decodeBase64Content
 * allow ldPkgMan to work even when no pkgloadermodname is provided (features/v2/chain/processors/import.js)
     * this will allow the system to function as long as long modules are available locally
-    * used to fail before even trying to check if modules were present locally
+    * used to fail before even trying to check if modules were present locally 
 * add handlerWhenChainReturnCBThrows to newChain
     * needed in settings where making doChain available for pkgruns (example rawhttp APIs, etc.)
 * add test/all.js
 * add test/runpkg, testing for runpkg across //inline/ and //network/
 * add test/api making sure that API system still supports JSONIO agnostic with mod.handle for generic purposes
-* fix the customer reported issue where for JSON/IO luanches, //inline/ should be 100% consistent with //network/ for all combinations.
+* fix the customer reported issue where for JSON/IO luanches, //inline/ should be 100% consistent with //network/ for all combinations. 
     * Prior to V3 the the API plug-in wont deliver consistency because if modtask.jsonio is not defined -- will think its a raw API and expects mod.handle.
     * This will make it harder for customer to create cloud components that can be deployed reliably to different cloud environment.
     * updated the API system use the same parser for uri that runpkg offers
         * moved the rawhttp, mod.handle interface with chain enabled into its own module within the api plug-in
-
-* clean app the server module.
+        
+* clean app the server module. 
     * now clients can create server apps with embedded configrations
     * made the certificate paths optional
-* add ability to define http domains as inline parameters.
+* add ability to define http domains as inline parameters. 
     * this will allo non connected apps to work local
 * fix bug with cloud import auth
     * when auth is not defined, the cloud import will not hit the izycloud
@@ -575,32 +620,32 @@ for more details, visit [izyware]
     * ditch doChain in favor of newChainForProcessor
 * the following cotext and callback pattern specific utility wrappers around newChain have been introduced
     * newChainForProcessor: while handling an item in a $chain will run a new chain in a new context, and on failure will exit the $chain. when success it will do next (move on to the next item in the $chain). The new running context will be tied to the processor module and the resulting callstack in case of a failure will trace to the processor.
-    * newChainForModule: runs a chain in a new running context tied to the given module and context object. The new running context will be tied to the processor module and the resulting callstack in case of a failure will trace to the module. The callback will have to decide whether to exit the $chain on failure or just report it as an output.
-
+    * newChainForModule: runs a chain in a new running context tied to the given module and context object. The new running context will be tied to the processor module and the resulting callstack in case of a failure will trace to the module. The callback will have to decide whether to exit the $chain on failure or just report it as an output. 
+    
 * deprecated $chain.doChain
     * this would 'share' the running context (callbacks and context) across $chain and the new chain which will lead to maintaince issues
-* updated //inline/ to support '//inline/pkg:module?processQueries' call pattern with optional package and module paths
-    * useful for calling internal methods in a module from a chain without writing code
+* updated //inline/ to support '//inline/pkg:module?processQueries' call pattern with optional package and module paths 
+    * useful for calling internal methods in a module from a chain without writing code 
     * '//inline/' call pattern would either call processQueries or run the entire module as chain
-    * '//inline/?actionName' will run modtask.actions.actionName(...)
+    * '//inline/?actionName' will run modtask.actions.actionName(...) 
 * updated //inline/ to support pure chain interfaces in addition to processQueries
     * the 'queryObject' and 'context' will be passed as chain keys
     * unified running JSONIO type modules with chains enabled by adding runJSONIOModuleInlineWithChainFeature to pkg/run
     * all other subsystem, including the APIs should be using this
 * deprecated //chain/ launch method in favor of //inline/
     * //chain/ was sharing context across chains which can lead to problems
-
+    
 * modified the outcome reporting and error handling model for the chain finalCallback to immediately terminate and report as opposed to shoving the outcome in chain.
     * if there is a system level chain failure it will be reported as the finalCallback(outcome)
     * if the system level is successful, $chain.get('outcome') will be reported
     * without this it would require everyone to add a ['return'] to the end of every chain or add ['ROF'] after every call to pump the outcome to the CB which is annoying. It will also make error reporting less useful because the call stack will be at ['ROF'] or ['return'] instead of the previous expression that caused it.
-
-* deprecated the the explicit
+    
+* deprecated the the explicit 
 * added the ability to attach running contexts to modules
     * chainAttachedModule is added to $chain and chainName will refernce the module name
     * this will provide valuable information when reporting failures and construcing stack traces
-* runpkg: deep clone the inline launch parameters
-    * this will ensure that the execution contexts are seperate and the data will not be leaked or corrupted
+* runpkg: deep clone the inline launch parameters 
+    * this will ensure that the execution contexts are seperate and the data will not be leaked or corrupted 
     * will allow for running packages in parallel without the fear of packages stepping on each others data
 * added tracing and callstack for chains
     * this will great aid the end user in creating and maintain complex chain based services
@@ -620,31 +665,31 @@ for more details, visit [izyware]
 * add support for relative paths in the pkgrunner luanch string
 
         ['//izyware.com/rel:modname', {}, mod]
-
+        
 * add dontDefaultToHttpWhenServiceNameUnrecognized flag to pkgrunner
 * Pass in authorization token as part of the session object to the pkgrunner
     * The token might be used for making HTTP based (not inline) calls
-* Pass in the current session when making inline requests.
+* Pass in the current session when making inline requests. 
 * New impementation of Authorization header security
     * Accept Bearer autorization tokens sent via the HTTP headers
     * Updated the OPTIONS response to indicate that authorization headers are accepted when making cross domain calls.
 * added test/cloudwatch/base for running service tests on a live version
     * this will enable an automated task for doing tests on the live service from the IzyCloud enterprise dashboard
     * The following plug-ins are covered
-        * APIs
+        * APIs 
         * http
         * circus
 * added assertion library to enable simple smoke tests
     * consolidated from toolbar and other libraries
 * added options for cacheImportedPackagesInMemory and noReimportIfAlreadyLoaded to the runpkg, and import chains to allow dynamic remote updating of the modules in the task runner.
     * If this is not turned on, the module updates will only be picked up on taskrestarts which is not desirable.
-* restructured the taskrunner component and added sample config file for standalone deployment of the taskrunner.
+* restructured the taskrunner component and added sample config file for standalone deployment of the taskrunner. 
     * added `apiExecutionContext` to taskrunnerProcessor config for remote and local configurations and deployments.
     * added samples/pkgloader/izycloud that uses POST `ui/ide:cloudstorage/api` with auth token to do package loading inside the Chains (i.e. when using the taskrunnder)
 * added the ability to configure chain processors
 * added the ability to 'replay' a chain and thus looping through easy
     * this is important for processing data sets:
-
+    
             ['newChain', {
               chainName: modtask.__myname + '.loop',
               chainItems: [
@@ -666,13 +711,13 @@ for more details, visit [izyware]
                 ['ROF'],
                 ['replay']
               ]
-
+    
 * the seperation of contexts, ability to import and doChain/newChain will enable the apps/tasks/api feature
     * The taskprocessor will define procesor commands (apps/tasks/api/chain) and will be imported
         * process seqs.onNewTask and capture the outcome if error without CONTAMINATING itself
     * The task itself will have a chain seqs.onNewTask (see izy-proxy/taskrunner/main.js)
-        * pre import relevant processors (task.*)
-* improved doChain so that it will create the context (dataspace, callbacks) on the fly so that the chain processors can also have doChain internally and the 'finally' part can be optionally localized (similar to how the try/catch works. The layer that has the catch will work).
+        * pre import relevant processors (task.*) 
+* improved doChain so that it will create the context (dataspace, callbacks) on the fly so that the chain processors can also have doChain internally and the 'finally' part can be optionally localized (similar to how the try/catch works. The layer that has the catch will work). 
     * This will allow us to have nested chains, and subchains, etc.
 * pass the $chain to the chain handler that would allow access to chain context as well as doing doChain, newChain, etc.
     * being able to doChain internally is important because the chain handlers may need to utilized other commands inside the current context.
