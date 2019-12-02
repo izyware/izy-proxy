@@ -26,10 +26,22 @@ modtask.actions.load = function(queryObject, cb, context) {
 		['frame_getnode', modtask, queryObject.customenodeparams],
 		['frame_importpkgs', ['sql/jsonnode']],
 		function(push) {
-			modtask.ldmod('sql/jsonnode/q').select({
+			modtask.ldmod('sql/jsonnode/q').select2({
 				map: {
-					backaddress: 'handlerMod',
-					address: 'domain'
+					handlerMod: 'backaddress',
+					domain: 'address',
+					servicetype: 'servicetype',
+					status: 'status',
+					utcdt: 'utcdt',
+					port: 'port',
+					username: 'username',
+					password: 'password',
+					security: 'security',
+					mfa: 'mfa',
+					backpassword: 'backpassword',
+					backusername: 'backusername',
+					backport: 'backport',
+					linkeduserid: 'linkeduserid'
 				},
 				from: ' FROM ' + 'izyware.cloudservice',
 				condition: ' WHERE servicetype = "' + 'HTTP' + '" AND status = "Enabled"'
