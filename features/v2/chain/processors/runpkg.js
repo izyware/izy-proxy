@@ -251,3 +251,5 @@ modtask.handlers.http = function($chain, cbWhenLaunchSuccessful, parsedLaunchStr
           return cbWhenLaunchSuccessful(outcome);
       });
 }
+
+modtask.__$d = ['rel:../../pkg/run'];

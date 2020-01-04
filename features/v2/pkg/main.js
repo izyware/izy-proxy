@@ -118,3 +118,10 @@ modtask.ldPath = ldPath;
 modtask.ldParsedPath = ldParsedPath;
 modtask.forceImportPackage = forceImportPackage;
 modtask.deportPackage = deportPackage;
+modtask.get_modToPkgMap = get_modToPkgMap;
+
+// Manatory for modules that are used in building the bootstrapers or statically linked components
+modtask.__$d = ['kernel/path', 'kernel/mod', 'kernel/extstores/import', 'kernel/extstores/inline/import',
+  // Backwards compat -- can be fixed when izymodtask reference is replaced with inline bootstrapper
+  'kernel\\selectors'
+];

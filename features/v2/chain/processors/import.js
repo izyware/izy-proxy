@@ -138,3 +138,6 @@ modtask.importConfigureAndRegisterProcessor = function(chainItemProcessor, __cha
   }
   return cb({ reason: 'Invalid chainItemProcessor for importConfigureAndRegisterProcessor' });
 }
+
+// Manatory for modules that are used in building the bootstrapers or statically linked components
+modtask.__$d = ['rel:../../pkg/main'];
