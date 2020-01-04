@@ -6,7 +6,9 @@ modtask.resolveAuthorization = function(bearerToken, cb) {
   fname = path + '/' + fname;
 
   var data = {
+    // Used by //http/ runpkg calls
     authorizationToken: authorizationToken,
+    // Used by //inline/ runpkg calls
     ownerType: 1, // user
     ownerId: null // user.id
   };

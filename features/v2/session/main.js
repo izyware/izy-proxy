@@ -1,6 +1,10 @@
 var modtask = function() {}
 
 modtask.data = {
+  // Used by //http/ runpkg calls
+  authorizationToken: null,
+
+  // Used by //inline/ runpkg calls
   ownerType: null,
   ownerId: null
 };
