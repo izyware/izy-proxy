@@ -43,7 +43,7 @@ modtask.wrapChainReturnCB = function(_chainReturnCB, $chain, handlerWhenChainRet
 }
 
 modtask.newChain = function(cfg, _chainReturnCB, doNotRun, handlerWhenChainReturnCBThrows) {
-  var chainContext = typeof(cfg.context) == 'object' ?  cfg.context : {};
+  var chainContext = (typeof(cfg.context) == 'object' || typeof(cfg.context) == 'function')?   cfg.context : {};
 
   // should this be deprecated?
   var $chain = function(chainItems, cb) {
@@ -213,4 +213,4 @@ modtask.addStackTrace = function(outcome, callStackItem) {
   outcome.__callstackStr += ' [' + callStackItem.chainItem + ']';
 }
 
-
+modtask.__$d = ['rel:parser'];
