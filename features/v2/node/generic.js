@@ -20,6 +20,20 @@ modtask.getNode = function(cfg) {
   return node;
 }
 
+modtask.hexEncode = function(str) {
+  // Node Environment?
+  if (typeof(Buffer) == 'function') {
+    return new Buffer(str, 'utf8').toString('hex');
+  }
+  var hex, i;
+  var result = '';
+  for (i=0; i< str.length; i++) {
+    hex = str.charCodeAt(i).toString(16);
+    result += ('0' + hex).slice(-2);
+  }
+  return result;
+}
+
 modtask.transportModule = function(cfg) {
   return {
     runQuery2: function(q, okpush, failpush) {
@@ -28,7 +42,9 @@ modtask.transportModule = function(cfg) {
       q = modtask.ldmod('ui/node/auth').signRequest(q, cfg.accesstoken);
       var url = cfg.dataservice + 'index.php';
       if (cfg.verbose) console.log('izyNode: POST "' + q + '" to ' + url);
-      q = 'hex_' + new Buffer(q, 'utf8').toString('hex');
+
+      q = 'hex_' + modtask.hexEncode(q);
+      
       modtask.ldmod('rel:../http').universalHTTP().sendRequest({
         method: 'POST',
         url: url,

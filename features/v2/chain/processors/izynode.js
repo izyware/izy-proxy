@@ -11,3 +11,5 @@ var modtask = function(chainItem, cb, $chain) {
       break;
   }
 }
+
+modtask.__$d = ['rel:../../node/generic'];
