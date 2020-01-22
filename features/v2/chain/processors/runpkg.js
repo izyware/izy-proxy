@@ -81,7 +81,13 @@ modtask.parseLaunchString = function(url, payload) {
         if (!destinationObj.ldmod) return {
             reason: 'rel: specified in the invokeString, but the context is not a module. (' + outcome.invokeString + ')'
         };
-        var modname = outcome.invokeString
+        var modname = outcome.invokeString;
+        var callParams = '';
+        if (modname.indexOf('?') > 0) {
+            modname = modname.split('?');
+            callParams = '?' + modname[1];
+            modname = modname[0];
+        }
 
         if (outcome.serviceName == 'inline') {
             // We dont really need a full package name for inline
@@ -91,6 +97,7 @@ modtask.parseLaunchString = function(url, payload) {
             if (!_outcome.success) return _outcome;
             outcome.invokeString = _outcome.data;
         }
+        outcome.invokeString = outcome.invokeString + callParams;
     };
 
     return outcome;
