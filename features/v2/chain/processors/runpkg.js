@@ -10,8 +10,6 @@ var modtask = function(chainItem, cb, $chain) {
 
     var i = 0;
     var str = chainItem[i++] + '';
-
-
     if (str.indexOf('//') == 0) {
         var queryObject = chainItem[i++];
         var destinationObj = chainItem[i++] || $chain.chainAttachedModule || $chain.context;
@@ -26,6 +24,15 @@ var modtask = function(chainItem, cb, $chain) {
         });
         return true;
     };
+
+    switch(str) {
+        case 'runpkg.setSession':
+            var session = chainItem[i++];
+            modtask.sessionMod.set(session);
+            cb();
+            return true;
+            break;
+    }
     return false;
 };
 
