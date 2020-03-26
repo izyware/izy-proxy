@@ -114,7 +114,7 @@ modtask.cmdlineverbs[commandLineKey] = function() {
       try {
         console.log('Loading config: ', config.chain.relConfigFile);
         __chainProcessorConfig = izymodtask.relRequire(config.chain.relConfigFile).__chainProcessorConfig;
-      } catch(e) { console.log('Warning no config found', e); }
+      } catch(e) { console.log('Warning no config found', e.message); }
       izymodtask.relRequire('index').newChain({
         chainItems: [
           [config.chain.action, config.chain.queryObject]
