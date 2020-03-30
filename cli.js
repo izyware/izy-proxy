@@ -1,11 +1,36 @@
-// node cli.js
-// node cli.js method
-// node cli.js method taskrunner
-// node cli.js method taskrunner taskrunner.verbose
-// [CRASH] node cli.js method taskrunner taskrunner.verbose true
+function start() {
+  var izymodtask = require('izymodtask');
+  var g_cli = izymodtask.getRootModule(__dirname).ldmod('g_cli');
 
-if (process.argv.length == 6) {
-  process.argv.push('___crashworkaround___padding___params___');
+  if (process.argv[2] == 'method') {
+    g_cli.cmdlineverbs.method();
+  } else {
+    var outcome = izymodtask.extractConfigFromCmdLine(process.argv);
+    if (!outcome.success) {
+      return console.log(outcome);
+    }
+    var cmdConfig = outcome.data;
+    var action = process.argv[2];
+    switch (action) {
+      case 'call':
+        var action = cmdConfig.call;
+        if (action.indexOf('//') != 0) {
+          action = '//inline/' + action;
+        }
+        g_cli.runWithMethod('chain', {
+          chain: {
+            dontUseDefaultRelConfigFile: true,
+            action: action,
+            queryObject: cmdConfig.queryObject || {}
+          }
+        });
+        break;
+    }
+  }
 }
 
-require('izymodtask').runCmd('cli.method');
+try {
+  start();
+} catch(e) {
+  console.log({ reason: e.message });
+}

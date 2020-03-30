@@ -1,4 +1,6 @@
 
+/* izy-loadobject nodejs-require */
+
 var modtask = {};
 
 var commandLineKey = 'method';
@@ -37,44 +39,19 @@ modtask.augmentConfig = function(cfg, more) {
   }
 }
 
-modtask.expandStringEncodedConfigValues = function(config, outcome) {
-  if (!outcome) outcome = {};
-  var p;
-  for(p in config) {
-    switch(typeof(config[p])) {
-      case 'string':
-        var token = 'json:';
-        if (config[p].indexOf(token) == 0) {
-          try {
-            config[p] = JSON.parse(config[p].substr(token.length, config[p].length - token.length));
-          } catch(e) {
-            outcome.success = false;
-            outcome.reason = 'cannot parse ' + config[p] + ': ' + e.message;
-            return outcome;
-          }
-        }
-        break;
-      case 'object':
-        modtask.expandStringEncodedConfigValues(config[p], outcome);
-        if (!outcome.success) return outcome;
-        break;
-    }
-  }
-  outcome.success = true;
-  return outcome;
-}
-
 modtask.cmdlineverbs[commandLineKey] = function() {
   var izymodtask = modtask.ldmod('izymodtask/index');
-  var config = izymodtask.extractConfigFromCmdLine(commandLineKey);
-  var outcome = modtask.expandStringEncodedConfigValues(config);
+  var outcome = izymodtask.extractConfigFromCmdLine(process.argv);
   if (!outcome.success) {
     return console.log(outcome);
   }
-
+  var config = outcome.data;
   var method = config[commandLineKey];
   delete config[commandLineKey];
+  modtask.runWithMethod(method, config);
+}
 
+modtask.runWithMethod = function(method, config) {
   var meta = {};
   if (config.meta) {
     meta = config.meta;
@@ -89,8 +66,8 @@ modtask.cmdlineverbs[commandLineKey] = function() {
       modtask.ldmod('rel:test/utils').simulateSocketIO(config.socket);
       break;
     case 'tcpserver':
-      var main = izymodtask.relRequire('server');
-      var runnerConfig = izymodtask.relRequire('../configs/izy-proxy/tcpserver');
+      var main = require('./server');
+      var runnerConfig = require('../configs/izy-proxy/tcpserver');
       modtask.augmentConfig(runnerConfig, config);
       if (meta.action == 'checkconfig') {
         return console.log(runnerConfig);
@@ -98,8 +75,8 @@ modtask.cmdlineverbs[commandLineKey] = function() {
       main.run(runnerConfig);
       break;
     case 'taskrunner':
-      var main = izymodtask.relRequire('taskrunner/main');
-      var runnerConfig = izymodtask.relRequire('../configs/izy-proxy/taskrunner');
+      var main = require('./taskrunner/main');
+      var runnerConfig = require('../configs/izy-proxy/taskrunner');
       modtask.augmentConfig(runnerConfig, config);
       if (meta.action == 'checkconfig') {
         return console.log(runnerConfig);
@@ -109,13 +86,16 @@ modtask.cmdlineverbs[commandLineKey] = function() {
     case 'chain':
       var __chainProcessorConfig = {};
       if (!config.chain.relConfigFile) {
-        config.chain.relConfigFile = '../configs/izy-proxy/taskrunner';
+        if (!config.chain.dontUseDefaultRelConfigFile)
+          config.chain.relConfigFile = '../configs/izy-proxy/taskrunner';
       }
-      try {
-        console.log('Loading config: ', config.chain.relConfigFile);
-        __chainProcessorConfig = izymodtask.relRequire(config.chain.relConfigFile).__chainProcessorConfig;
-      } catch(e) { console.log('Warning no config found', e.message); }
-      izymodtask.relRequire('index').newChain({
+      if (config.chain.relConfigFile) {
+        try {
+          console.log('Loading config: ', config.chain.relConfigFile);
+          __chainProcessorConfig = require(config.chain.relConfigFile).__chainProcessorConfig;
+        } catch (e) { console.log('Warning no config found', e.message); }
+      }
+      require('./index').newChain({
         chainItems: [
           [config.chain.action, config.chain.queryObject]
         ],
@@ -136,3 +116,5 @@ modtask.cmdlineverbs[commandLineKey] = function() {
       break;
   }
 }
+
+module.exports = modtask;
