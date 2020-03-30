@@ -8,6 +8,8 @@ var modtask = function(chainItem, cb, $chain) {
         modtask.sessionMod = modtask.ldmod(modtask.sessionMod);
     };
 
+    modtask._modToPkgMap = modtask.__chainProcessorConfig.modToPkgMap || {};
+
     var i = 0;
     var str = chainItem[i++] + '';
     if (str.indexOf('//') == 0) {
@@ -100,7 +102,7 @@ modtask.parseLaunchString = function(url, payload) {
             // We dont really need a full package name for inline
             outcome.invokeString = destinationObj.ldmod('kernel/path').rel(modname.substr(4, modname.length-4));
         } else {
-            var _outcome = destinationObj.ldmod('kernel/path').toInvokeString(modname);
+            var _outcome = destinationObj.ldmod('kernel/path').toInvokeString(modname, modtask._modToPkgMap);
             if (!_outcome.success) return _outcome;
             outcome.invokeString = _outcome.data;
         }
@@ -203,7 +205,7 @@ modtask.handlers.http = function($chain, cbWhenLaunchSuccessful, parsedLaunchStr
     var methodOutcome = modtask.ldmod('rel:../../pkg/run').parseMethodOptionsFromInvokeString(parsedLaunchString.invokeString);
     if (methodOutcome.invokeString == '') {
         var modname = $chain.chainAttachedModule.__myname;
-        var _outcome = modtask.ldmod('kernel/path').toInvokeString(modname);
+        var _outcome = modtask.ldmod('kernel/path').toInvokeString(modname, modtask._modToPkgMap);
         if (!_outcome.success) return modtask.exitChainWithMyStackTrace($chain, _outcome.reason);
         connectionString = url + _outcome.data + '?' + methodOutcome.methodToCall;
     }
