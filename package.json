@@ -8,7 +8,7 @@
     "url": "git://github.com/izyware/izy-proxy"
   },
   "dependencies": {
-    "izymodtask": "^2.0.0"
+    "izymodtask": "^5.0.0"
   },
   "files": [
     "README.md",
