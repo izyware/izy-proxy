@@ -9,6 +9,7 @@ var modtask = function(chainItem, cb, $chain) {
     case 'ldpath':
       modtask.ldPath(chainItem[i++], function(outcome) {
         if (!outcome.success) return $chain.chainReturnCB(outcome);
+        $chain.set('outcome', outcome);
         cb();
       });
       return true;
@@ -102,6 +103,15 @@ modtask.importPkgs = function(pkgs, cb) {
 
 modtask.ldPkgMan = function() {
   var cfg = modtask.__chainProcessorConfig || {};
+  if (Array.isArray(cfg)) {
+    cfg = {
+      pkgloadermodconfig: {
+        auth: cfg[i++]
+      },
+      pkgloadermodname: cfg[i++] || 'samples/pkgloader/izycloud'
+    }
+  };
+
   var modpkgloader = null;
   if (cfg.pkgloadermodname) {
     if (!cfg.pkgloadermodconfig) cfg.pkgloadermodconfig = {};
