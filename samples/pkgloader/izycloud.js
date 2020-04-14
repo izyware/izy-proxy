@@ -14,7 +14,7 @@ modtask.incrementalLoadPkg = function(pkgName, options, loadpush, okpush, failpu
    if (!modtask.auth) {
      return failpush({ reason: 'pkgloader auth token is not specified. You must configure the pkgloader.' });
    }
-   return modtask.ldmod('izy-proxy/features/v2/http').universalHTTP().sendRequest({
+   return modtask.ldmod('rel:../../features/v2/http').universalHTTP().sendRequest({
      url: 'https://izyware.com/apigateway/:ui/ide:cloudstorage/api',
      method: 'POST',
      headers: {
@@ -68,4 +68,4 @@ modtask.incrementalLoadPkg = function(pkgName, options, loadpush, okpush, failpu
 
 modtask.auth = null;
 
-modtask.__$d = ['izy-proxy/features/v2/http'];
+modtask.__$d = ['rel:../../features/v2/http'];

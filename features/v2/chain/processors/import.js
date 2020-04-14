@@ -104,6 +104,7 @@ modtask.importPkgs = function(pkgs, cb) {
 modtask.ldPkgMan = function() {
   var cfg = modtask.__chainProcessorConfig || {};
   if (Array.isArray(cfg)) {
+    var i = 0;
     cfg = {
       pkgloadermodconfig: {
         auth: cfg[i++]
