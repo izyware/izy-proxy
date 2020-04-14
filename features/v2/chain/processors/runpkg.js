@@ -3,7 +3,7 @@ var modtask = function(chainItem, cb, $chain) {
     if (!modtask.__chainProcessorConfig) modtask.__chainProcessorConfig = {};
     modtask.dontDefaultToHttpWhenServiceNameUnrecognized = modtask.__chainProcessorConfig.dontDefaultToHttpWhenServiceNameUnrecognized;
     modtask.verbose = modtask.__chainProcessorConfig.verbose;
-    modtask.sessionMod = modtask.__chainProcessorConfig.sessionMod || 'features/v2/session/main';
+    modtask.sessionMod = modtask.__chainProcessorConfig.sessionMod || 'rel:../../session/main';
     if (typeof(modtask.sessionMod) == 'string') {
         modtask.sessionMod = modtask.ldmod(modtask.sessionMod);
     };
