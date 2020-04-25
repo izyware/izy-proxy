@@ -131,11 +131,10 @@ modtask.handlers.inline = function($chain, cbWhenLaunchSuccessful, parsedLaunchS
     var forcepackagereload = false;
 
     var methodOutcome = modtask.ldmod('rel:../../pkg/run').parseMethodOptionsFromInvokeString(parsedLaunchString.invokeString);
-    var methodToCall = methodOutcome.methodToCall;
-    var methodCallOptions = methodOutcome.methodCallOptions;
+    var methodCallOptionsObj = methodOutcome.methodCallOptionsObj;
     parsedLaunchString.invokeString = methodOutcome.invokeString;
 
-    if (methodCallOptions.indexOf('forcepackagereload') == 0) {
+    if (methodCallOptionsObj.forcepackagereload) {
         forcepackagereload = true;
     }
 
@@ -161,7 +160,7 @@ modtask.handlers.inline = function($chain, cbWhenLaunchSuccessful, parsedLaunchS
             queryObject = queryObject ? JSON.parse(JSON.stringify(queryObject)) : queryObject;
             modtask.ldmod('rel:../../pkg/run').runJSONIOModuleInlineWithChainFeature(
               myMod,
-              methodToCall,
+              methodOutcome,
               queryObject,
               context,
               $chain.chainHandlers,

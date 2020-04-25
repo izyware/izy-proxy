@@ -2,7 +2,13 @@ var modtask = function() {}
 
 modtask.runJSONIOModuleInlineWithChainFeature = function(myMod, methodToCall, queryObject, context, chainHandlers, cb) {
   var chainMain = modtask.ldmod('rel:../chain/main');
+  var methodCallOptionsObj = {};
+  if (typeof(methodToCall) == 'object') {
+    methodCallOptionsObj = methodToCall.methodCallOptionsObj;
+    methodToCall = methodToCall.methodToCall;
+  }
   if (!methodToCall) methodToCall = 'processQueries';
+
   var wrapError = function(reason) {
     var outcome = { reason: reason };
     chainMain.addStackTrace(outcome, {
@@ -24,6 +30,9 @@ modtask.runJSONIOModuleInlineWithChainFeature = function(myMod, methodToCall, qu
     };
 
     if (!theMethod && methodToCall != 'processQueries') {
+      if (methodCallOptionsObj.methodnotfoundstatus) {
+        return cb({ success: true, status: methodCallOptionsObj.methodnotfoundstatus });
+      }
       return wrapError('"' + moduleName + '" does not implement method: ' + methodToCall);
     }
 
@@ -56,6 +65,7 @@ modtask.runJSONIOModuleInlineWithChainFeature = function(myMod, methodToCall, qu
 modtask.parseMethodOptionsFromInvokeString = function(invokeString) {
   var methodToCall = '';
   var methodCallOptions = '';
+  var methodCallOptionsObj = {};
 
   if (invokeString.indexOf('?') > -1) {
     var options = invokeString.split('?');
@@ -66,12 +76,20 @@ modtask.parseMethodOptionsFromInvokeString = function(invokeString) {
   if (methodToCall.indexOf('&') > -1) {
     var options = methodToCall.split('&');
     methodToCall = options[0];
-    methodCallOptions = options[1] + '';
+    options.shift();
+    methodCallOptions = options.join('&');
+    for (var i=0; i < options.length; ++i) {
+      var option = options[i];
+      if (option.indexOf('=') >= 0) {
+        option = option.split('=');
+        methodCallOptionsObj[option[0]] = option[1];
+      }
+    }
   }
-
   return {
     invokeString: invokeString,
     methodToCall: methodToCall,
-    methodCallOptions: methodCallOptions
+    methodCallOptions: methodCallOptions,
+    methodCallOptionsObj: methodCallOptionsObj
   };
 }
