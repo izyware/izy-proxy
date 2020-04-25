@@ -382,7 +382,16 @@ The difference between the context object for non JSONIO calls (i.e. plugin/http
 
 We will review the legacy and current implementations and call signatures below
 
-### Version >=3
+### Version 5
+
+The following schema is supported
+
+    ///pkg:module?method&forcepackagereload=1&methodnotfoundstatus=statuscode
+
+* forcepackagereload: will force a cloud import for the pkg:module, overriding file system or any other cached copies. This will have a performance hit but will ensure freshest and latests code.
+* methodnotfoundstatus: normally if module does not implement module (see rules for V3 below) the outcome will not be success. with this feature, the outcome will be successful and status meta key will be set to statuscode.
+
+### Version 3
 starting with V3, new signature added to specify method in the invokeString
 
     //service/pkg:path?method
@@ -555,6 +564,13 @@ for more details, visit [izyware]
 # Changelog
 
 ## V5
+* for pkgrunner implement methodnotfoundstatus
+    * now supporting ///pkg:module?method&forcepackagereload=1&methodnotfoundstatus=statuscode
+    * allow probing for existance of methods
+* add support for __chainProcessorConfig.__moduleSearchPaths
+    * doChain would only be able to locate module dependencies path resolver from root/modtask/... which is not practical
+* set outcome to the loaded module on chain.ldmod/ldpath
+    * this will allow loading of modules directly from the initial chain without having access to modtask.ldmod
 * allow local definition for modToPkgMap in the runpkg.__chainProcessorConfig
     * without this, modtask.ldmod('kernel/path').toInvokeString will fail for locally located modules (i.e. on disk imported vs. cloud imported)
     * the package names are used extensively for access control and customization. therefore we cannot assign arbitrary names to the packages
