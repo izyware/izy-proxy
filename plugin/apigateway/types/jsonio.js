@@ -25,6 +25,7 @@ modtask.processQuery = function(query, serverObjs, mod, chainHandlers, methodToC
     var jcbEncode = function(outcome) {
         // Stringify might fail on this one when there are circular refs/functions
         delete outcome.__callstack;
+        delete outcome.__callstackStr;
         var retStr = '';
         try {
             retStr = JSON.stringify(outcome);
@@ -32,7 +33,7 @@ modtask.processQuery = function(query, serverObjs, mod, chainHandlers, methodToC
             retStr = JSON.stringify({ reason: e.message });
         }
         var headers = serverObjs.getCORSHeaders();
-        headers['Content-Type'] = 'text/html; charset=utf-8';
+        headers['Content-Type'] = 'application/json; charset=utf-8';
         serverObjs.res.writeHead(200, headers);
         serverObjs.res.end(retStr);
     };
