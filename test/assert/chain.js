@@ -29,7 +29,7 @@ var testObjectValues = function(testCondition, objectToCheckAgainst) {
     contextMsg += '] ';
   }
 
-  var verbose = testCondition.__verbose__ || { testDetails: true };
+  var verbose = testCondition.__verbose__ || { };
 
   var operatorFunctions = {
     'greater than': function(props, description) {
@@ -69,7 +69,7 @@ var testObjectValues = function(testCondition, objectToCheckAgainst) {
     // Array and Object
     if (typeof(testerObj) == 'object') {
       var p;
-      var operators = testerObj.__operators__ || {};
+      if (!operator) operator = {};
       var isEmpty = true;
       for(p in testerObj) {
         if (p == '__operators__' || p == '__contextName__' || p == '__verbose__') continue;
@@ -78,7 +78,7 @@ var testObjectValues = function(testCondition, objectToCheckAgainst) {
           testerObj[p],
           testeeObj[p],
           namespace.length ? namespace + '.' + p : p,
-          operators[p] || 'equal'
+          operator[p]
         );
         if (!outcome.success) return outcome;
       }
@@ -91,9 +91,11 @@ var testObjectValues = function(testCondition, objectToCheckAgainst) {
       return { success: true };
     };
 
+    if (!operator) operator = 'equal';
+
     if (verbose.testCondition) {
       console.log('------------- checking testCondition ------------');
-      console.log('Doing DFS, the current non-object path is: "' + namespace + '"');
+      console.log('key: "' + namespace + '"');
       console.log('testerObj', testerObj);
       console.log('testeeObj', testeeObj);
       console.log('operator', operator);
@@ -105,5 +107,6 @@ var testObjectValues = function(testCondition, objectToCheckAgainst) {
     }
     return operatorFunctions[operator]([testerObj, testeeObj], namespace);
   };
-  return dfs(testCondition, objectToCheckAgainst, '');
+
+  return dfs(testCondition, objectToCheckAgainst, '', testCondition.__operators__);
 }
