@@ -84,7 +84,19 @@ modtask.runWithMethod = function(method, config) {
       main.run(runnerConfig);
       break;
     case 'chain':
-      var __chainProcessorConfig = {};
+      var currentdir = 'rel:/';
+      try {
+        currentdir = process.cwd() + '/';
+      } catch(e) { }
+      var __chainProcessorConfig = {
+        __moduleSearchPaths: [
+          currentdir,
+          __dirname + '/',
+          // needed, otherwise FAIL, loadObject2, Does not exist: kernel/mod. The module for the chain handler is: node_modules/izy-proxy/features/v2/chain/processors/runpkg
+          // turns out the failure is coming from modtask.ldmod('kernel\\selectors').objectExist line in runpkg
+          currentdir + '/node_modules/izymodtask/'
+        ]
+      };
       if (!config.chain.relConfigFile) {
         if (!config.chain.dontUseDefaultRelConfigFile)
           config.chain.relConfigFile = '../configs/izy-proxy/taskrunner';

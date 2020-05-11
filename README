@@ -481,38 +481,61 @@ This would result in the route:
 
 # Extending existing node apps
 
-Setup the environment by:
+izy-proxy supports both a CLI (command line interface) and a referencable library. There are a few typical usecases for using those.
+
+## 1. Launching JSONIO components using the CLI
+
+You launch your components by:
 
 ```
-npm install izy-proxy
+node node_modules/izy-proxy/cli.js call path/to/handler?theAction queryObject.param1 ...
+```
+
+if you would rather, use npm run, add this to the scripts section of package.json file:
+
+```
+"theAction": "node node_modules/izy-proxy/cli.js call path/to/handler?theAction"
+```
+
+this way, you can just call the action by doing:
+
+```
+npm run theAction queryObject.param1 ...
+```
+
+
+### Adding Search Path
+If you would like to have a more flexible path resolution, you must first setup external path resolution so that when you call the CLI, it can correctly interpret and locate your modules:
+
+```
 mkdir -p modtask/config/kernel/extstores
 cp ./node_modules/izy-proxy/modtask/config/kernel/extstores/file.js modtask/config/kernel/extstores/
 ```
 
 You should then edit the modtask/config/kernel/extstores/file.js and add the hard coded and relative paths for the location of your repositories.
 
-Finally you can do:
+## 2. Launching JSONIO components from legacy code in your app
+
+In this case, call the newChain method:
+
 
 ```
-var argv = process.argv.slice(0);
 require('izy-proxy').newChain({
       chainItems: [
-					['log', 'hello world'],
-					['outcome', { success: true }]
-//          ['sysview'],
-//          ['chain.importProcessor', 'apps/tasks/api:taskrunner_chain', {}]
+        ['chain.importProcessor', 'lib/chain/sql', {
+            config: {}
+        }],
+        ['//inline/module?fn', {}]
       ],
-      __chainProcessorConfig: {}
-  },
-  function(outcome) {
-		console.log('service chain outcome', outcome.success, outcome.reason);
-  });
+      __chainProcessorConfig: {
+        __moduleSearchPaths: [`${__dirname}/`]
+      }
+    }, outcome => console.log(outcome.reason)
+  );
+});
 ```
 
-NOTE: require('izy-proxy') will manipulate the argv. you should always make a copy before the call as shown above.
-
-As an alternative, you may reference functionality directly into the node environment:
-
+## 3. Build server functionality for RPC access
 
 ```
 require('izy-proxy/server').run({
@@ -542,10 +565,21 @@ require('izy-proxy/server').run({
 });
 ```
 
+
 ## NOTE
 for more details, visit [izyware]
 
 # Known Issues
+
+## Features
+* remove dependencies to components/net/http:chain
+    * implement http functionality using feature/v2/http.universalHTTP
+    * add http chain net.httprequest
+
+## Service Consumption
+* the node service (features/v2/node/generic) still depends on legacy /apps/izyware/index
+    * some of the sql access, session management for legacy systems gets routed
+    * the session management relies on some of the data structure in legacy /apps/izyware/index
 
 ## Feature Requests
 * pass the IP address and headers metadata to the { sessionObjs } already present in HTTP handler as well as the RAW APIS
@@ -559,11 +593,21 @@ for more details, visit [izyware]
     * over HTTP to JSON (for all non master nodes)
     * (only master nodes) using sockets (no mysqlutil node package dependency) -- this will allow turning toolbar into master
     * q/sql/jsonnode pacakge should provide a chain processor for chain level consumption
+    * all outer tier configurations (webservice, smtp, pop3, taskrunner) will need overhaul
+* runpkg, forces a path resolution dependency on __moduleSearchPaths as currentdir + '/node_modules/izymodtask/'
+    * otherwise FAIL, loadObject2, Does not exist: kernel/mod. The module for the chain handler is: node_modules/izy-proxy/features/v2/chain/processors/runpkg
+    * turns out the failure is coming from modtask.ldmod('kernel\\selectors').objectExist line in runpkg
 
 
 # Changelog
 
 ## V5
+* set JSON/IO content-type to application/json
+* do not send back outcome.__callstackStr in JSON RPC
+    * low risk security issue exposing the callstack to an attacker
+* assert.value should accept hierarchy of __operators__
+    * to support probing for scenarios like headers: { location: 'contain' }
+* add default __moduleSearchPaths to CLI to allow out of the box functionality without external path resolver
 * for pkgrunner implement methodnotfoundstatus
     * now supporting ///pkg:module?method&forcepackagereload=1&methodnotfoundstatus=statuscode
     * allow probing for existance of methods
