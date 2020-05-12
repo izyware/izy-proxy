@@ -31,5 +31,6 @@
   "scripts": {
     "test": "node test.js"
   },
-  "author": "Izyware"
+  "author": "Izyware Inc",
+  "license": "MIT"
 }
