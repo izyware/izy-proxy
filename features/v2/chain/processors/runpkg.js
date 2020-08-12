@@ -28,6 +28,15 @@ var modtask = function(chainItem, cb, $chain) {
     };
 
     switch(str) {
+        case 'net.httprequest':
+            var request = chainItem[i++];
+            modtask.ldmod('rel:../../http').universalHTTP().sendRequest(request, function(outcome) {
+                if (!outcome.success) return $chain.chainReturnCB(outcome);
+                $chain.set('outcome', outcome);
+                cb();
+            });
+            return true;
+            break;
         case 'runpkg.setSession':
             var session = chainItem[i++];
             modtask.sessionMod.set(session);
