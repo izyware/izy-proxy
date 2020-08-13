@@ -42,11 +42,15 @@ modtask.universalHTTP = function() {
       var modurl = require('url');
       parts = modurl.parse(url, true);
       var options = {
-        host: parts.host,
+        host: parts.hostname,
         path: parts.path,
         method: method,
         headers: headers
       };
+
+      if (parts.port) {
+        options.port = parts.port;
+      }
 
       if (method == 'POST' || method == 'PUT') {
         options.headers['Content-length'] = body.length;
