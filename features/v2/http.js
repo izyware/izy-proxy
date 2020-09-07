@@ -78,7 +78,8 @@ modtask.universalHTTP = function() {
             cb({
               success: true,
               responseText: str,
-              status: response.statusCode
+              status: response.statusCode,
+              headers: response.headers
             });
           });
         }
@@ -90,7 +91,8 @@ modtask.universalHTTP = function() {
           cb({
             success: true,
             responseText: str,
-            status: metaOptions.resolveErrorAsStatusCode
+            status: metaOptions.resolveErrorAsStatusCode,
+            headers: {}
           });
         } else {
           cb({ reason: str });
