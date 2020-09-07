@@ -27,6 +27,9 @@ modtask.universalHTTP = function() {
     var method = _options.method;
     var body = _options.body;
     var headers = _options.headers || {};
+    var metaOptions = {
+      resolveErrorAsStatusCode: _options.resolveErrorAsStatusCode
+    };
     if (!method) {
       method = (body) ? 'POST' : 'GET';
     }
@@ -39,10 +42,10 @@ modtask.universalHTTP = function() {
 
     var req = createXMLHTTPObject();
     if (req) return requestByXmlHttp(cb, url, method, headers, body, req);
-    requestByNode(cb, url, method, headers, body);
+    requestByNode(cb, url, method, headers, body, metaOptions);
   };
 
-  function requestByNode(cb, url, method, headers, body) {
+  function requestByNode(cb, url, method, headers, body, metaOptions) {
     try {
       method = method.toUpperCase();
       var modurl = require('url');
@@ -82,7 +85,16 @@ modtask.universalHTTP = function() {
       );
 
       req.on('error', function(err) {
-        cb({ reason: 'http request error: ' + err + ', host: ' + parts.host });
+        var str = 'http request error: ' + err + ', host: ' + parts.host;
+        if (metaOptions.resolveErrorAsStatusCode) {
+          cb({
+            success: true,
+            responseText: str,
+            status: metaOptions.resolveErrorAsStatusCode
+          });
+        } else {
+          cb({ reason: str });
+        }
       });
 
       if (method == 'POST' || method == 'PUT') {
