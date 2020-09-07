@@ -31,6 +31,12 @@ modtask.universalHTTP = function() {
       method = (body) ? 'POST' : 'GET';
     }
 
+    if (method == 'POST' || method == 'PUT') {
+      if (typeof(body) != 'string') {
+        return cb({ reason: 'please specify a body string for request method: ' + method });
+      }
+    }
+
     var req = createXMLHTTPObject();
     if (req) return requestByXmlHttp(cb, url, method, headers, body, req);
     requestByNode(cb, url, method, headers, body);
