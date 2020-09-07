@@ -28,7 +28,8 @@ var myLog = function(p1, p2) {
 function startSlave(config) {
   var clusterConfig = config.cluster || defaults.clusterConfig;
   var verbose = clusterConfig.verbose || defaults.verbose;
-  process.on('message', message => {
+  process.on('message', masterMetrics => {
+    process.__masterMetrics = masterMetrics;
     var metrics = { rss: process.memoryUsage().rss, pid: process.pid };
     if (verbose.masterSlaveMessages) myLog('Send metrics to master', metrics.rss);
     process.send(metrics);
@@ -85,8 +86,8 @@ function startMaster(config) {
     if (slaveMetrics.instantiate || slaveMetrics.memoryTrigger || slaveMetrics.TTLExpired) {
       restartSlave();
     } else {
-      if (verbose.masterSlaveMessages) myLog('get metrics for', slaveInstance.pid)
-      slaveInstance.send({}); // Have slave send us back their metrics
+      if (verbose.masterSlaveMessages) myLog('notify slave', slaveInstance.pid)
+      slaveInstance.send(slaveMetrics); // Have slave send us back their metrics
     }
     setTimeout(function() {
       healthCheck();
@@ -99,7 +100,8 @@ var config = require('../../configs/izy-proxy/tcpserver');
 var mode = process.argv[2];
 if (!mode && config.cluster) {
   mode = 'master';
-} else {
+}
+if (!mode) {
   mode = 'standalone';
 }
 var processId =  mode + '.' + process.pid;

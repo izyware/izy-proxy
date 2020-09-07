@@ -95,8 +95,7 @@ function initModtask(config) {
   modtask.initHttpHandlers = function () {
     if (!config.port) {
       config.port = {};
-    }
-    ;
+    };
 
     const requestHandlerHttp = function (req, res) {
       handleRequest(req, res, 'http', config);

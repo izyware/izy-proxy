@@ -3,16 +3,17 @@
 var modtask = {};
 modtask.test = function() {
   var numHits = 0;
-  var config = require('../../configs/izy-proxy/tcpserver');
+  var config = require('../../../configs/izy-proxy/tcpserver');
   modtask.doChain([
     ['net.httprequest', { 
-      url: 'http://localhost:' + config.port.http + '/apigateway/:performance/memtest?respond',
+      url: 'http://localhost:' + config.port.http + '/apigateway/:test/performance/memtest?respond',
       method: 'POST',
       body: JSON.stringify({}),
       resolveErrorAsStatusCode: 900
     }],
     function(chain) {
-      chain(['log', chain.get('outcome').status + ' numHits ' + numHits++]);
+      var outcome = chain.get('outcome');
+      chain(['log', `${numHits++}, ${outcome.status} ${outcome.responseText}`]);
     },
     ['replay']
   ]);
@@ -20,7 +21,7 @@ modtask.test = function() {
 
 modtask.respond = function() {
   modtask.doChain([
-    ['outcome', { success: true }]
+    ['outcome', { success: true, data: process.__masterMetrics }]
   ]);
 }
 
