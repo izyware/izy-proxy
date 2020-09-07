@@ -153,6 +153,35 @@ To run mypackage:mymodule as a chain (what), inline (transport), inside the cont
 
     //inline/mypackage:mymodule?method
 
+# Clustering and Autoscaling
+Starting with version 6, clustering support has been added to support the following applications:
+* high performance
+* computationally intenstive 
+* high availablability and realiability. 
+
+We recommend that you enable clustering for better reliability for your mission critical apps. 
+
+
+You may enable clustering by either doing:
+
+```
+node tcpserver/app.js master|standalone|slave
+```
+
+If you specify the cluster configuration in your config file, the default startup mode would automatically become 'master'.
+
+```
+	cluster: {
+		healthCheckIntervalSeconds: 2,
+		slaveMaxAllowedMemoryMB: 400,
+		slaveTTLSeconds: 1000,
+		verbose: {
+			healthCheck: true,
+			masterSlaveMessages: false,
+			restartSlave: true
+		}
+	}
+```
 
 # Testing and QA
 Since the izy-proxy contains a heterogeneous set of component, full testing will entail running each test piece seperately.
@@ -600,7 +629,13 @@ for more details, visit [izyware]
 
 # Changelog
 
+## V6
+* support for clustering and autoscaling
+
 ## V5
+* add support for resolveErrorAsStatusCode to net.httprequest 
+* make body string mandatory for POST/PUT net.httprequest 
+* add support for ip:port scheme to net.httprequest
 * remove dependencies to components/net/http:chain 
     * implement http functionality using feature/v2/http.universalHTTP
     * add http chain net.httprequest
