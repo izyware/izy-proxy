@@ -8,11 +8,7 @@ modtask.run = function(config, cb) {
     };
     require('../index').newChain({
           chainItems: [
-              // Use this to adjust the paths defined in modtask/config/kernel/extstores/file.js
-              // So that all the relative and absolute paths to pkgs and modules are accessible
-              // ['sysview'],
-              ['chain.importProcessor', 'apps/tasks/api:taskrunner_chain', config.taskrunnerProcessor],
-              ['taskrunner.listen']
+              ['//inline/izy-proxy/taskrunner/process?listen', { config: config.taskrunnerProcessor }]
           ],
           __chainProcessorConfig: config.__chainProcessorConfig
       },
