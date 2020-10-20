@@ -7,6 +7,7 @@ module.exports.taskrunnerProcessor = {
      // 'inline' would require izynode configuration ('frame_getnode') when package that is not available locally needs to be loaded
      // 'izyware' would require import.pkgloadermodconfig.auth to import from the cloud
      apiExecutionContext: 'izyware',
+     apiPackageName: 'package/version/api',
      authenticate: {
           izyware_taskrunner_key_id: 'your_access_key',
           izyware_taskrunner_secret_access_key: 'your_secret_key'
