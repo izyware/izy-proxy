@@ -8,6 +8,10 @@ var modtask = function(chainItem, next, $chain) {
       var previousOutcome = Object.assign({}, $chain.get('outcome'));
       var testCondition = params.test;
       var objectToCheckAgainst = previousOutcome;
+
+      var verbose = testCondition.__verbose__ || { };
+      if (verbose.testeeObj) console.log('testeeObj: ', objectToCheckAgainst);
+
       var newOutcome = testObjectValues(testCondition, objectToCheckAgainst);
       $chain.set('outcome', newOutcome);
       if (!newOutcome.success) {
