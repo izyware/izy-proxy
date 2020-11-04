@@ -194,6 +194,7 @@ node cli.js method chain chain.action "//inline/izy-proxy/test/chain:module_sett
 
 ### Test chains, runpkg and API plug-in -- require localhost connection (just run node tcpserver/app.js on a seperate terminal)
 * node test/all.js
+* node cli.js call "test/performance/memtest?test"
 
 ### Test the Socket plug-in
 /* running the socket handler module directly without going through the TCP/IP stack */
@@ -230,6 +231,11 @@ You can use the assertion library to to quickly write integrate tests for your s
     ['chain.importProcessor', 'izy-proxy/test/assert:chain'],
     ['net.httprequest', { url: 'https://myservice/endpoint' }],
     ['assert.value', {
+        /* optional */
+		__verbose__: {
+			testCondition: true,
+			testeeObj: true
+		},
        /* optional */
        __contextName__: 'Provide the explanation and contet when an assertion failure is reported',
        /* Optional */
@@ -617,6 +623,23 @@ for more details, visit [izyware]
         * Is this a valid point? may be not: this information will NOT be avilable in JSON/IO apis. The point of JSON/IO apis is transport independence and doing this will introduce the trainsport specific concept into it.
     
 ## Chains
+* `chain.importProcessor` needs to support 'rel:xxx'
+  *  This will be more consistent with the package launcher // schema.
+   * This is important to avoid collusion where the package is being launched when installed as dependency inside node_modules and the parent context also has a chain module with the same name:
+
+            /* ambigious -- chain could be found in a lot of different places */ 
+             ['chain.importProcessor', 'chain']
+    
+            /* unambigious -- chain must be in the same path as the current module*/ 
+            /* would be like modtask.ldmod('kernel/path').rel('chain') */
+             ['chain.importProcessor', 'rel:chain']
+             
+* support compact syntax in the framework. Currently `apps/accountmanager/5/sessionfeature:chainprocessor` implements locally
+
+
+        ['chain.importProcessor', 'apps/accountmanager/5/sessionfeature:chainprocessor']
+        ['features=session.pkgflags']
+
 * the get_node is essentially a get_sql service. best implementations would be
     * over HTTP to JSON (for all non master nodes)
     * (only master nodes) using sockets (no mysqlutil node package dependency) -- this will allow turning toolbar into master
@@ -630,6 +653,12 @@ for more details, visit [izyware]
 # Changelog
 
 ## V6
+* assert.value: verbose option for testeeObj
+* process taskrunner inside izy-proxy. use API configurable task iterator and recorder
+ * Will allow custom task iterators.
+ * Decouples the hosting environment from the apps/tasks/___ packages
+* move memtest suit to test directory
+* send masterMetrics to slaves for monitoring
 * support for clustering and autoscaling
 
 ## V5
@@ -848,7 +877,11 @@ for more details, visit [izyware]
     * this will open up implementation by chain.
     * if a handler is redeclared, it will process instead of the parent context
 
+# External Resources
+* [git]
+* [npmjs]
 
-
+[npmjs]: https://www.npmjs.com/package/izy-proxy
+[git]: https://github.com/izyware/izy-proxy
 [izyware]: https://izyware.com
 [izy-proxy-help-article]: https://izyware.com/help/article/izy-proxy-readme
