@@ -30,6 +30,7 @@ modtask.universalHTTP = function() {
     var metaOptions = {
       resolveErrorAsStatusCode: _options.resolveErrorAsStatusCode
     };
+    if (typeof(url) != 'string') return cb({ reason: 'missing the the "url" string. please provide one to continue.' });
     if (!method) {
       method = (body) ? 'POST' : 'GET';
     }
