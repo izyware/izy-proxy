@@ -26,11 +26,13 @@ var modtask = function(chainItem, cb, $chain) {
         });
         return true;
     };
-
     switch(str) {
         case 'net.httprequest':
             var request = chainItem[i++];
+            var verbose = request.verbose || {};
+            if (verbose.logRequest) console.log('request', request);
             modtask.ldmod('rel:../../http').universalHTTP().sendRequest(request, function(outcome) {
+                if (verbose.logResponse) console.log('response', outcome);
                 if (!outcome.success) return $chain.chainReturnCB(outcome);
                 $chain.set('outcome', outcome);
                 cb();
