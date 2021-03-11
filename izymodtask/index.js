@@ -8,6 +8,7 @@ modtask.getRootModule = function(dir, __moduleSearchPaths) {
   if (!__moduleSearchPaths)
     __moduleSearchPaths = [];
 
+  __moduleSearchPaths = __moduleSearchPaths.slice();
   __moduleSearchPaths.push(dir + '/');
   props.__moduleSearchPaths = __moduleSearchPaths;
   var mod = modtask.getKernel().rootModule.usermodule;
