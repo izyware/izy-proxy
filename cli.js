@@ -1,5 +1,5 @@
 function start() {
-  var izymodtask = require('izymodtask');
+  var izymodtask = require('./izymodtask/index');
   var g_cli = izymodtask.getRootModule(__dirname).ldmod('g_cli');
 
   if (process.argv[2] == 'method') {

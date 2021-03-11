@@ -42,7 +42,7 @@ function newChain(cfg, chainReturnCB) {
   var __chainProcessorConfig = cfg.__chainProcessorConfig || {};
   try {
     var __moduleSearchPaths = __chainProcessorConfig.__moduleSearchPaths || [];
-    var _modtaskModule = require('izymodtask').getRootModule(__dirname, __moduleSearchPaths);
+    var _modtaskModule = require('./izymodtask/index').getRootModule(__dirname, __moduleSearchPaths);
     _modtaskModule.ldmod(featureModulesPath + 'chain/main').newChain({
       chainName: module.parent.filename,
       chainItems: cfg.chainItems || [],

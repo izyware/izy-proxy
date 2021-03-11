@@ -24,7 +24,7 @@ modtask.createServer = function(serverRuntime, handler, cfg, pluginCfg, cb) {
 
 modtask.connectionCounter  = 0;
 modtask.onNewConnection = function(socket, serverRuntime, handler, cfg, pluginCfg, cb) {
-  var rootmod = require('izymodtask').getRootModule();
+  var rootmod = require('../../izymodtask/index').getRootModule();
   var dt = rootmod.ldmod('core/datetime');
   if (!cb) {
     cb = function(outcome) {

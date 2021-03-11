@@ -1,10 +1,10 @@
 var modtask = {};
 
-var localConfigPath = '../../../configs/izy-proxy/tcpserver';
+var localConfigPath = '../../configs/izy-proxy/tcpserver';
 var featureModulesPath = 'features/v2/';
 
 modtask.getServerModule = function() {
-  return require(__dirname + '/../../server');
+  return require(__dirname + '/../server');
 }
 
 modtask.getServerConfig = function() {
@@ -74,7 +74,7 @@ modtask.connectTestSocket = function(config, testSocket, testSocketConfig) {
       __chainProcessorConfig: require(localConfigPath).__chainProcessorConfig
     };
 
-    var rootmod = require('izymodtask').getRootModule();
+    var rootmod = require('../izymodtask/index').getRootModule();
     var socket = testSocket;
     var cfg = { handlerPath: path };
     var session = {
@@ -83,7 +83,7 @@ modtask.connectTestSocket = function(config, testSocket, testSocketConfig) {
         plugin: 'testSocketSystem'
       }
     };
-    var chainHandlers = require(__dirname + '/../../plugin/socket/handle').getChainHandlers(
+    var chainHandlers = require(__dirname + '/../plugin/socket/handle').getChainHandlers(
       rootmod,
       pluginCfg, session, {});
 
@@ -131,7 +131,7 @@ modtask.connectTestSocket = function(config, testSocket, testSocketConfig) {
     var serverRuntime = modtask.getServerModule().instantiateWithConfig(modtask.getServerConfig());
     var socket = testSocket;
     var cfg = { handlerPath: path };
-    require(__dirname + '/../../plugin/socket/handle').onNewConnection(socket,
+    require(__dirname + '/../plugin/socket/handle').onNewConnection(socket,
       serverRuntime,
       handler,
       cfg, pluginCfg, testOutcome);

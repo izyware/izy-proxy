@@ -4,7 +4,7 @@ var featureModulesPath = 'features/v2/';
 module.exports = function (config, pluginName) {
   var name = 'http';
   var healthcheckpath = '/7fe2de1a5c919314f6f5dcfeb94a91ec4195d200';
-  var rootmod = require('izymodtask').getRootModule();
+  var rootmod = require('../../izymodtask/index').getRootModule();
   var modHeader = rootmod.ldmod(featureModulesPath + 'html/headers');
   var cloudServices = [];
   var localDefinedDomains = config.domains || [];
@@ -89,7 +89,7 @@ module.exports = function (config, pluginName) {
         }, 'Total HTTP services: ' + cloudServices.length);
       }
       try {
-        var _rootmod = require('izymodtask').getRootModule();
+        var _rootmod = require('../../izymodtask/index').getRootModule();
         getImportProcessor(_rootmod).ldPath(sessionObjs.cloudService.handlerMod, function(outcome) {
           try {
             if (outcome.success) {

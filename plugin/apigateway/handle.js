@@ -20,7 +20,7 @@ module.exports = function (config, pluginName) {
 
       // For security reasons we virtualize each requests's load into its own root context
       // However, the file system caching (if present) will still allow sharing of context
-      var rootmod = require('izymodtask').getRootModule();
+      var rootmod = require('../../izymodtask/index').getRootModule();
       var importProcessor = rootmod.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', config.__chainProcessorConfig.import);
       // fill my namespace with usable stuff
       serverObjs[name] = {};
