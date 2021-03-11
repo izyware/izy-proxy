@@ -1,4 +1,4 @@
-var featureModulesPath = 'features/v2/';
+var featureModulesPath = 'rel:../../../features/v2/';
 modtask.handle = function(serverObjs, mod, chainHandlers, methodToCall) {
     if (serverObjs.acceptAndHandleCORS()) return;
 
@@ -46,7 +46,7 @@ modtask.processQuery = function(query, serverObjs, mod, chainHandlers, methodToC
     }
 
     try {
-        var context = { session: modtask.ldmod('features/v2/session/main').get() };
+        var context = { session: modtask.ldmod(featureModulesPath + 'session/main').get() };
         modtask.ldmod(featureModulesPath + 'pkg/run').runJSONIOModuleInlineWithChainFeature(
           mod,
           methodToCall,
