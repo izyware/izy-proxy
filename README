@@ -397,6 +397,19 @@ The chain handler should be configued based on the following criteria:
 
 Note that when setting up a new chain special attention must be paid to chainAttachedModule and context object. context object gets accessed when doing $chain.get, $chain.set. In some settings (for example FE components) it may make sense to set both the context and chainAttachedModule to the same object (i.e. modui) while in some other contexts it does not make sense to do so.
 
+### Standard Built-In Chain Commands reference
+
+    ['net.httprequest', {
+        verbose: {
+            logRequest: true,
+            logResponse: true
+        },
+        url: '',
+        method: 'POST',
+        headers: {},
+        body: 'string'
+    }]
+
 ## Package Runner (runpkg) and using invokeString over the JSONIO APIs
 You can leverage this feature to create and consume service components that send/recieve JSON objects across service level boundaries. The advantages are:
 
@@ -599,6 +612,25 @@ require('izy-proxy/server').run({
 });
 ```
 
+## Integration with Popular Frameworks
+The frameworks folder provides support for quick and easy integration with popular frameworks.
+
+### ExpressJS
+Express is a back end web application framework for Node.js. It provides the `app` object and defines routing by `app.METHOD(PATH, HANDLER)` syntax. 
+
+    const izyhandle = require('izy-proxy/frameworks/express').handle([`${__dirname}/`]);
+    app.all('/path/to/module', izyhandle);
+    
+### HapiJS
+Hapi is popular for enterprise level back end development. 
+
+    const izyhandle = require('izy-proxy/frameworks/hapi').handle([`${__dirname}/`]);
+    server.route({
+        method: 'GET',
+        path: '/',
+        handler: izyhandle
+    });
+
 
 ## NOTE
 for more details, visit [izyware]
@@ -623,6 +655,8 @@ for more details, visit [izyware]
         * Is this a valid point? may be not: this information will NOT be avilable in JSON/IO apis. The point of JSON/IO apis is transport independence and doing this will introduce the trainsport specific concept into it.
     
 ## Chains
+* 80001331: raw APIs (non JSONIO) do not have the correct context for modtask.doChain module
+    * ['//inline/rel:api'] resolves to kernel\extstores\api
 * `chain.importProcessor` needs to support 'rel:xxx'
   *  This will be more consistent with the package launcher // schema.
    * This is important to avoid collusion where the package is being launched when installed as dependency inside node_modules and the parent context also has a chain module with the same name:
@@ -652,7 +686,30 @@ for more details, visit [izyware]
 
 # Changelog
 
-## V6
+## V5.3
+
+* 53000402: Support minimal config design service 
+    * fix apigateway hardcoded paths  
+    * consume __moduleSearchPaths to locate mod?fn relative to app.js (see below)
+    * app.js below
+
+            curl --header "Content-Type: application/json" -X POST  "http://localhost:17800/apigateway/mod?fn" -d '{}' 
+                
+            require('izy-proxy/server').run({
+                port: { http: 17800 },
+                plugins: [{
+                    name: 'apigateway',
+                    __moduleSearchPaths: [__dirname + '/']
+                }]
+            });
+                
+                
+* 53000401: fix getRootModule data corruption bug
+* 53000400: move bootstrap into izy-proxy
+* 80001333: add logging to net.httprequest
+* 80001332: show user feedback when proper url string is not provided.
+
+## V5.2
 * assert.value: verbose option for testeeObj
 * process taskrunner inside izy-proxy. use API configurable task iterator and recorder
  * Will allow custom task iterators.
