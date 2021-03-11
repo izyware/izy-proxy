@@ -25,6 +25,8 @@
     "features",
     "chains",
     "samples",
+    "izymodtask",
+    "frameworks",
     "kernel"
   ],
   "devDependencies": {},
