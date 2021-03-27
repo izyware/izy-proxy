@@ -12,8 +12,13 @@ function start() {
     var cmdConfig = outcome.data;
     var action = process.argv[2];
     switch (action) {
+      case 'callpretty':
       case 'call':
-        var action = cmdConfig.call;
+        var pretty = false;
+        if (action == 'callpretty') {
+          pretty  = true;
+        }
+        var action = cmdConfig[action];
         if (action.indexOf('//') != 0) {
           action = '//inline/' + action;
         }
@@ -21,7 +26,8 @@ function start() {
           chain: {
             dontUseDefaultRelConfigFile: true,
             action: action,
-            queryObject: cmdConfig.queryObject || {}
+            queryObject: cmdConfig.queryObject || {},
+            pretty: pretty
           }
         });
         break;

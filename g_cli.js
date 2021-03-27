@@ -116,10 +116,14 @@ modtask.runWithMethod = function(method, config) {
         if (outcome.success) {
           delete outcome.__callstack;
           delete outcome.__callstackStr;
-          console.log(outcome);
+          if (config.chain.pretty)
+            console.log(outcome.data);
+          else
+            console.log(outcome);
         } else {
           console.log(outcome.reason);
-          console.log(outcome.__callstackStr);
+          if (!config.chain.pretty)
+            console.log(outcome.__callstackStr);
         }
       });
       break;
