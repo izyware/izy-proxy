@@ -60,5 +60,6 @@ function newChain(cfg, chainReturnCB) {
 }
 
 module.exports = {
-  newChain: newChain
+  newChain: newChain,
+  basePath: __dirname
 }
