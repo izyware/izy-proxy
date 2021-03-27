@@ -535,13 +535,13 @@ izy-proxy supports both a CLI (command line interface) and a referencable librar
 You launch your components by:
 
 ```
-node node_modules/izy-proxy/cli.js call path/to/handler?theAction queryObject.param1 ...
+node node_modules/izy-proxy/cli.js call|callpretty path/to/handler?theAction queryObject.param1 ...
 ```
 
 if you would rather, use npm run, add this to the scripts section of package.json file:
 
 ```
-"theAction": "node node_modules/izy-proxy/cli.js call path/to/handler?theAction"
+"theAction": "node node_modules/izy-proxy/cli.js call|callpretty path/to/handler?theAction"
 ```
 
 this way, you can just call the action by doing:
@@ -549,6 +549,33 @@ this way, you can just call the action by doing:
 ```
 npm run theAction queryObject.param1 ...
 ```
+
+### Quick Object Loading
+
+Use the loadById for the source data schema:
+
+    const proxyLib = require('izy-proxy').basePath;
+
+    // json
+    chain([`//inline/${proxyLib}/json?loadById`,{ id }]);
+    // yaml
+    chain([`//inline/${proxyLib}/yaml?loadById`,{ id }]);
+    // xml
+    chain([`//inline/${proxyLib}/xml?loadById`,{ id }]);
+
+### Output Formatting
+The following formats are currently supported out of the box.
+* tsv (tab seperated values): useful for cut/pasting results into spreadsheets, etc.
+* ssv (space seperated values): Useful for viewing in a terminal, but may not work well for cut/pasting into other apps.
+* json: pretty json
+
+You can consume these in chains by calling the format modules direcly:
+
+    const proxyLib = require('izy-proxy').basePath;
+    chain([`//inline/${proxyLib}/format?serialize`, {
+        data,
+        format: 'tsv'
+    }]);
 
 
 ### Adding Search Path 
@@ -637,6 +664,10 @@ for more details, visit [izyware]
 
 # Known Issues
 
+## Misc
+* remove the kernel folder from root and include in izymodtask?
+* packages with memory leaks tend to crash the main process (See KB article on izy-prozy memory leaks)
+
 ## Service Consumption
 * the node service (features/v2/node/generic) still depends on legacy /apps/izyware/index
     * some of the sql access, session management for legacy systems gets routed 
@@ -687,7 +718,14 @@ for more details, visit [izyware]
 # Changelog
 
 ## V5.3
-
+* 53000406: add flexible config loader for JSONIO components:
+    * when id is a path it will use the file system
+    * when id is an object it will parse and verify
+    * when id is a service address, the service gets contacted.
+* 53000405: add output format options for cli.
+* 53000404: add flexible npm launch options for better console management.
+* 53000403: expose basePath from index.js
+    * cleaner syntax for referencing direct modules
 * 53000402: Support minimal config design service 
     * fix apigateway hardcoded paths  
     * consume __moduleSearchPaths to locate mod?fn relative to app.js (see below)
