@@ -718,6 +718,8 @@ for more details, visit [izyware]
 # Changelog
 
 ## V5.3
+* 53000477: fix formatting issue for integers
+* 53000476: add support for YAML format.
 * 53000406: add flexible config loader for JSONIO components:
     * when id is a path it will use the file system
     * when id is an object it will parse and verify
