@@ -13,12 +13,12 @@ modtask.serialize = function(queryObject, cb) {
       var propNames = {};
       for(var p in data[0]) {
         propNames[p] = p;
-        props[p] = p.length;
+        props[p] = String(p).length;
       }
       for (var i=0; i < data.length; ++i) {
         item = data[i];
         for(var p in item) {
-          props[p] = Math.max(props[p], item[p].length);
+          props[p] = Math.max(props[p], String(item[p]).length);
         }
       };
       var pad = function(str, n) { 
@@ -29,7 +29,7 @@ modtask.serialize = function(queryObject, cb) {
           }
           return ret;
         }
-        while(str.length <= n) str += ' ';
+        while(String(str).length <= n) str += ' ';
         return str;
       }
       var ret = pad(propNames, props) + '\n';
