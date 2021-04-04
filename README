@@ -382,20 +382,34 @@ Please refer to the comments in the file to understand how to reference external
 
 
 ## Chain Processing 
-Your application functionality may be consumed via the universal scripting environment.
+Even-though chain processing is optional, we recommend that it is used when heterogeneous development across multiple platforms is needed. Not only will this enable cross language and cross platform interoperability, it will also simplify building dashboards and command line tools more quickly and rapidly. 
 
-It is recommended that you expose the functionality via an importable chain module. As of version 2.0 the chaining library will support importing and registering new chain handlers.
+Your application units of functionality may be componentized either as a chain action (CA) or as a JSONIO end-point. The former would enforce execution of your application code in context while sharing the objects passed in and out while the latter would serialize the objects and would execute your application code in an isolated environment. The following considerations are important when making a decision about the component type:
 
-Chain processing is optional and should be used when heterogeneous development across multiple platforms is needed.
+* Security: JSONIO
+* Performance: CA
+* Clustering and Scalability: JSONIO
+* Parallel Processing: JSONIO
+* RCP: JSONIO
 
-To support chain processing in the izy-proxy container execution context, simply drop the __chainProcessorConfig in the config file.
-
-The chain handler should be configued based on the following criteria:
-* Security Context
-* Network Configuration
-* Performance Considerations
 
 Note that when setting up a new chain special attention must be paid to chainAttachedModule and context object. context object gets accessed when doing $chain.get, $chain.set. In some settings (for example FE components) it may make sense to set both the context and chainAttachedModule to the same object (i.e. modui) while in some other contexts it does not make sense to do so.
+
+
+CAs are implemented via a chain handler module (CHM) while JSONIO end-point are implemented as a JSONIO module (JM). JMs always proffer the doChain method with its context object set to the JM. On the other hand, CHMs do not have the standard doChain processor as JSONIO modules do because they can share context and be called from other chains. In order to process a chain inside a CHM, the $chain parameter proffers the following functions:
+
+* newChainForModule: Allows running a new chain by running it in the context of a module.
+
+    
+        $chain.newChainForModule(module, cb, context
+            ['//service/endpoint', { data }]
+        );
+
+* newChainForProcessor: Allows running a new chain by running it in the same context of the processor it is being called from.
+
+        $chain.newChainForProcessor(processorModule, next, {}, [
+            ['//service/endpoint', { data }]
+        ]);
 
 ### Standard Built-In Chain Commands reference
 
@@ -705,11 +719,7 @@ for more details, visit [izyware]
         ['chain.importProcessor', 'apps/accountmanager/5/sessionfeature:chainprocessor']
         ['features=session.pkgflags']
 
-* the get_node is essentially a get_sql service. best implementations would be
-    * over HTTP to JSON (for all non master nodes)
-    * (only master nodes) using sockets (no mysqlutil node package dependency) -- this will allow turning toolbar into master
-    * q/sql/jsonnode pacakge should provide a chain processor for chain level consumption 
-    * all outer tier configurations (webservice, smtp, pop3, taskrunner) will need overhaul
+
 * runpkg, forces a path resolution dependency on __moduleSearchPaths as currentdir + '/node_modules/izymodtask/' 
     * otherwise FAIL, loadObject2, Does not exist: kernel/mod. The module for the chain handler is: node_modules/izy-proxy/features/v2/chain/processors/runpkg
     * turns out the failure is coming from modtask.ldmod('kernel\\selectors').objectExist line in runpkg
