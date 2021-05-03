@@ -12,6 +12,7 @@
   },
   "files": [
     "README.md",
+    "apps",
     "tcpserver",
     "taskrunner",
     "favicon.ico",

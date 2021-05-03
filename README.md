@@ -532,13 +532,18 @@ To make cloning and reusability easier, it is further recommended that the bridg
 
     app_name/bridge/api
 
-For example, the sample app included with izy-proxy uses:
+For example, the http bridge app included with izy-proxy uses:
 
-    apps/sample/bridge/api.js
+    apps/bridge/api.js
 
 This would result in the route:
 
-    https://dnsentry.com/apigateway/%3Aapps/sample/bridge%3Aapi
+    https://dnsentry.com/apigateway/%3Aapps/bridge%3Aapi
+
+Which can then be further used to perform configuration tasks from the CLI, Dashboard Interface or more generally a JSON API call:
+
+    npm run apps/brige/api?setconfig queryObject.agent socks5://ip:port
+    
 
 # Extending existing node apps
 
@@ -728,6 +733,7 @@ for more details, visit [izyware]
 # Changelog
 
 ## V5.3
+* 53000478: provide replacement for izymodtask/encodedecode/uri with izymodtask/uri
 * 53000477: fix formatting issue for integers
 * 53000476: add support for YAML format.
 * 53000406: add flexible config loader for JSONIO components:
