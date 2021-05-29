@@ -287,6 +287,17 @@ node cli.js method chain chain.action "//service/accountmanager:api/forgotpasswo
  chain.queryObject.email xxx@yourizywaredomain.com
 ```
 
+## Passing Around Configuration Objects
+The CLI uses `flatToJSON` to convert flat serialized command line strings to an in memory JSON key/values using the standard modtask flatToJSON method. If you need to parse the string values into objects, you should use expandStringEncodedConfigValues
+
+    let cmdline = { 'queryObject.param.key1' : 'val', test: 'json:["domain_manager"]' };
+    const { flatToJSON, expandStringEncodedConfigValues } = require('izy-proxy/izymodtask');
+    expandStringEncodedConfigValues(flatToJSON(cmdline));
+    /* will result */
+    { success: true, data: { queryObject: { param: { key1: 'val' } }, test: ['domain_manager'] } }
+    
+the serialized syntax for expandStringEncodedConfigValues is consistent with data URIs which was defined in Request for Comments (RFC) 2397. 
+
 # Plugins
 The tool has an extensive and powerful plugin system that allows you to very easily break your application up into isolated pieces of business logic, and reusable pieces.
 
@@ -684,6 +695,28 @@ for more details, visit [izyware]
 # Known Issues
 
 ## Misc
+* default path resolution call/callpretty needs to allow '..' for izy-proxy children
+
+        node node_modules/izy-proxy/cli.js callpretty test/test
+        
+        /* fails -- needs to work. works when called from izy-proxy root */
+        ['chain.importProcessor', 'izy-proxy/test/assert:chain'],
+        
+        /* works */
+        ['chain.importProcessor', 'test/assert:chain'],
+        
+* runpkg needs to gracefully handle a '?fn' call in a chain without a chainAttachedModule set
+    * the workround is to pass the full path i.e. '//inline/path?myFn'
+    * this scenario can happen for example when it calls directly from a node module
+
+              require('izy-proxy').newChain({
+                chainItems: [
+                  ['//inline/?MyFN'],
+                  chain => {
+                  }
+                ],
+    
+
 * remove the kernel folder from root and include in izymodtask?
 * packages with memory leaks tend to crash the main process (See KB article on izy-prozy memory leaks)
 
@@ -733,6 +766,7 @@ for more details, visit [izyware]
 # Changelog
 
 ## V5.3
+* 53000479: improve expandStringEncodedConfigValues
 * 53000478: provide replacement for izymodtask/encodedecode/uri with izymodtask/uri
 * 53000477: fix formatting issue for integers
 * 53000476: add support for YAML format.

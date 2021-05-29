@@ -120,6 +120,7 @@ modtask.expandStringEncodedConfigValues = function(config, outcome) {
     }
   }
   outcome.success = true;
+  outcome.data = config;
   return outcome;
 }
 
