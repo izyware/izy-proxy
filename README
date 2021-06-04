@@ -738,6 +738,25 @@ for more details, visit [izyware]
         * Is this a valid point? may be not: this information will NOT be avilable in JSON/IO apis. The point of JSON/IO apis is transport independence and doing this will introduce the trainsport specific concept into it.
     
 ## Chains
+*  single action chain items with top level module fail:
+
+
+        req.path = '/path/to/mymodule';
+    
+        require('../../index').newChain({
+          chainItems: [
+            ['//inline/' + req.path, (req.method.toUpperCase() === 'POST' ? req.body : req.query)],
+          ],
+          __chainProcessorConfig: {
+            __moduleSearchPaths
+          }
+        }, outcome => {
+          delete outcome.__callstack;
+          delete outcome.__callstackStr;
+          res(JSON.stringify(outcome));
+        });
+
+
 * 80001331: raw APIs (non JSONIO) do not have the correct context for modtask.doChain module
     * ['//inline/rel:api'] resolves to kernel\extstores\api
 * `chain.importProcessor` needs to support 'rel:xxx'
@@ -766,6 +785,7 @@ for more details, visit [izyware]
 # Changelog
 
 ## V5.3
+* 53000480: Serialize frameworkresponse for backward compatibility
 * 53000479: improve expandStringEncodedConfigValues
 * 53000478: provide replacement for izymodtask/encodedecode/uri with izymodtask/uri
 * 53000477: fix formatting issue for integers
