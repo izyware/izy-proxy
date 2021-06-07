@@ -72,7 +72,22 @@ modtask.extractConfigFromCmdLine = function(params) {
   return outcome;
 }
 
-// convert x.y.z to x: { y: { z ...
+modtask.jsonToFlat = function(obj, prefix, data) {
+  if (!data) data = {};
+  if (!prefix) prefix = '';
+  var newKey = '';
+  for (var p in obj) {
+      newKey = p;
+      if (prefix.length) newKey = prefix + '.' + newKey;
+      if (typeof(obj[p]) == 'object') {
+          modtask.jsonToFlat(obj[p], newKey, data);
+      } else {
+          data[newKey] = obj[p];
+      }
+  }
+  return data;
+}
+
 modtask.flatToJSON = function(obj) {
   var p;
   var ret = {};
