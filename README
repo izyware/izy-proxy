@@ -287,6 +287,18 @@ node cli.js method chain chain.action "//service/accountmanager:api/forgotpasswo
  chain.queryObject.email xxx@yourizywaredomain.com
 ```
 
+If your subscription enables access to Automation Projects studio, you can recreate these launch configurations in the UI and use the console for interactive exploration of your app functionality. Logging, monitoring and automation will also be supported. You must select the authentication strategy that best suits your use case (Open, hoAuth, SAML, etc.) even in the minimal service configuration option. For example:
+    
+    
+    require('izy-proxy/server').run({
+            port: { http: 17800 },
+            plugins: [{
+                name: 'apigateway',
+                __moduleSearchPaths: [__dirname + '/'],
+                cli: 'oAuth2'
+            }]
+        });
+
 ## Passing Around Configuration Objects
 The CLI uses `flatToJSON` to convert flat serialized command line strings to an in memory JSON key/values using the standard modtask flatToJSON method. If you need to parse the string values into objects, you should use expandStringEncodedConfigValues
 
@@ -531,6 +543,16 @@ The following solution is recommended:
 * SSL certificates corresponding to the DNS resources above: In most cases is not needed for the public facing izy-server instances where the HTTPS connections are handled by a load balancer. But in this scenarios, the izy-proxy instance should handle the HTTPS connection directly (see server.js):
 
      	../configs/izy-proxy/certificates/privatekey.pem
+     	
+* domain config: you can pass in specific domain level config to the module. for example:
+
+        { handlerMod: 'apps/bridge/...', domain: 'mydomain', config: { 
+                transportAgent: 'socks5://ip:port',
+                verbose: {
+                    transportAgent: true
+                }
+            }
+        }
 
 # Packaging
 It is recommended that the functionality be organized and packaged as an izyware app. This approach will have the following benefits:
@@ -719,6 +741,7 @@ for more details, visit [izyware]
 
 * remove the kernel folder from root and include in izymodtask?
 * packages with memory leaks tend to crash the main process (See KB article on izy-prozy memory leaks)
+* runWithMethod is duplicated across apigateway/cli and g_cli. consolidation of configuration options is needed.
 
 ## Service Consumption
 * the node service (features/v2/node/generic) still depends on legacy /apps/izyware/index
@@ -740,7 +763,7 @@ for more details, visit [izyware]
 ## Chains
 *  single action chain items with top level module fail:
 
-
+        /* only happens when called from frameworks */
         req.path = '/path/to/mymodule';
     
         require('../../index').newChain({
@@ -785,6 +808,8 @@ for more details, visit [izyware]
 # Changelog
 
 ## V5.3
+* 53000482: replicate runWithMethod in the apigateway
+* 53000481: Increase test coverage for izymodtask
 * 53000480: Serialize frameworkresponse for backward compatibility
 * 53000479: improve expandStringEncodedConfigValues
 * 53000478: provide replacement for izymodtask/encodedecode/uri with izymodtask/uri

@@ -53,6 +53,16 @@ module.exports = function (config, pluginName) {
       }
 
       if (config.invokePrefix) path = removePrefix(path, config.invokePrefix);
+      if (path == 'cli') {
+        if (!config.cli || config.cli != 'open') {
+          return serverObjs.sendStatus({
+            status: 400,
+            subsystem: name
+          }, 'You do not have sufficient permissions to access the CLI on this service.');
+        }
+        path = (__dirname + '/' + path).replace('//', '/');
+      };
+
       var chainHandlers = [
         rootmod.ldmod(featureModulesPath + 'chain/processors/basic'),
         rootmod.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', config.__chainProcessorConfig.izynode),
