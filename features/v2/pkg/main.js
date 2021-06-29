@@ -1,5 +1,7 @@
 /* izy-loadobject nodejs-require */
 module.exports = (function() {
+  var modtask = function() {};
+
   // Always import package even if it has already been imported before
   function forceImportPackage(pkgPathWithoutColons, cb) {
     importPackageIfNotPresent({
@@ -14,7 +16,7 @@ module.exports = (function() {
     for(var p in modToPkgMap) {
       if (modToPkgMap[p] == pkgPathWithoutColons) {
         // todo: this needs to be in kernel/extstores/inline/deport
-        delete INLINESTORE[p];
+        delete modtask.__Kernel.INLINESTORE[p];
         delete modToPkgMap[p];
       }
     }
@@ -112,7 +114,6 @@ module.exports = (function() {
     );
   }
 
-  var modtask = function() {}
   modtask.verbose = false;
   modtask.modpkgloader = null;
   modtask.ldPath = ldPath;

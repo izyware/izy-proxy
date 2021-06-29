@@ -14,12 +14,14 @@ require('../../index').newChain([
   ['assert.value', myJsonObject],
   ['set', 'outcome', izymodtask.jsonToFlat(myJsonObject)],
   ['assert.value', { 'queryObject.param.key1': 'val' }],
-  ['log', 'support self loading izymodtask'],
   function(chain) {
-    console.log('Get Root Module');
     var mod = izymodtask.getRootModule(__dirname).ldmod(izymodtaskPath);
     chain(['set', 'outcome', typeof(mod.jsonToFlat) ]);
   },
-  ['assert.value', 'function'],
+  function(chain) {
+    var mod = izymodtask.getRootModule(__dirname).ldmod(izymodtaskPath);
+    chain(['set', 'outcome', { Kernel: typeof(mod.__Kernel), INLINESTORE: typeof(mod.__Kernel.INLINESTORE) } ]);
+  },
+  ['assert.value', { Kernel: 'object', INLINESTORE: 'object' }],
   ['outcome', { success: true }]
 ]);

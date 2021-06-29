@@ -32,7 +32,7 @@ var modtask =
 			Kernel.Sleep = modtask.platform.Sleep;
 			Kernel.exceptionToString = modtask.platform.exceptionToString;
 			Kernel.getPlatformModule = function() { return modtask.platform; };
-			Kernel.getBuildInfo = function() { return "2021-06-28 17:23:44"; } ;
+			Kernel.getBuildInfo = function() { return "2021-06-29 11:57:11"; } ;
 			Kernel["getModulePath"] =  function(name)
 			{
 				if (typeof(modtask.platform.modspath[name]) != "string")
@@ -2645,7 +2645,8 @@ var Minicore = {
 		  if (x.indexOf("rel:") == 0) return mod.ldmod(mod.ldmod('kernel/path').resolve(mod, x, true));
 		  else return Kernel.loadModuleInModtask(mod, x); 
 	  };
-		mod["__modtask"] = modtask;			
+		mod["__modtask"] = modtask;
+		mod.__Kernel = Kernel;
 		mod["sp"] = function(p,v) { 
 			var p1;if (typeof(p) == "object") { for(p1 in p) mod["sp"](p1, p[p1]); return mod; }  
 			mod[p] = v; return mod; 
@@ -2830,6 +2831,7 @@ var Minicore = {
 
 
 var Kernel=Minicore;
+Kernel.INLINESTORE = INLINESTORE;
 
 function onSystemStart(platobject)
 {

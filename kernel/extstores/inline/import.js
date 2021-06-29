@@ -11,7 +11,7 @@ module.exports = (function() {
 
 	modtask.writeModule = function(path, raw, okpush, failpush)
 	{
-		INLINESTORE[path] = raw;
+		modtask.__Kernel.INLINESTORE[path] = raw;
 	}
 	return modtask;
 })();
