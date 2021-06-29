@@ -1,4 +1,4 @@
-
+module.exports = (function() { 
 var INLINESTORE = {};INLINESTORE["minicore"] = function() { 
 var modtask = 
 {
@@ -32,7 +32,7 @@ var modtask =
 			Kernel.Sleep = modtask.platform.Sleep;
 			Kernel.exceptionToString = modtask.platform.exceptionToString;
 			Kernel.getPlatformModule = function() { return modtask.platform; };
-			Kernel.getBuildInfo = function() { return "2021-03-10 17:23:14"; } ;
+			Kernel.getBuildInfo = function() { return "2021-06-28 17:23:44"; } ;
 			Kernel["getModulePath"] =  function(name)
 			{
 				if (typeof(modtask.platform.modspath[name]) != "string")
@@ -1050,13 +1050,17 @@ var modtask =
 			var unparsedstrform = decodefunc(modtask.file.readFile(objname));
 			var token = 'izy-loadobject nodejs-require';
 			if (typeof(require) == 'function' && unparsedstrform.indexOf('/* ' + token + ' */') > -1) {
-				if (require.cache && require.resolve)
-					delete require.cache[require.resolve(objname)];
+				var requirePath = objname;
+				if (requirePath.indexOf('./') == 0) {
+					console.log('[warning] converting to fullPath', requirePath);
+					requirePath = process.cwd() + '/' + requirePath;
+				}
 				__tempobjstore = require(objname);
+				__tempobjstore["__loadObject2Path"] = requirePath;
 			} else {
 				__tempobjstore = Minicore.nakedParseStr(_modtask, objname, objecttype, unparsedstrform);
+				__tempobjstore["__loadObject2Path"] = objname;
 			}
-			__tempobjstore["__loadObject2Path"] = objname;
 		} catch(e) {
 			var err = "loadFromFileParseFunc " + Minicore.newLine;
 		        err += "file   : " + objname + Minicore.newLine;
@@ -1124,7 +1128,8 @@ modtask.determineExtension = function(basepath) {
 		if (modtask.endsWith(basepath, item)) return '';
 	}
 	return modtask.extentionstr;
-}; return modtask; }; 
+}
+; return modtask; }; 
 INLINESTORE["minipath"] = function() { 
 var modtask = {};
 modtask.seperator = "/";
@@ -2572,7 +2577,10 @@ var modtask =
 
 
 var Minicore = {
-	verbose: {},
+	verbose: {
+		strictModeEval: false,
+		loadObject: false
+	},
 	ERR_DOESNOT_EXIST 	: "Does not exist",
  	newLine : "\r\n",
 	rootModule : false,
@@ -2747,12 +2755,13 @@ var Minicore = {
 		return __tempobjstore == 'string' || __tempobjstore == 'function';
 	},	
 
-	JscriptToAA : function(modtask, JS, objstoredname) {
+	JscriptToAA : function(modtask, JS, objstoredname, objname) {
 		var objcontents;
 		try {
 			if (typeof(JS) == 'function') {
 				objcontents = JS(objstoredname);
 			} else {
+        if (Minicore.verbose.strictModeEval) console.log('[strictModeEval] ' + objname);
 				eval(JS + "; objcontents = " + objstoredname + ";");	
 			}
 		} catch(e) {
@@ -2768,7 +2777,7 @@ var Minicore = {
 		if (!unparsedstrform)
 			unparsedstrform = Minicore.getInlineJScriptForObj(objname);
 		__tempobjstore = unparsedstrform; 
-		__tempobjstore = Minicore.JscriptToAA(modtask, __tempobjstore, objecttype); 		
+		__tempobjstore = Minicore.JscriptToAA(modtask, __tempobjstore, objecttype, objname); 		
 		return __tempobjstore;
 	},
 
@@ -2835,4 +2844,4 @@ function onSystemStart(platobject)
 
 
 
-onSystemStart();module.exports=Kernel;
+onSystemStart();return Kernel;})();

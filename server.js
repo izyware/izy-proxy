@@ -1,5 +1,7 @@
 "use strict";
 
+var moduleLoaderMode = 'strict';
+
 function initModtask(config) {
   var handlers = [];
   var modtask = {};
@@ -32,7 +34,6 @@ function initModtask(config) {
     var path = `./plugin/${pluginConfig.name}/handle`;
     modtask.serverLog(`Loading plug-in ${pluginConfig.name}`, 'INFO');
     if (noCaching) {
-      // delete require.cache[require.resolve(path)]
       var p;
       for (p in require.cache) {
         delete require.cache[p];
@@ -192,6 +193,9 @@ function initModtask(config) {
         handler = handlers[i];
         if (handler.config.customRequestHandler) continue;
         if (handler.config.reloadPerRequest) {
+          if (moduleLoaderMode == 'strict') {
+            throw new Error('reloadPerRequest and strict mode are incompatible');
+          }
           handler.plugin = modtask.loadPlugin(handler.config, true);
         }
         /*** Errors happening in this block will be marked as belonging to the plug-in ***/

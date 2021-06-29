@@ -22,10 +22,14 @@ modtask.getBootstrapPath = function() {
   return __dirname + '/bootstrap.js';
 }
 
+var moduleLoaderMode = 'strict';
+
 modtask.getKernel = function() {
   var path = modtask.getBootstrapPath();
-  if (require.cache && require.resolve)
-    delete require.cache[require.resolve(path)];
+  if (moduleLoaderMode != 'strict') {
+    if (require.cache && require.resolve)
+      delete require.cache[require.resolve(path)];
+  }
   return require(path);
 }
 
