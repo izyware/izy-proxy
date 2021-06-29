@@ -5,9 +5,20 @@ var modtask = function(chainItem, next, $chain) {
   switch (params.action) {
     case 'assert.value':
       params.test = chainItem[i++] || {};
-      var previousOutcome = Object.assign({}, $chain.get('outcome'));
       var testCondition = params.test;
-      var objectToCheckAgainst = previousOutcome;
+      var previousOutcome = $chain.get('outcome');
+      var objectToCheckAgainst;
+
+      switch(typeof(testCondition)) {
+        case 'string':
+        case 'number':
+          objectToCheckAgainst = { assertionValue: previousOutcome };
+          testCondition = { __verbose__: { testeeObj: false }, assertionValue: testCondition };
+          break;
+        default:
+          objectToCheckAgainst = Object.assign({}, previousOutcome);
+          break;
+      }
 
       var verbose = testCondition.__verbose__ || { };
       if (verbose.testeeObj) console.log('testeeObj: ', objectToCheckAgainst);
