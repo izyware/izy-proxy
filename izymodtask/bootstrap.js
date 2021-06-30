@@ -32,7 +32,7 @@ var modtask =
 			Kernel.Sleep = modtask.platform.Sleep;
 			Kernel.exceptionToString = modtask.platform.exceptionToString;
 			Kernel.getPlatformModule = function() { return modtask.platform; };
-			Kernel.getBuildInfo = function() { return "2021-06-29 11:57:11"; } ;
+			Kernel.getBuildInfo = function() { return "2021-06-30 09:27:18"; } ;
 			Kernel["getModulePath"] =  function(name)
 			{
 				if (typeof(modtask.platform.modspath[name]) != "string")
@@ -1056,6 +1056,10 @@ var modtask =
 					requirePath = process.cwd() + '/' + requirePath;
 				}
 				__tempobjstore = require(objname);
+				if (__tempobjstore.forcemodulereload) {
+					if (typeof(__tempobjstore) != 'function') throw { message: 'forcemodulereload requires a function payload' };
+					__tempobjstore = Minicore.nakedParseStr(_modtask, objname, objecttype, __tempobjstore);
+				}
 				__tempobjstore["__loadObject2Path"] = requirePath;
 			} else {
 				__tempobjstore = Minicore.nakedParseStr(_modtask, objname, objecttype, unparsedstrform);
@@ -1063,11 +1067,11 @@ var modtask =
 			}
 		} catch(e) {
 			var err = "loadFromFileParseFunc " + Minicore.newLine;
-		        err += "file   : " + objname + Minicore.newLine;
-			err += "error  : " + modtask.exceptionToString(e) + Minicore.newLine;
-			err += "parser : ";
-			if (modtask.getparseerrorinfo) {
+			if (e.stack) {
 				err += e.stack;
+			} else {
+				err += "file   : " + objname + Minicore.newLine;
+				err += "error  : " + modtask.exceptionToString(e) + Minicore.newLine;
 			}
 			_modtask.Fail(err);
 		}

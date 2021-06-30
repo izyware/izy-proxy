@@ -1,5 +1,5 @@
 /* izy-loadobject nodejs-require */
-module.exports = (function() {
+module.exports = function() {
    var modtask = {
       init : function() {
          modtask.modcore = modtask.ldmod("core\\core");
@@ -152,4 +152,5 @@ module.exports = (function() {
       }
    };
    return modtask;
-})();
+};
+module.exports.forcemodulereload = true;
