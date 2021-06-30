@@ -186,28 +186,42 @@ If you specify the cluster configuration in your config file, the default startu
 # Testing and QA
 Since the izy-proxy contains a heterogeneous set of component, full testing will entail running each test piece seperately.
 
+## Core Unit Tests
+These will test core functionality for module management, chains and integration layer.
 ```
-### Test the chaining engine functionality
-### SHOULD ALWAYS WORK
-node test/chain/all.js
+npm run test
+```
+
+## Networking, Run Package, and API Integration tests
+
+Test chains, runpkg and API plug-in -- require localhost connection.
+
+
+```
+/* for localhost connection just run node tcpserver/app.js on a seperate terminal */
+npm run test all
+```
+
+## CLI, RPC and Performance Management Tests
+
+```
 node cli.js method chain chain.action "//inline/izy-proxy/test/chain:module_setting_the_outcome" chain.queryObject.success true chain.queryObject.testKey testValue chain.relConfigFile ../configs/izy-proxy/taskrunner
 
-### Test chains, runpkg and API plug-in -- require localhost connection (just run node tcpserver/app.js on a seperate terminal)
-* node test/all.js
-* node cli.js call "test/performance/memtest?test"
+/* memory management tests */
+node cli.js call "test/performance/memtest?test"
 
-### Test the Socket plug-in
 /* running the socket handler module directly without going through the TCP/IP stack */
 node cli.js method socket socket.path izy-pop3/proxypkg:directdb socket.testmod izy-pop3/proxypkg/test/android socket.verbose.pipe.s1data true socket.verbose.pipe.s2data true socket.verbose.pipe.teardown true socket.verbose.mock false socket.user user  socket.pass 'password!'
 
 /* Test remote servers over TCP/SSL */
 node cli.js method socket socket.path pop3.izyware.com socket.port 110 socket.testmod izy-pop3/proxypkg/test/android socket.verbose.pipe.s1data true socket.verbose.pipe.s2data true socket.verbose.pipe.teardown true socket.verbose.mock false socket.user user  socket.pass 'password!'
+```
 
-### Test TaskRunner
+## Test TaskRunner
 From the dashboard, select the "izy-proxy smoke tests" task and run it on your node by
 
+```
 node cli.js method taskrunner taskrunnerProcessor.verbose true taskrunnerProcessor.readonly true taskrunnerProcessor.loopMode false meta.action checkconfig
-
 ```
 
 ## Test Automation 
@@ -811,6 +825,9 @@ for more details, visit [izyware]
 # Changelog
 
 ## V5.4
+* 54000007: add forcemodulereload feature
+    * enables object construction delegation to the module load phase 
+* 54000006: reorganize and clean up tests
 * 54000005: add reference to Kernel and module store per module
 * 54000004: support self loading izymodtask
     * this will allow module consumption via require and ldmod
