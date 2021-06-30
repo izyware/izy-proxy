@@ -740,7 +740,6 @@ for more details, visit [izyware]
     
 
 * remove the kernel folder from root and include in izymodtask?
-* packages with memory leaks tend to crash the main process (See KB article on izy-prozy memory leaks)
 * runWithMethod is duplicated across apigateway/cli and g_cli. consolidation of configuration options is needed.
 
 ## Service Consumption
@@ -749,6 +748,10 @@ for more details, visit [izyware]
     * the session management relies on some of the data structure in legacy /apps/izyware/index
 
 ## Feature Requests
+* networking
+    * net.http needs to allow for passing a transport agent
+        * support HTTP, HTTPS, and SOCKS options
+        * for browser context require toolbar.
 * context 
     * domains need to become part of the context 
     * APIs is not domain aware. nede to add that
@@ -806,6 +809,16 @@ for more details, visit [izyware]
 
 
 # Changelog
+
+## V5.4
+* 54000005: add reference to Kernel and module store per module
+* 54000004: support self loading izymodtask
+    * this will allow module consumption via require and ldmod
+* 54000003: add support for direct assertions on string and numbers
+* 54000002: enforce source code tracking using izy-loadobject tag
+* 54000001: implement strict mode
+    * better performance
+    * added package running space isolation
 
 ## V5.3
 * 53000482: replicate runWithMethod in the apigateway
