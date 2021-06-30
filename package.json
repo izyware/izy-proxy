@@ -35,7 +35,7 @@
   ],
   "devDependencies": {},
   "scripts": {
-    "test": "node test.js"
+    "test": "node test/all.js"
   },
   "author": "Izyware Inc",
   "license": "MIT"

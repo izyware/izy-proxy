@@ -1,12 +1,13 @@
 
-function testV3() {
+function testV3(testCB) {
+  var verbose = false;
   var callStackLength = 5;
   var chainContext = {};
   var chainItems = [
-    ['log', 'Settings chain property should write into the chainContext object'],
-    ['set', 'property1', 'value1'], (chain) => chain(['log', chainContext.property1]),
+    (!verbose) ? ['nop'] : ['log', 'Settings chain property should write into the chainContext object'],
+    ['set', 'property1', 'value1'], (chain) => chain((!verbose) ? ['nop'] : ['log', chainContext.property1]),
 
-    ['log', 'test callstack feature'],
+    (!verbose) ? ['nop'] : ['log', 'test callstack feature'],
     function(chain) {
       chain.newChain({
         chainName: 'fakeModule',
@@ -17,14 +18,14 @@ function testV3() {
           ['//inline/izy-proxy/test/chain/nestedfailures', { counter: callStackLength - 2 }]
         ]
       }, function(outcome) {
-        if (outcome.__callstack.length != callStackLength) return chain(['outcome', {
+        if (outcome.__callstack.length != callStackLength) return testCB({
           reason: 'expected __callstack of length ' + callStackLength + ' but got ' + outcome.__callstack.length
-        }]);
+        });
         chain(['continue']);
       });
     },
 
-    ['log', 'nonexitent launch on chain will catch and exit'],
+    (!verbose) ? ['nop'] : ['log', 'nonexitent launch on chain will catch and exit'],
     ['set', 'outcome', { success: true }],
     function(chain) {
       chain.newChain({
@@ -39,16 +40,13 @@ function testV3() {
         ]
       }, function(outcome) {
         if (outcome.success) {
-          return chain([
-            ['set', 'outcome', { reason: 'expected module_that_does_not_exist to generate non-success outcome.' }],
-            ['return']
-          ]);
+          return testCB({ reason: 'expected module_that_does_not_exist to generate non-success outcome.' });
         };
         chain(['continue']);
       });
     },
 
-    ['log', '/// launch pattern should fail even if the module path is valid'],
+    (!verbose) ? ['nop'] : ['log', '/// launch pattern should fail even if the module path is valid'],
     ['set', 'outcome', { success: true }],
     function(chain) {
       chain.newChain({
@@ -64,16 +62,13 @@ function testV3() {
         ]
       }, function(outcome) {
         if (outcome.success) {
-          return chain([
-            ['set', 'outcome', { reason: 'expected /// to fail' }],
-            ['return']
-          ]);
+          return testCB({ reason: 'expected /// to fail' });
         };
         chain(['continue']);
       });
     },
 
-    ['log', 'bad url should fail'],
+    (!verbose) ? ['nop'] : ['log', 'bad url should fail'],
     function(chain) {
       chain.newChain({
         chainName: 'fakeModule',
@@ -87,102 +82,121 @@ function testV3() {
         ]
       }, function(outcome) {
         if (outcome.success) {
-          return chain([
-            ['set', 'outcome', { reason: 'expected bad url to generate non-success outcome.' }],
-            ['return']
-          ]);
+          return testCB({ reason: 'expected bad url to generate non-success outcome.' });
         };
         chain(['continue']);
       });
     },
 
-    ['log', 'only outcome key should be copied back and the rest should remain isolated'],
+    (!verbose) ? ['nop'] : ['log', 'only outcome key should be copied back and the rest should remain isolated'],
     ['set', 'commonkey', 'caller'],
     ['//inline/izy-proxy/test/chain/module_setting_the_outcome', {
       success: true,
       reason: 'just testing'
     }],
     function(chain) {
-      if (!chain.get('outcome').success || chain.get('outcome').reason != 'just testing') return chain(['outcome', { reason: 'module_setting_the_outcome is expected to set the outcome' }]);
-      if (chain.get('commonkey') != 'caller') return chain(['outcome', { reason: 'commonkey should remain isolated' }]);
+      if (!chain.get('outcome').success || chain.get('outcome').reason != 'just testing') 
+        return testCB({ reason: 'module_setting_the_outcome is expected to set the outcome' });
+      if (chain.get('commonkey') != 'caller') 
+        return testCB({ reason: 'commonkey should remain isolated' });
       return chain(['set', 'outcome', { success: true }]);
     },
 
-    ['//inline/izy-proxy/test/chain:module_setting_the_outcome?testMethodToCall', {
+    ['//inline/izy-proxy/test/chain:module_setting_the_outcome?methodSettingOutcome', {
       success: true
     }],
+    function(chain) {
+      if (!chain.get('outcome').success) 
+        return testCB({ reason: 'module_setting_the_outcome?methodSettingOutcome is expected to set the outcome' });
+      chain(['continue']);
+    },
 
-    ['log', 'test getter/setter'],
+    ['//inline/izy-proxy/test/chain:module_setting_the_outcome?methodCallingCB', {
+      success: true
+    }],
+    function(chain) {
+      if (!chain.get('outcome').success) 
+        return testCB({ reason: 'module_setting_the_outcome?methodCallingCB is expected to set the outcome' });
+      chain(['continue']);
+    },
+
+    (!verbose) ? ['nop'] : ['log', 'test getter/setter'],
     ['set', 'testKey', 'testValue'],
     ($chain) => {
       if ($chain.get('testKey') != 'testValue') {
-        $chain.set('outcome', { reason: 'set/getValue failed' });
-        $chain(['return']);
+        return testCB({ reason: 'set/getValue failed' });
       } else {
         $chain(['continue']);
       }
     },
 
-  ['log', 'delay and replay loop'],
-  function(chain) {
-    var startts = (new Date()).getTime();
-    var i = 0;
-    var sleepTime = 200;
-    var totalTime = 1000;
-    chain.newChain({
-      chainName: 'fakeModule',
-      context: {},
-      chainHandlers: chain.chainHandlers,
-      chainAttachedModule: { __myname: 'fakeModule'},
-      chainItems: [
-        ['nop'],
-        function(chain) {
-          if (i++ < totalTime / sleepTime) {
-            chain(['log', 'sleep for ' + sleepTime + ', iteration ' + i]);
-          } else {
-            chain([
-              ['set', 'outcome', { success: true }],
-              ['return']
-            ]);
+    (!verbose) ? ['nop'] : ['log', 'delay and replay loop'],
+    function(chain) {
+      var startts = (new Date()).getTime();
+      var i = 0;
+      var sleepTime = 200;
+      var totalTime = 1000;
+      chain.newChain({
+        chainName: 'fakeModule',
+        context: {},
+        chainHandlers: chain.chainHandlers,
+        chainAttachedModule: { __myname: 'fakeModule'},
+        chainItems: [
+          ['nop'],
+          function(chain) {
+            if (i++ < totalTime / sleepTime) {
+              chain((!verbose) ? ['nop'] : ['log', 'sleep for ' + sleepTime + ', iteration ' + i]);
+            } else {
+              chain([
+                ['set', 'outcome', { success: true }],
+                ['return']
+              ]);
+            }
+          },
+          ['delay', sleepTime],
+          (!verbose) ? ['nop'] : ['log', 'after delay'],
+          ['replay']
+        ]
+      }, function(outcome) {
+        if (outcome.success) {
+          if ((new Date()).getTime() - startts < totalTime) {
+            outcome = { reason: 'exitted sooner than expected' };
           }
-        },
-        ['delay', sleepTime],
-        ['log', 'after delay'],
-        ['replay']
-      ]
-    }, function(outcome) {
-      if (outcome.success) {
-        if ((new Date()).getTime() - startts < totalTime) {
-          outcome = { reason: 'exitted sooner than expected' };
         }
-      }
-      if (!outcome.success) {
-        return chain([
-          ['set', 'outcome', { reason: outcome.reason }],
-          ['return']
-        ]);
-      };
-      chain(['continue']);
-    });
-  },
-
-    ['log', 'test delay'],
+        if (!outcome.success) return testCB(outcome);
+        chain(['continue']);
+      });
+    },
+    (!verbose) ? ['nop'] : ['log', 'test delay'],
     ['delay', 500],
-    ['log', 'after delay']
+    (!verbose) ? ['nop'] : ['log', 'after delay']
   ];
 
   require('../../index').newChain({
     chainItems: chainItems,
     context: chainContext,
     __chainProcessorConfig: {},
-  }, function (outcome) {
-    if (outcome.success) return console.log('* All items ran successfully');
-    console.log('\r\n************************************ ERRROR *********************************************');
-    console.log(outcome.reason);
-    console.log('--- CallStack ---');
-    console.log(outcome.__callstackStr);
-    console.log('*********************************************************************************');
-  });
+  }, testCB);
 }
 
-testV3();
+function test(cb) {
+  var finalOutcome = null;
+  testV3(function(outcome) {
+    finalOutcome = outcome;
+  });
+
+  var startTime = (new Date()).getTime();
+  var delta = function() { return (new Date()).getTime() - startTime; };
+  var maxDelay = 5;
+  function monitor() {
+    if (delta() < maxDelay * 1000) {
+      if (!finalOutcome) return setTimeout(monitor, 1000);
+      cb(finalOutcome);
+    } else {
+      cb({ reason: 'timeout' });
+    }
+  };
+  monitor();
+}
+
+module.exports = test;
