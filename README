@@ -208,6 +208,8 @@ npm run test all
 node cli.js method chain chain.action "//inline/izy-proxy/test/chain:module_setting_the_outcome" chain.queryObject.success true chain.queryObject.testKey testValue chain.relConfigFile ../configs/izy-proxy/taskrunner
 
 /* memory management tests */
+chrome://inspect/#devices
+node --inspect tcpserver/app.js standalone
 node cli.js call "test/performance/memtest?test"
 
 /* running the socket handler module directly without going through the TCP/IP stack */
@@ -731,6 +733,9 @@ for more details, visit [izyware]
 # Known Issues
 
 ## Misc
+* importPackageIfNotPresent does not currently take advantage of strict mode optimizations
+    * add option to convert inlinestore item from raw to function for faster looped iterations.
+    * an optional improvement would be to use /tmp folder cache to generate the function to skip the first raw evaluation
 * default path resolution call/callpretty needs to allow '..' for izy-proxy children
 
         node node_modules/izy-proxy/cli.js callpretty test/test
@@ -825,6 +830,8 @@ for more details, visit [izyware]
 # Changelog
 
 ## V5.4
+* 54000009: enforce source code tracking for samples
+* 54000008: getRootModule should always return new object
 * 54000007: add forcemodulereload feature
     * enables object construction delegation to the module load phase 
 * 54000006: reorganize and clean up tests
