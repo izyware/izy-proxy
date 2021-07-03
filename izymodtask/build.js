@@ -5,7 +5,7 @@ modtask.SHIP = function() {
 	var js = modtask.ldmod('codegen/gen').sp('verbose', true).genCustomePayload(
 		entrypoint, // TOKEN_ROOTMODULE -- see modtask/minicore
 		'host/nodejs/base', // TOKEN_HOSTINGMODULE -- see modtask/minicore
-		'onSystemStart();return Kernel;})();', // callbackcode
+		'onSystemStart();return Kernel;};', // callbackcode
 		// extramodulestoinclude
 		[
 			// This is needed by Kernel (minicore) when processing ldmod('rel:...')
@@ -21,7 +21,7 @@ modtask.SHIP = function() {
 		false // Config
 	);
 
-	js = 'module.exports = (function() { ' + js;
+	js = 'module.exports = function() { ' + js;
 
 	modtask.file = modtask.ldmod('file');
 

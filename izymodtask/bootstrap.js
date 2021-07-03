@@ -1,4 +1,4 @@
-module.exports = (function() { 
+module.exports = function() { 
 var INLINESTORE = {};INLINESTORE["minicore"] = function() { 
 var modtask = 
 {
@@ -32,7 +32,7 @@ var modtask =
 			Kernel.Sleep = modtask.platform.Sleep;
 			Kernel.exceptionToString = modtask.platform.exceptionToString;
 			Kernel.getPlatformModule = function() { return modtask.platform; };
-			Kernel.getBuildInfo = function() { return "2021-06-30 09:27:18"; } ;
+			Kernel.getBuildInfo = function() { return "2021-07-03 14:11:59"; } ;
 			Kernel["getModulePath"] =  function(name)
 			{
 				if (typeof(modtask.platform.modspath[name]) != "string")
@@ -2850,4 +2850,4 @@ function onSystemStart(platobject)
 
 
 
-onSystemStart();return Kernel;})();
+onSystemStart();return Kernel;};

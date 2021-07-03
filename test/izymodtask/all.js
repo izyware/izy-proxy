@@ -50,6 +50,17 @@ var test = function(cb) {
       __testProperty: undefined
     }],
 
+    function(chain) {
+      var root = izymodtask.getRootModule(__dirname);
+      root.__testProperty = 1;
+      root = izymodtask.getRootModule(__dirname);
+      chain(['set', 'outcome', { __testProperty: root.__testProperty } ]);
+    },
+    ['assert.value', {
+      __contextName__: 'getRootModule should always return new object',
+      __testProperty: undefined
+    }],
+
     ['outcome', { success: true }]
   ], cb);
 };

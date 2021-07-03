@@ -32,7 +32,7 @@ module.exports = (function() {
       if (require.cache && require.resolve)
         delete require.cache[require.resolve(path)];
     }
-    return require(path);
+    return require(path)();
   }
 
   modtask.extractConfigFromCmdLine = function(params) {
