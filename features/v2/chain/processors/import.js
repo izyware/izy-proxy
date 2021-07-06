@@ -1,5 +1,5 @@
 /* izy-loadobject nodejs-require */
-module.exports = (function() {
+module.exports = function() {
   var modtask = function(chainItem, cb, $chain) {
     if (!modtask.__chainProcessorConfig) modtask.__chainProcessorConfig = {};
     modtask.cacheImportedPackagesInMemory = modtask.__chainProcessorConfig.cacheImportedPackagesInMemory;
@@ -156,4 +156,6 @@ module.exports = (function() {
   modtask.__$d = ['rel:../../pkg/main'];
 
   return modtask;
-})();
+};
+
+module.exports.forcemodulereload = true;

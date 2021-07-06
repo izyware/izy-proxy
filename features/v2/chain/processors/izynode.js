@@ -1,5 +1,5 @@
 /* izy-loadobject nodejs-require */
-module.exports = (function() {
+module.exports = function() {
   var modtask = function(chainItem, cb, $chain) {
     var i = 0;
     switch (chainItem[i++]) {
@@ -16,4 +16,6 @@ module.exports = (function() {
 
   modtask.__$d = ['rel:../../node/generic'];
   return modtask;
-})();
+};
+
+module.exports.forcemodulereload = true;
