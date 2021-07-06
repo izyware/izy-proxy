@@ -11,12 +11,16 @@ module.exports = function() {
 
   modtask.incrementalLoadPkg = function(pkgName, options, loadpush, okpush, failpush) {
     if (!options) options = {};
+    var url = modtask.url;
+    if (!url) {
+      url = 'https://izyware.com/apigateway/:ui/ide:cloudstorage/api';
+    };
 
     if (!modtask.auth) {
       return failpush({ reason: 'pkgloader auth token is not specified. You must configure the pkgloader.' });
     }
     return modtask.ldmod('rel:../../features/v2/http').universalHTTP().sendRequest({
-      url: 'https://izyware.com/apigateway/:ui/ide:cloudstorage/api',
+      url: url,
       method: 'POST',
       headers: {
         'content-type': 'application/x-www-form-urlencoded'
