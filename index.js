@@ -55,7 +55,11 @@ function newChain(cfg, chainReturnCB) {
       ]
     }, chainReturnCB);
   } catch(e) {
-    chainReturnCB( { reason: e.message });
+    var outcome = { reason: e.message };
+    if (e.stack) {
+      outcome.__callstackStr = String(e.stack);
+    }
+    chainReturnCB(outcome);
   }
 }
 
