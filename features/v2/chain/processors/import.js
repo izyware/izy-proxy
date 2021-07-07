@@ -26,7 +26,7 @@ module.exports = function() {
         break;
       case 'importPkgs':
       case 'importpkgs':
-        modtask.importPkgs(chainItem[i++], function(outcome) {
+        modtask.importPkgs(chainItem[i++], chainItem[i++], function(outcome) {
           if (!outcome.success) return $chain.chainReturnCB(outcome);
           cb();
         });
@@ -78,7 +78,7 @@ module.exports = function() {
     return true;
   }
 
-  modtask.importPkgs = function(pkgs, cb) {
+  modtask.importPkgs = function(pkgs, custompackageloader, cb) {
     if (typeof(pkgs) != 'object' || pkgs.length != 1) {
       return cb({ reason: 'importpkgs only accepts and array of length 1' });
     }
@@ -92,7 +92,7 @@ module.exports = function() {
     }
     if (modtask.__chainProcessorConfig.verbose) console.log('[chain.importPkgs] cash miss: ' + pkgName);
     try {
-      modtask.ldPkgMan().forceImportPackage(pkgName, function(outcome) {
+      modtask.ldPkgMan(custompackageloader).forceImportPackage(pkgName, function(outcome) {
         if (outcome.success) modtask.__importCache[pkgName] = true;
         cb(outcome);
       });
@@ -103,23 +103,30 @@ module.exports = function() {
     }
   }
 
-  modtask.ldPkgMan = function() {
-    var cfg = modtask.__chainProcessorConfig || {};
+  modtask.ldPkgMan = function(custompackageloader) {
+    var cfg = Object.assign({}, modtask.__chainProcessorConfig);
+    if (custompackageloader) {
+      if (custompackageloader.indexOf('@') > -1) {
+        cfg = custompackageloader.split('@');
+      } else {
+        cfg = [null, null, custompackageloader];
+      }
+    };
+
     if (Array.isArray(cfg)) {
-      var i = 0;
       cfg = {
         pkgloadermodconfig: {
-          auth: cfg[i++]
+          auth: cfg[0],
+          url: cfg[2]
         },
-        pkgloadermodname: cfg[i++] || 'samples/pkgloader/izycloud'
-      }
+        pkgloadermodname: cfg[1] || 'samples/pkgloader/izycloud'
+      };
     };
 
     var modpkgloader = null;
     if (cfg.pkgloadermodname) {
       if (!cfg.pkgloadermodconfig) cfg.pkgloadermodconfig = {};
       modpkgloader = modtask.ldmod(cfg.pkgloadermodname);
-
       var p;
       for (var p in cfg.pkgloadermodconfig) {
         modpkgloader.sp(p, cfg.pkgloadermodconfig[p]);

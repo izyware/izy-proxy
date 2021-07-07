@@ -141,6 +141,7 @@ module.exports = (function() {
         var parsed = {};
         var doNotLoadPackage = false;
         var forcepackagereload = false;
+        var custompackageloader = false;
 
         var methodOutcome = modtask.ldmod('rel:../../pkg/run').parseMethodOptionsFromInvokeString(parsedLaunchString.invokeString);
         var methodCallOptionsObj = methodOutcome.methodCallOptionsObj;
@@ -148,6 +149,10 @@ module.exports = (function() {
 
         if (methodCallOptionsObj.forcepackagereload) {
             forcepackagereload = true;
+        }
+
+        if (methodCallOptionsObj.custompackageloader) {
+            custompackageloader = methodCallOptionsObj.custompackageloader;
         }
 
         if (parsedLaunchString.invokeString == '') {
@@ -187,6 +192,7 @@ module.exports = (function() {
 
         if (modtask.verbose) console.log('[runpkg,inline]', {
             forcepackagereload: forcepackagereload,
+            custompackageloader: custompackageloader,
             doNotLoadPackage: doNotLoadPackage,
             parsed: parsed
         });
@@ -204,7 +210,7 @@ module.exports = (function() {
             runModule(parsed.mod);
         }, {},[
             forcepackagereload ? ['chain.deportpkgs', [parsed.pkg]] : ['nop'],
-            ['frame_importpkgs', [parsed.pkg]],
+            ['frame_importpkgs', [parsed.pkg], custompackageloader],
             ['set', 'outcome', { success: true }]
         ]);
     }
