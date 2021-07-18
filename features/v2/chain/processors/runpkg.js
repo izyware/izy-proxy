@@ -155,6 +155,10 @@ module.exports = (function() {
             custompackageloader = methodCallOptionsObj.custompackageloader;
         }
 
+        if (methodCallOptionsObj.cpl) {
+            custompackageloader = methodCallOptionsObj.cpl;
+        }
+
         if (parsedLaunchString.invokeString == '') {
             doNotLoadPackage = true;
             parsed = {

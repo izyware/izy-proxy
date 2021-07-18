@@ -13,8 +13,15 @@ module.exports = function() {
     if (!options) options = {};
     var url = modtask.url;
     if (!url) {
-      url = 'https://izyware.com/apigateway/:ui/ide:cloudstorage/api';
+      url = 'izyware';
     };
+
+    if (url.indexOf('https://') != 0 && url.indexOf('http://') != 0) {
+      if (url.indexOf('.') == -1) {
+        url += '.com';
+      }
+      url = 'https://' + url + '/apigateway/:ui/ide:cloudstorage/api';
+    }
 
     if (!modtask.auth) {
       return failpush({ reason: 'pkgloader auth token is not specified. You must configure the pkgloader.' });
