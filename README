@@ -736,6 +736,9 @@ for more details, visit [izyware]
 * importPackageIfNotPresent does not currently take advantage of strict mode optimizations
     * add option to convert inlinestore item from raw to function for faster looped iterations.
     * an optional improvement would be to use /tmp folder cache to generate the function to skip the first raw evaluation
+* provide a new JSON/IO compatible package loader
+    * this will enable distributing the pkg server across a cluster.
+make 2 versions and 1 for V2?
 * default path resolution call/callpretty needs to allow '..' for izy-proxy children
 
         node node_modules/izy-proxy/cli.js callpretty test/test
@@ -830,6 +833,13 @@ for more details, visit [izyware]
 # Changelog
 
 ## V5.4
+* 54000015: implement Flaviu Cristian clock sync algorithm 
+* 54000014: (security) cleans the pkgloader url
+* 54000013: support custompackageloader for 3rd party modules and package publishers
+* 54000012: allow url customization for cloud pkgloader
+* 54000011: provide callstack when outer exception is thrown for newChain
+* 54000010: security - reallocate node and import proccessors on each load
+    * concurrent threads might be able to get access to execution contexts when common module address space is used
 * 54000009: enforce source code tracking for samples
 * 54000008: getRootModule should always return new object
 * 54000007: add forcemodulereload feature
