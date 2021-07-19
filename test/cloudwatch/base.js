@@ -22,7 +22,7 @@ var modtask = function(chain) {
           auth: 'invalid_auth_token'
         }),
         headers: {
-          'content-type': 'application/x-www-form-urlencoded; charset=utf-8'
+          'content-type': 'application/json; charset=utf-8'
         }
       }]);
     },

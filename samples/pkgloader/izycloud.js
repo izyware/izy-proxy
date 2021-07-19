@@ -30,7 +30,7 @@ module.exports = function() {
       url: url,
       method: 'POST',
       headers: {
-        'content-type': 'application/x-www-form-urlencoded'
+        'content-type': 'application/json'
       },
       body: JSON.stringify({
         action: 'incrementalLoadPkg',

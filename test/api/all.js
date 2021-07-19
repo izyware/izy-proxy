@@ -35,6 +35,19 @@ var test = function(cb) {
       __operators__: {
         responseText: 'contain'
       }
+    }],
+
+    ['net.httprequest', {
+      url: 'http://localhost/apigateway/:test/api/jsonio?test',
+      method: 'POST',
+      body: JSON.stringify({})
+    }],
+    ['assert.value', {
+      __contextName__: 'jsonio api should return correct content type',
+      status: 200,
+      headers: {
+        'content-type': 'application/json; charset=utf-8'
+      }
     }]
   ], cb);
 }

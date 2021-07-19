@@ -232,7 +232,7 @@ module.exports = (function() {
         }
 
         var headers = {};
-        headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
+        headers['content-type'] = 'application/json; charset=utf-8';
         var authorization = null;
         try {
             authorization = 'Bearer ' + modtask.sessionMod.get().authorizationToken;
