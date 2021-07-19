@@ -3,7 +3,7 @@ modtask.handle = function(__moduleSearchPaths) {
   return function(req, res) {
     require('../../index').newChain({
       chainItems: [
-        ['//inline/' + req.path, (req.method.toUpperCase() === 'POST' ? req.body : req.query)],
+        ['//inline/' + (req.method.toUpperCase() === 'POST' ? (req.payload.path || req.path) : req.path), (req.method.toUpperCase() === 'POST' ? req.payload : req.query)],
         ['continue']
       ],
       __chainProcessorConfig: {
