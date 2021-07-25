@@ -70,7 +70,7 @@ module.exports = (function() {
 
     if (pkg === '') return cb(outcome);
     if (!modtask.modpkgloader) {
-      return cb({ reason: 'please define modpkgloader to enable package importing' });
+      return cb({ reason: 'please define modpkgloader to enable package importing for ' + pkg });
     }
 
     if (modtask.verbose)  console.log('[importPackageIfNotPresent] package not loaded already so will use "' + modtask.modpkgloader.__myname + '" to load package');
