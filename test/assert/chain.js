@@ -8,7 +8,6 @@ var modtask = function(chainItem, next, $chain) {
       var testCondition = params.test;
       var previousOutcome = $chain.get('outcome');
       var objectToCheckAgainst;
-
       switch(typeof(testCondition)) {
         case 'string':
         case 'number':
@@ -47,6 +46,17 @@ var testObjectValues = function(testCondition, objectToCheckAgainst) {
   var verbose = testCondition.__verbose__ || { };
 
   var operatorFunctions = {
+    'same length': function(props, description) {
+      if (typeof(props[0]) != 'string') {
+        return({ reason: contextMsg + 'Expected ' + description + ' to be string ' + ' but got ' + typeof(props[0]) });
+      }
+
+      var desiredLength = String(props[1]).length;
+      if (props[0].length != desiredLength) {
+        return({ reason: contextMsg + 'Expected ' + description + ' to be have the length ' + desiredLength + ' but got ' + props[0].length });
+      }
+      return { success: true };
+    },
     'greater than': function(props, description) {
       if (props[0] > props[1]) {
         return({ reason: contextMsg + 'Expected ' + description + ' to be greater than ' + props[0] + ' but got ' + props[1] });
@@ -84,6 +94,7 @@ var testObjectValues = function(testCondition, objectToCheckAgainst) {
     // Array and Object
     if (typeof(testerObj) == 'object') {
       var p;
+      if (!operator && testerObj.__operators__) operator = testerObj.__operators__;
       if (!operator) operator = {};
       var isEmpty = true;
       for(p in testerObj) {
@@ -122,6 +133,5 @@ var testObjectValues = function(testCondition, objectToCheckAgainst) {
     }
     return operatorFunctions[operator]([testerObj, testeeObj], namespace);
   };
-
   return dfs(testCondition, objectToCheckAgainst, '', testCondition.__operators__);
 }
