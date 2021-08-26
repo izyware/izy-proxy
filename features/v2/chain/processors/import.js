@@ -7,6 +7,15 @@ module.exports = function() {
     var params = {};
     params.action = modtask.extractPrefix(chainItem[i++]);
     switch (params.action) {
+      case 'moduleSearchPathAdd':
+        var moduleSearchPath = chainItem[i++];
+        if (typeof(moduleSearchPath) == 'string') {
+          modtask.__Kernel.rootModule.usermodule.__moduleSearchPaths.push(moduleSearchPath);
+        }
+        $chain.set('outcome', { success: true, data: modtask.__Kernel.rootModule.usermodule.__moduleSearchPaths });
+        cb();
+        return true;
+        break;
       case 'ldPath':
       case 'ldpath':
         modtask.ldPath(chainItem[i++], function(outcome) {
