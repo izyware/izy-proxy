@@ -13,6 +13,9 @@ module.exports = (function() {
 
         var i = 0;
         var str = chainItem[i++] + '';
+        if (str.indexOf('?') == 0) {
+            str = '//inline/' + str;
+        };
         if (str.indexOf('//') == 0) {
             var queryObject = chainItem[i++];
             var destinationObj = chainItem[i++] || $chain.chainAttachedModule || $chain.context;
