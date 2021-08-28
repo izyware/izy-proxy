@@ -49,6 +49,14 @@ module.exports = (function() {
                 cb();
                 return true;
                 break;
+            case 'runpkg.__chainProcessorConfig':
+                var __chainProcessorConfig = chainItem[i++];
+                if (typeof(__chainProcessorConfig) != 'object') return $chain.chainReturnCB({ reason: '__chainProcessorConfig must be an object'});
+                modtask.__chainProcessorConfig = __chainProcessorConfig;
+                $chain.set('outcome', { success: true });
+                cb();
+                return true;
+                break;
         }
         return false;
     };

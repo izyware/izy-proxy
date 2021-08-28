@@ -2,11 +2,18 @@
 module.exports = function() {
   var modtask = function(chainItem, cb, $chain) {
     if (!modtask.__chainProcessorConfig) modtask.__chainProcessorConfig = {};
-    modtask.cacheImportedPackagesInMemory = modtask.__chainProcessorConfig.cacheImportedPackagesInMemory;
     var i = 0;
     var params = {};
     params.action = modtask.extractPrefix(chainItem[i++]);
     switch (params.action) {
+      case '__chainProcessorConfig':
+        var __chainProcessorConfig = chainItem[i++];
+        if (typeof(__chainProcessorConfig) != 'object') return $chain.chainReturnCB({ reason: '__chainProcessorConfig must be an object'});
+        modtask.__chainProcessorConfig = __chainProcessorConfig;
+        $chain.set('outcome', { success: true });
+        cb();
+        return true;
+        break;
       case 'moduleSearchPathAdd':
         var moduleSearchPath = chainItem[i++];
         if (typeof(moduleSearchPath) == 'string') {
@@ -52,7 +59,7 @@ module.exports = function() {
   }
 
   modtask.extractPrefix = function(str) {
-    var all = ['chain.', 'frame_'];
+    var all = ['chain.', 'frame_', 'import.'];
     for(var i=0; i < all.length; ++i) {
       var prefix = all[i];
       if (str.indexOf(prefix) == 0) {
@@ -70,7 +77,6 @@ module.exports = function() {
     }
   }
 
-  modtask.cacheImportedPackagesInMemory = false;
   modtask.deportPkgs = function(pkgs, cb) {
     modtask.__importCache = modtask.__importCache || {};
     var pkgName = pkgs[0];
@@ -93,7 +99,7 @@ module.exports = function() {
     }
     modtask.__importCache = modtask.__importCache || {};
     var pkgName = pkgs[0];
-    if (modtask.cacheImportedPackagesInMemory && modtask.__importCache[pkgName]) {
+    if (modtask.__chainProcessorConfig.cacheImportedPackagesInMemory && modtask.__importCache[pkgName]) {
       if (modtask.__chainProcessorConfig.verbose) console.log('[chain.importPkgs] cash hit: ' + pkgName);
       return cb({
         success: true
