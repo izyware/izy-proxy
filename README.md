@@ -259,6 +259,8 @@ You can use the assertion library to to quickly write integrate tests for your s
         success: 'equal',
         status: 'equal'
         // reason: 'contain'
+        // counter: 'greater than'
+        // str2: 'notcontain'
       },
       success: true,
       status: 200
@@ -675,6 +677,13 @@ require('izy-proxy').newChain({
     }, outcome => console.log(outcome.reason)
   );
 });
+
+/* or more compact */
+
+require('izy-proxy').series([
+    []
+], failoutcome => {});
+
 ```
 
 ## 3. Build server functionality for RPC access
@@ -833,6 +842,15 @@ make 2 versions and 1 for V2?
 # Changelog
 
 ## V5.4
+* 54000023: implement runpkg/import/izynode__chainProcessorConfig for dynamic setting of the processors
+* 54000022: implement forceRequireOnLoadFromFile
+* 54000021: runpkg support ?fnName syntax and default to inline
+    * this will support a more compact syntax
+* 54000020: add chain.moduleSearchPathAdd
+* 54000019: add new tools to the assertion lib
+* 54000018: provide package name when importing fails
+* 54000017: enforce application/json content type
+* 54000016: (security) allow POST requests for hapi and express frameworks templates
 * 54000015: implement Flaviu Cristian clock sync algorithm 
 * 54000014: (security) cleans the pkgloader url
 * 54000013: support custompackageloader for 3rd party modules and package publishers
