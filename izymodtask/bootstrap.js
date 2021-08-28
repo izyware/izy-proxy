@@ -32,7 +32,7 @@ var modtask =
 			Kernel.Sleep = modtask.platform.Sleep;
 			Kernel.exceptionToString = modtask.platform.exceptionToString;
 			Kernel.getPlatformModule = function() { return modtask.platform; };
-			Kernel.getBuildInfo = function() { return "2021-07-03 14:11:59"; } ;
+			Kernel.getBuildInfo = function() { return "2021-08-28 12:59:50"; } ;
 			Kernel["getModulePath"] =  function(name)
 			{
 				if (typeof(modtask.platform.modspath[name]) != "string")
@@ -1049,7 +1049,7 @@ var modtask =
 		try {
 			var unparsedstrform = decodefunc(modtask.file.readFile(objname));
 			var token = 'izy-loadobject nodejs-require';
-			if (typeof(require) == 'function' && unparsedstrform.indexOf('/* ' + token + ' */') > -1) {
+			if (typeof(require) == 'function' && (Kernel.forceRequireOnLoadFromFile || unparsedstrform.indexOf('/* ' + token + ' */') > -1)) {
 				var requirePath = objname;
 				if (requirePath.indexOf('./') == 0) {
 					console.log('[warning] converting to fullPath', requirePath);
@@ -2836,6 +2836,7 @@ var Minicore = {
 
 var Kernel=Minicore;
 Kernel.INLINESTORE = INLINESTORE;
+Kernel.forceRequireOnLoadFromFile = false;
 
 function onSystemStart(platobject)
 {

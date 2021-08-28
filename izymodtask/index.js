@@ -1,7 +1,7 @@
 /* izy-loadobject nodejs-require */
 module.exports = (function() {
   var modtask = {};
-  modtask.getRootModule = function(dir, __moduleSearchPaths) {
+  modtask.getRootModule = function(dir, __moduleSearchPaths, forceRequireOnLoadFromFile) {
     var props = {};
     if (!dir) dir = __dirname;
     props.__contextualName = dir + '/__contextualName_for_Root';
@@ -12,7 +12,9 @@ module.exports = (function() {
     __moduleSearchPaths = __moduleSearchPaths.slice();
     __moduleSearchPaths.push(dir + '/');
     props.__moduleSearchPaths = __moduleSearchPaths;
-    var mod = modtask.getKernel().rootModule.usermodule;
+    var k = modtask.getKernel();
+    k.forceRequireOnLoadFromFile = forceRequireOnLoadFromFile;
+    var mod = k.rootModule.usermodule;
     for(var p in props) {
       mod[p] = props[p];
     }

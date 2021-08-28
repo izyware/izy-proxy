@@ -42,9 +42,13 @@ function newChain(cfg, chainReturnCB) {
   var __chainProcessorConfig = cfg.__chainProcessorConfig || {};
   try {
     var __moduleSearchPaths = __chainProcessorConfig.__moduleSearchPaths || [];
-    var _modtaskModule = require('./izymodtask/index').getRootModule(__dirname, __moduleSearchPaths);
+    var _modtaskModule = require('./izymodtask/index').getRootModule(__dirname, __moduleSearchPaths, cfg.forceRequireOnLoadFromFile);
+    var chainAttachedModule = {
+      __myname: module.parent.filename.replace(/\.js$/, '')
+    };
     _modtaskModule.ldmod(featureModulesPath + 'chain/main').newChain({
       chainName: module.parent.filename,
+      chainAttachedModule: chainAttachedModule,
       chainItems: cfg.chainItems || [],
       context: cfg.context || {},
       chainHandlers: [
@@ -65,5 +69,12 @@ function newChain(cfg, chainReturnCB) {
 
 module.exports = {
   newChain: newChain,
-  basePath: __dirname
+  basePath: __dirname,
+  series: function(chainItems, cb) {
+    return newChain({
+      chainItems: chainItems,
+      forceRequireOnLoadFromFile: true,
+      __chainProcessorConfig: {}
+    }, cb);
+  }
 }
