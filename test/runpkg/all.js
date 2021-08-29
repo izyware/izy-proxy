@@ -29,7 +29,7 @@ var test = function(cb) {
             ['//inline/nonexistent:nonexistent?nonexistent']
           ]
         }, function(outcome) {
-          if (outcome.reason != 'please define modpkgloader to enable package importing') {
+          if (outcome.reason != 'please define modpkgloader to enable package importing for nonexistent') {
             return chain(['outcome', { reason: 'expected setup failure but got: ' + outcome.reason }]);
           }
           chain(['continue']);

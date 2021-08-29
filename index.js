@@ -39,15 +39,19 @@ function newChain(cfg, chainReturnCB) {
       context: {}
     }
   }
+
+  var callerContextModule = cfg.callerContextModule || module.parent;
   var __chainProcessorConfig = cfg.__chainProcessorConfig || {};
   try {
     var __moduleSearchPaths = __chainProcessorConfig.__moduleSearchPaths || [];
     var _modtaskModule = require('./izymodtask/index').getRootModule(__dirname, __moduleSearchPaths, cfg.forceRequireOnLoadFromFile);
     var chainAttachedModule = {
-      __myname: module.parent.filename.replace(/\.js$/, '')
+      __myname: callerContextModule.filename.replace(/\.js$/, '')
     };
+    _modtaskModule.__Kernel.inheritFromModtask(_modtaskModule, chainAttachedModule);
+    _modtaskModule.__Kernel.postLoadModule(_modtaskModule, chainAttachedModule, true /* dontcallinit */);
     _modtaskModule.ldmod(featureModulesPath + 'chain/main').newChain({
-      chainName: module.parent.filename,
+      chainName: callerContextModule.filename,
       chainAttachedModule: chainAttachedModule,
       chainItems: cfg.chainItems || [],
       context: cfg.context || {},
@@ -67,14 +71,29 @@ function newChain(cfg, chainReturnCB) {
   }
 }
 
-module.exports = {
-  newChain: newChain,
-  basePath: __dirname,
-  series: function(chainItems, cb) {
-    return newChain({
-      chainItems: chainItems,
-      forceRequireOnLoadFromFile: true,
-      __chainProcessorConfig: {}
-    }, cb);
-  }
-}
+module.exports = function(moduleToAttach) {
+  if (!moduleToAttach) moduleToAttach = module.parent;
+  return {
+    basePath: __dirname,
+    newChain: newChain,
+    series: function(chainItems, cb) {
+      return newChain({
+        chainItems: chainItems,
+        forceRequireOnLoadFromFile: true,
+        __chainProcessorConfig: {},
+        callerContextModule: moduleToAttach
+      }, cb);
+    }
+  };
+};
+
+module.exports.basePath = __dirname;
+module.exports.newChain = newChain;
+module.exports.series = function(chainItems, cb) {
+  return newChain({
+    chainItems: chainItems,
+    forceRequireOnLoadFromFile: true,
+    __chainProcessorConfig: {},
+    callerContextModule: module.parent
+  }, cb);
+};
