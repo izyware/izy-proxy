@@ -119,7 +119,7 @@ module.exports = function() {
   }
 
   modtask.ldPkgMan = function(custompackageloader) {
-    var cfg = Object.assign({}, modtask.__chainProcessorConfig);
+    var cfg = modtask.__chainProcessorConfig;
     if (custompackageloader) {
       if (custompackageloader.indexOf('@') > -1) {
         cfg = custompackageloader.split('@');
@@ -136,7 +136,9 @@ module.exports = function() {
         },
         pkgloadermodname: cfg[1] || 'samples/pkgloader/izycloud'
       };
-    };
+    } else {
+      if (typeof(cfg) != 'object') cfg = {};
+    }
 
     var modpkgloader = null;
     if (cfg.pkgloadermodname) {

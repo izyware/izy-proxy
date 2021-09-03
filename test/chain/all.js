@@ -169,7 +169,20 @@ function testV3(testCB) {
     },
     (!verbose) ? ['nop'] : ['log', 'test delay'],
     ['delay', 500],
-    (!verbose) ? ['nop'] : ['log', 'after delay']
+    (!verbose) ? ['nop'] : ['log', 'after delay'],
+    function(chain) {
+      var importArrCfgTest = 'import' + new Date().getTime();
+      require('../../index').newChain({
+        chainItems: [
+          [`//inline/inline:inline?inline`, {}]
+        ],
+        __chainProcessorConfig: { import: [importArrCfgTest, importArrCfgTest, importArrCfgTest] }
+      }, function(outcome) {
+        if (outcome.success) return testCB({ reason: 'expected to fail' });
+        if (outcome.reason.indexOf('not exist: ' + importArrCfgTest) == -1) return testCB({ reason: 'expected processing of importarr' });
+        chain(['continue']);
+      });
+    }
   ];
 
   require('../../index').newChain({
