@@ -11,12 +11,28 @@ module.exports = (function() {
 
         modtask._modToPkgMap = modtask.__chainProcessorConfig.modToPkgMap || {};
 
+        if (!modtask.__Kernel.interceptors) modtask.__Kernel.interceptors = {};
+        var interceptors = modtask.__Kernel.interceptors
+
         var i = 0;
         var str = chainItem[i++] + '';
         if (str.indexOf('?') == 0) {
             str = '//inline/' + str;
         };
         if (str.indexOf('//') == 0) {
+            for(var p in interceptors) {
+                var interceptor = interceptors[p];
+                if (str.match(interceptor.regExpObj)) {
+                    if (interceptor.verbose) {
+                        console.log('interceptor ' + p + ': ' + str);
+                    };
+                    if (!interceptor.outcome.success) return $chain.chainReturnCB(interceptor.outcome);
+                    $chain.set('outcome', interceptor.outcome);
+                    cb();
+                    return true;
+                }
+            };
+
             var queryObject = chainItem[i++];
             var destinationObj = chainItem[i++] || $chain.chainAttachedModule || $chain.context;
             modtask.doLaunchString($chain, str, {
@@ -53,6 +69,17 @@ module.exports = (function() {
                 var __chainProcessorConfig = chainItem[i++];
                 if (typeof(__chainProcessorConfig) != 'object') return $chain.chainReturnCB({ reason: '__chainProcessorConfig must be an object'});
                 modtask.__chainProcessorConfig = __chainProcessorConfig;
+                $chain.set('outcome', { success: true });
+                cb();
+                return true;
+                break;
+            case 'runpkg.intercept':
+                var interceptor = chainItem[i++];
+                if (typeof(interceptor.id) != 'string') return $chain.chainReturnCB({ reason: str + ': please pass in a valid id string for the interceptor'});
+                if (typeof(interceptor.regExpObj) != 'object') return $chain.chainReturnCB({ reason: str + ': please pass in a valid regExp object'});
+                if (typeof(interceptor.outcome) != 'object') interceptor.outcome = { reason: 'intercepted' };
+                interceptors[interceptor.id] = interceptor;
+                if (interceptor.verbose) console.log('added interceptor', interceptor);
                 $chain.set('outcome', { success: true });
                 cb();
                 return true;
