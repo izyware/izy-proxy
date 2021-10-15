@@ -671,16 +671,14 @@ require('izy-proxy').newChain({
         }],
         ['//inline/module?fn', {}]
       ],
-      __chainProcessorConfig: {
-        __moduleSearchPaths: [`${__dirname}/`]
-      }
+      callerContextModule: module
     }, outcome => console.log(outcome.reason)
   );
 });
 
 /* or more compact */
 
-require('izy-proxy').series([
+require('izy-proxy')(module).series([
     []
 ], failoutcome => {});
 
@@ -722,13 +720,15 @@ The frameworks folder provides support for quick and easy integration with popul
 ### ExpressJS
 Express is a back end web application framework for Node.js. It provides the `app` object and defines routing by `app.METHOD(PATH, HANDLER)` syntax. 
 
-    const izyhandle = require('izy-proxy/frameworks/express').handle([`${__dirname}/`]);
+    const __moduleSeachPaths = null; /* optional, defaults to [`${__dirname}/`]; */
+    const izyhandle = require('izy-proxy/frameworks/express').handle(__moduleSeachPaths);
     app.all('/path/to/module', izyhandle);
     
 ### HapiJS
 Hapi is popular for enterprise level back end development. 
 
-    const izyhandle = require('izy-proxy/frameworks/hapi').handle([`${__dirname}/`]);
+    const __moduleSeachPaths = null; /* optional, defaults to [`${__dirname}/`]; */
+    const izyhandle = require('izy-proxy/frameworks/hapi').handle(__moduleSeachPaths);
     server.route({
         method: 'GET',
         path: '/',
@@ -841,7 +841,15 @@ make 2 versions and 1 for V2?
 
 # Changelog
 
+## V5.5
+* 55000002: implement net.httpproxy
+* 55000001: implement runpkg.intercept
+
 ## V5.4
+* 54000026: fix import config processor bug
+* 54000025: improve node module simulation for chainAttachedModule and leverage Kernel postLoadModule functions.
+    * this will fix the issue where 'rel:' is used in package runner.
+* 54000024: make moduleSearchPaths optional for framework libraries
 * 54000023: implement runpkg/import/izynode__chainProcessorConfig for dynamic setting of the processors
 * 54000022: implement forceRequireOnLoadFromFile
 * 54000021: runpkg support ?fnName syntax and default to inline

@@ -47,10 +47,51 @@ module.exports = (function() {
             return true;
         };
         switch(str) {
+            case 'net.httpproxy':
+                var httpProxy = chainItem[i++];
+                if (!httpProxy) {
+                    modtask.__Kernel.httpProxy = null;
+                } else {
+                    if (!httpProxy.bypassList) return $chain.chainReturnCB({ reason: 'Please specify bypassList' });
+                    modtask.__Kernel.httpProxy = httpProxy;
+                }
+                $chain.set('outcome', { success: true });
+                cb();
+                return true;
+                break;
             case 'net.httprequest':
                 var request = chainItem[i++];
+                if (typeof(request.url) != 'string') return $chain.chainReturnCB({ reason: 'url must be a string' });
                 var verbose = request.verbose || {};
-                if (verbose.logRequest) console.log('request', request);
+                var httpProxy = modtask.__Kernel.httpProxy;
+                var useProxy = false;
+                if (httpProxy) {
+                    useProxy = true;
+                    for (var i=0; i < httpProxy.bypassList.length; ++i) {
+                        var bypass = httpProxy.bypassList[i];
+                        if (request.url.indexOf(bypass) != -1) {
+                            useProxy = false;
+                            break;
+                        }
+                    }
+                    if (request.url.indexOf('izyware.com') != -1) {
+                        useProxy = false;
+                    }
+                };
+                if (verbose.logRequest || (httpProxy && httpProxy.logRequest)) console.log('request(proxy=' + useProxy + ')', request);
+                if (useProxy) {
+                    $chain.newChainForProcessor(modtask, cb, {}, [
+                        [httpProxy.service + '?httprequest', { httparams: request, config: httpProxy.config }],
+                        function(chain) {
+                            var outcome = chain.get('outcome').data;
+                            if (verbose.logResponse) console.log('response', outcome);
+                            if (!outcome.success) return $chain.chainReturnCB(outcome);
+                            $chain.set('outcome', outcome);
+                            cb();
+                        }
+                    ]);
+                    return true;
+                };
                 modtask.ldmod('rel:../../http').universalHTTP().sendRequest(request, function(outcome) {
                     if (verbose.logResponse) console.log('response', outcome);
                     if (!outcome.success) return $chain.chainReturnCB(outcome);
