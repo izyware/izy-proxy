@@ -734,8 +734,29 @@ Hapi is popular for enterprise level back end development.
         path: '/',
         handler: izyhandle
     });
+    
+### AWS
+You can package your components into AWS infrastructure pieces. As an example, you can package a JSONIO interface into a lambda function simply by following these steps:
 
+* package your project into a lambda and upload it into aws lambda. e.g. when using a zip package:
 
+    
+        docker run --rm -it -v $HOME:/root -v $(pwd):/izyhostdir amazon/aws-cli lambda update-function-code --function-name  "arn:aws:lambda:..." --zip-file fileb:///izyhostdir/pkg.zip
+        
+* enter the following string in `AWS > Lambda > Runtime Settings > Handler`
+
+        node_modules/izy-proxy/frameworks/aws/lambda.handler
+        
+* (optional) pass on the CLI arguments to your JSONIO component in `AWS > Lambda > Configuration > Environment variables` as `AWS_LAMBDA_CLI_STRING`. For example if you are using the following to launch your component from the CLI:
+
+        npm run lib/mytest?mytask queryObject.p1 hello
+        
+    then, create the following environment variable
+    
+        AWS_LAMBDA_CLI_STRING=lib/mytest?mytask queryObject.p1 hello
+        
+
+        
 ## NOTE
 for more details, visit [izyware]
 
@@ -842,6 +863,7 @@ make 2 versions and 1 for V2?
 # Changelog
 
 ## V5.5
+* 55000003: update aws framework libraries
 * 55000002: implement net.httpproxy
 * 55000001: implement runpkg.intercept
 
