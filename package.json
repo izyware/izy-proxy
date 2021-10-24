@@ -1,14 +1,13 @@
 {
   "name": "izy-proxy",
-  "version": "6.0.26",
+  "version": "6.0.27",
   "description": "IZY PROXY MODULE",
   "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/izyware/izy-proxy"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "files": [
     "README.md",
     "apps",
