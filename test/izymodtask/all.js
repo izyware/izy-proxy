@@ -11,6 +11,7 @@ var myJsonObject = {
 
 var test = function(cb) {
   require('../../index').newChain([
+    ['chain.importProcessor', 'rel:../test/assert/chain'],
     ['chain.importProcessor', ':test/assert/chain'],
     ['set', 'outcome', izymodtask.flatToJSON({ 'queryObject.param.key1' : 'val' })],
     ['assert.value', myJsonObject],

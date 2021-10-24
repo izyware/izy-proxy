@@ -837,17 +837,7 @@ make 2 versions and 1 for V2?
 
 * 80001331: raw APIs (non JSONIO) do not have the correct context for modtask.doChain module
     * ['//inline/rel:api'] resolves to kernel\extstores\api
-* `chain.importProcessor` needs to support 'rel:xxx'
-  *  This will be more consistent with the package launcher // schema.
-   * This is important to avoid collusion where the package is being launched when installed as dependency inside node_modules and the parent context also has a chain module with the same name:
-
-            /* ambigious -- chain could be found in a lot of different places */ 
-             ['chain.importProcessor', 'chain']
     
-            /* unambigious -- chain must be in the same path as the current module*/ 
-            /* would be like modtask.ldmod('kernel/path').rel('chain') */
-             ['chain.importProcessor', 'rel:chain']
-             
 * support compact syntax in the framework. Currently `apps/accountmanager/5/sessionfeature:chainprocessor` implements locally
 
 
@@ -863,6 +853,20 @@ make 2 versions and 1 for V2?
 # Changelog
 
 ## V5.5
+* 55000006: chain.importProcessor needs to support 'rel:xxx'
+  *  This will be more consistent with the package launcher // schema.
+   * This is important to avoid collusion where the package is being launched when installed as dependency inside node_modules and the parent context also has a chain module with the same name:
+
+            /* ambigious -- chain could be found in a lot of different places */ 
+             ['chain.importProcessor', 'chain']
+    
+            /* unambigious -- chain must be in the same path as the current module*/ 
+            /* would be like modtask.ldmod('kernel/path').rel('chain') */
+             ['chain.importProcessor', 'rel:chain']
+             
+* 55000005: prioritize usermodule.getModuleSearchPaths over default Kernel search paths
+    * customers had reporting module path resolution conflict for rel:build with internal build components.
+* 55000004: remove izymodtask packge dependency
 * 55000003: update aws framework libraries
 * 55000002: implement net.httpproxy
 * 55000001: implement runpkg.intercept

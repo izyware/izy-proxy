@@ -160,7 +160,15 @@ module.exports = function() {
     switch(typeof(chainItemProcessor)) {
       case 'string':
         try {
-          modtask.ldPkgMan().ldPath(chainItemProcessor, function(outcome) {
+          var modname = chainItemProcessor;
+          if (modname.indexOf('rel:') == 0) {
+            var destinationObj = $chain.chainAttachedModule || {};
+            if (!destinationObj.ldmod) return cb({
+                reason: 'rel: specified in the chain.importProcessor, but the context is not a module. (' + modname + ')'
+            });
+            modname = destinationObj.ldmod('kernel/path').rel(modname.substr(4, modname.length-4));
+          }
+          modtask.ldPkgMan().ldPath(modname, function(outcome) {
             if (!outcome.success) return cb(outcome);
             var mod = outcome.data;
             mod.__chainProcessorConfig = __chainProcessorConfig || {};
