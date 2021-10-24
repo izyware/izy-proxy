@@ -32,7 +32,7 @@ var modtask =
 			Kernel.Sleep = modtask.platform.Sleep;
 			Kernel.exceptionToString = modtask.platform.exceptionToString;
 			Kernel.getPlatformModule = function() { return modtask.platform; };
-			Kernel.getBuildInfo = function() { return "2021-08-28 12:59:50"; } ;
+			Kernel.getBuildInfo = function() { return "2021-10-24 10:28:12"; } ;
 			Kernel["getModulePath"] =  function(name)
 			{
 				if (typeof(modtask.platform.modspath[name]) != "string")
@@ -103,7 +103,8 @@ var modtask =
 		return ret;		
 	}
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["host/nodejs/base"] = function() { 
 var modtask =
 {
@@ -174,7 +175,8 @@ var modtask =
 	}
 }
 
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["izymodtask/entrypoint"] = function() { // both usermodule (izymodtask/entrypoint) and modtask/minicore.platform via host/nodejs/base
 // see modtask/minicore.servicecallback for more details
 // for usermodule reference see modtask/codegen/console/root.js
@@ -253,7 +255,8 @@ modtask.setupSelectors = function() {
 }
 
 modtask.__$d = ['kernel\\selectors', 'kernel\\extstores\\file', 'host\\nodejs\\file', 'host\\nodejs\\filecommon'];
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["kernel\\selectors"] = function() { 
 var modtask = {
 	// gets set by loaders
@@ -509,7 +512,8 @@ var modtask = {
 		return ret;
 	}	
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["core\\string"] = function() { 
 var modtask = 
 {
@@ -682,7 +686,8 @@ var modtask =
 	} 
 }
 
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["core\\core"] = function() { 
 var modtask = 
 {
@@ -831,7 +836,8 @@ var modtask =
 
 	obj : function(p, v) { var ret = {}; ret[p] = v; return ret; } 
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["kernel\\extstores\\inline"] = function() { 
 var modtask =
 {
@@ -875,7 +881,8 @@ var modtask =
 		}
 	}	
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["kernel\\extstores\\file"] = function() { 
 var modtask =
 {
@@ -1007,7 +1014,7 @@ var modtask =
 		}
 
 		if (typeof(Kernel.rootModule.usermodule.getModuleSearchPaths) == 'function') {
-			paths = paths.concat(Kernel.rootModule.usermodule.getModuleSearchPaths());
+			paths = Kernel.rootModule.usermodule.getModuleSearchPaths().concat(paths);
 		}
 
  		var i, path;
@@ -1056,11 +1063,7 @@ var modtask =
 					requirePath = process.cwd() + '/' + requirePath;
 				}
 				__tempobjstore = require(objname);
-				if (__tempobjstore.forcemodulereload) {
-					if (typeof(__tempobjstore) != 'function') throw { message: 'forcemodulereload requires a function payload' };
-					__tempobjstore = Minicore.nakedParseStr(_modtask, objname, objecttype, __tempobjstore);
-				}
-				__tempobjstore["__loadObject2Path"] = requirePath;
+				__tempobjstore = Minicore.postProcessNodeJSModule(__tempobjstore, objname, requirePath);
 			} else {
 				__tempobjstore = Minicore.nakedParseStr(_modtask, objname, objecttype, unparsedstrform);
 				__tempobjstore["__loadObject2Path"] = objname;
@@ -1133,7 +1136,8 @@ modtask.determineExtension = function(basepath) {
 	}
 	return modtask.extentionstr;
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["minipath"] = function() { 
 var modtask = {};
 modtask.seperator = "/";
@@ -1160,7 +1164,8 @@ modtask.init = function()
 }
 
 modtask.getDependencies = function() { return [['modtask', 'kernel/plat']]; };
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["kernel/plat"] = function() { 
 var modtask = {};
 modtask.getOSName = function()
@@ -1170,7 +1175,8 @@ modtask.getOSName = function()
 		ret = 'windows';
 	return ret; 
 };
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["file"] = function() { 
 var modtask =
 {
@@ -1392,7 +1398,8 @@ newLine : "\r\n",
 		return ret;
 	}
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["kernel\\logging"] = function() { 
 var modtask = 
 {
@@ -1405,7 +1412,8 @@ var modtask =
 		}
 	}
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["path"] = function() { 
 var modtask = 
 {
@@ -1503,7 +1511,8 @@ var modtask =
 		modtask.modstr = modtask.ldmod("core\\string");
 	}
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["kernel/path"] = function() { 
 var modtask = 
 {
@@ -1647,7 +1656,8 @@ modtask.toInvokeString = function(path, _modToPkgMap) {
 	};
 }
 
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["host\\nodejs\\file"] = function() { 
 var modtask = 
 {
@@ -1887,7 +1897,8 @@ var modtask =
 	}	
 	
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["proc"] = function() { 
 var modtask = 
 {
@@ -1962,7 +1973,8 @@ var modtask =
 		return ret;
 	}	
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["os\\windows\\filecommon"] = function() { 
 var modtask = 
 {
@@ -2025,7 +2037,8 @@ var modtask =
 		return ret;
 	} 
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["host\\nodejs\\filecommon"] = function() { 
 var modtask = 
 {
@@ -2088,7 +2101,8 @@ var modtask =
 		return ret;
 	} 
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["kernel/mod"] = function() { 
 var modtask = 
 {
@@ -2133,7 +2147,8 @@ var modtask =
 		return modtask;
 	}		
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["core/datetime"] = function() { 
 
 
@@ -2369,7 +2384,8 @@ var modtask =
 		return ret;
 	}			
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["core/string"] = function() { 
 var modtask = 
 {
@@ -2542,7 +2558,8 @@ var modtask =
 	} 
 }
 
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["ui/node/auth"] = function() { 
 var modtask = 
 {
@@ -2568,7 +2585,8 @@ var modtask =
 
    __$d : ["ui\\conn\\tags"]
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 INLINESTORE["ui\\conn\\tags"] = function() { 
 // This should match the tags in template/1/index.php
 var modtask = 
@@ -2577,7 +2595,8 @@ var modtask =
    "AUTH_TAG" : "_=_:)a",
    "TUNNEL_TAG" : "__endpointid"
 }
-; return modtask; }; 
+; return modtask;
+ }; 
 
 
 var Minicore = {
@@ -2773,6 +2792,19 @@ var Minicore = {
 			modtask.Fail("JscriptToAA: eval failed on '" + objstoredname +"' :" +  e.description); 
 		}
 		return objcontents;
+	},
+
+	postProcessNodeJSModule : function(izyModuleExportsInline, objname, optionalRequirePath) {
+		if (izyModuleExportsInline.forcemodulereload) {
+			if (typeof(izyModuleExportsInline) != 'function') throw { message: 'forcemodulereload requires a function payload' };
+			izyModuleExportsInline = Minicore.nakedParseStr(Minicore, objname, null, izyModuleExportsInline);
+		}
+		if (optionalRequirePath) {
+			izyModuleExportsInline.__loadObject2Path = optionalRequirePath;
+		} else {
+			izyModuleExportsInline.__loadObject2Path = objname;
+		}
+		return izyModuleExportsInline;
 	},
 
 	nakedParseStr : function(modtask, objname, objecttype, unparsedstrform) {
