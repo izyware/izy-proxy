@@ -18,6 +18,8 @@ module.exports = function() {
         var moduleSearchPath = chainItem[i++];
         if (typeof(moduleSearchPath) == 'string') {
           modtask.__Kernel.rootModule.usermodule.__moduleSearchPaths.push(moduleSearchPath);
+        } else {
+          return $chain.chainReturnCB({ reason: 'moduleSearchPathAdd: please provide a path string.'});
         }
         $chain.set('outcome', { success: true, data: modtask.__Kernel.rootModule.usermodule.__moduleSearchPaths });
         cb();

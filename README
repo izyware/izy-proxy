@@ -658,6 +658,18 @@ cp ./node_modules/izy-proxy/modtask/config/kernel/extstores/file.js modtask/conf
 
 You should then edit the modtask/config/kernel/extstores/file.js and add the hard coded and relative paths for the location of your repositories. 
 
+
+You can also use the following chain command for adding module search paths:
+
+
+```
+var repoRoot = process.env.HOME + '/plat/p/';
+modtask.doChain([
+    ['chain.moduleSearchPathAdd', repoRoot],
+    chain => console.log(chain.get('outcome'))
+];
+```
+
 ## 2. Launching JSONIO components from legacy code in your app 
 
 In this case, call the newChain method:
@@ -762,6 +774,9 @@ for more details, visit [izyware]
 
 # Known Issues
 
+## Testing
+* customers have requested that service test runner integration into the izy-proxy library.
+
 ## Misc
 * importPackageIfNotPresent does not currently take advantage of strict mode optimizations
     * add option to convert inlinestore item from raw to function for faster looped iterations.
@@ -853,6 +868,7 @@ make 2 versions and 1 for V2?
 # Changelog
 
 ## V5.5
+* 55000007: improve error handling for moduleSearchPathAdd
 * 55000006: chain.importProcessor needs to support 'rel:xxx'
   *  This will be more consistent with the package launcher // schema.
    * This is important to avoid collusion where the package is being launched when installed as dependency inside node_modules and the parent context also has a chain module with the same name:
