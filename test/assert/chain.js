@@ -93,6 +93,11 @@ var testObjectValues = function(testCondition, objectToCheckAgainst) {
 
     // Array and Object
     if (typeof(testerObj) == 'object') {
+      if (testerObj == null) {
+        if (typeof(testeeObj) == 'object' && testeeObj == null) return { success : true };
+        return { reason: contextMsg + 'Expected null for ' + namespace + ' but got ' + testeeObj };
+      };
+
       var p;
       if (!operator && testerObj.__operators__) operator = testerObj.__operators__;
       if (!operator) operator = {};

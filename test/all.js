@@ -10,7 +10,7 @@ var errFunction = function(outcome) {
 
 var allChainTests = './chain/all.js';
 var mode = process.argv[2] || 'core';
-var mods = [allChainTests, './izymodtask/all.js'];
+var mods = [allChainTests, './izymodtask/all.js', './assert/test'];
 if (mode == 'all') {
   mods.push('./api/all.js');
   mods.push('./runpkg/all.js');

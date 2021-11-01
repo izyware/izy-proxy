@@ -8,6 +8,7 @@ var test = function(cb) {
     },
     xhrs: [],
     idtoken: '03acdab81062b406',
+    nullProperty: null
   };
   require('../../index').newChain({
     chainItems: [
@@ -36,7 +37,8 @@ var test = function(cb) {
           __operators__: {
             'c.g': 'greater than'
           }
-        }
+        },
+        nullProperty: null
       }],
     ],
     __chainProcessorConfig: {
