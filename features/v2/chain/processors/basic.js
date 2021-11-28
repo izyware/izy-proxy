@@ -60,6 +60,19 @@ module.exports = (function() {
           cb();
         }
         return true;
+      case 'newChain':
+        var cfg = chainItem[i++];
+        if (!cfg.chainItems) return $chain.chainReturnCB({ reason: 'please specify the chainItems property' });
+        $chain.newChainForModule($chain.chainAttachedModule, function(outcome) {
+          $chain.set('outcome', {
+            success: outcome.success,
+            reason: outcome.reason,
+            __callstack: outcome.__callstack,
+            __callstackStr: outcome.__callstackStr
+          });
+          cb();
+        }, (cfg.context || {}), cfg.chainItems);
+        return true;
       case 'sysview':
         require('izymodtask').getRootModule().ldmod('s_root').cmdlineverbs.sysview();
         cb();
