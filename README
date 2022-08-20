@@ -464,7 +464,9 @@ CAs are implemented via a chain handler module (CHM) while JSONIO end-point are 
         headers: {},
         body: 'string',
         /* when set to false, it will allow https connections to self-signed certificates */
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        /* when an error would have triggered an unsuccessful outcome, setting this would return a success outcome with outcome.status set to myNumbericalValue and responseText set to outcome.reason */
+        resolveErrorAsStatusCode: 'myNumericalValue'
     }]
 
 ## Package Runner (runpkg) and using invokeString over the JSONIO APIs
