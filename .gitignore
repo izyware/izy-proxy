@@ -1,3 +1,4 @@
 node_modules
 pkgdashboard
 package-lock.json
+.DS_Store

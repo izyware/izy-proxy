@@ -30,8 +30,14 @@ module.exports = (function() {
       var body = _options.body;
       var headers = _options.headers || {};
       var metaOptions = {
-        resolveErrorAsStatusCode: _options.resolveErrorAsStatusCode
+        resolveErrorAsStatusCode: _options.resolveErrorAsStatusCode,
+        rejectUnauthorized: true
       };
+
+      if (typeof(_options.rejectUnauthorized) == 'boolean' && !_options.rejectUnauthorized) {
+        metaOptions.rejectUnauthorized = false;
+      };
+
       if (typeof(url) != 'string') return cb({ reason: 'missing the the "url" string. please provide one to continue.' });
       if (!method) {
         method = (body) ? 'POST' : 'GET';
@@ -69,6 +75,11 @@ module.exports = (function() {
         };
 
         var nodeHttp = require((parts.protocol == 'https:' ? 'https' : 'http'));
+        if (!metaOptions.rejectUnauthorized) {
+          options.agent = new nodeHttp.Agent({
+            rejectUnauthorized: false
+          });
+        }
 
         var ret = '';
         var req = nodeHttp.request(options,

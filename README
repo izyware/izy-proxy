@@ -462,7 +462,9 @@ CAs are implemented via a chain handler module (CHM) while JSONIO end-point are 
         url: '',
         method: 'POST',
         headers: {},
-        body: 'string'
+        body: 'string',
+        /* when set to false, it will allow https connections to self-signed certificates */
+        rejectUnauthorized: false
     }]
 
 ## Package Runner (runpkg) and using invokeString over the JSONIO APIs
@@ -808,6 +810,15 @@ make 2 versions and 1 for V2?
 
 * remove the kernel folder from root and include in izymodtask?
 * runWithMethod is duplicated across apigateway/cli and g_cli. consolidation of configuration options is needed.
+* allow relative paths in package names. this will help using the currenct context version for determining package names. so
+
+        ['chain.importProcessor', 'izywaretoolbar/5/extension/api:chainprocessor']
+        
+        will become 
+        
+        ['chain.importProcessor', 'rel:../extension/api:chainprocessor']
+        
+* treat leading './' and '../' to imply 'rel:'.
 
 ## Service Consumption
 * the node service (features/v2/node/generic) still depends on legacy /apps/izyware/index
@@ -819,6 +830,8 @@ make 2 versions and 1 for V2?
     * net.http needs to allow for passing a transport agent
         * support HTTP, HTTPS, and SOCKS options
         * for browser context require toolbar.
+    * net.http needs to support modern XMLHttpRequest options
+        * request.responseType = 'arraybuffer' (see izyidman/5/pkgdashboard/tab/xcast2/userinput/audiooutput/api for reference implementation)
 * context 
     * domains need to become part of the context 
     * APIs is not domain aware. nede to add that
@@ -867,7 +880,17 @@ make 2 versions and 1 for V2?
 
 # Changelog
 
+## V6.2
+* 6200001: implement rejectUnauthorized for net.httprequest
+    * allows making https requests to end-points with self-signed certificates
+    * useful for testing
+
+## V5.6
+* 56000001: implement 'newChain' command for basic chain processing.
+    * this will enable handling errors gracefully for event driven apps without throwing the main chain.
+
 ## V5.5
+* 55000008: fix assertion library bug by treating null values as special objects
 * 55000007: improve error handling for moduleSearchPathAdd
 * 55000006: chain.importProcessor needs to support 'rel:xxx'
   *  This will be more consistent with the package launcher // schema.
