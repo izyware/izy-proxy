@@ -830,8 +830,6 @@ make 2 versions and 1 for V2?
     * net.http needs to allow for passing a transport agent
         * support HTTP, HTTPS, and SOCKS options
         * for browser context require toolbar.
-    * net.http needs to support modern XMLHttpRequest options
-        * request.responseType = 'arraybuffer' (see izyidman/5/pkgdashboard/tab/xcast2/userinput/audiooutput/api for reference implementation)
 * context 
     * domains need to become part of the context 
     * APIs is not domain aware. nede to add that
@@ -881,6 +879,8 @@ make 2 versions and 1 for V2?
 # Changelog
 
 ## V6.2
+* 6200002: implement responseType for net.httprequest
+    * customer feedback needed to support modern XMLHttpRequest options
 * 6200001: implement rejectUnauthorized for net.httprequest
     * allows making https requests to end-points with self-signed certificates
     * useful for testing
