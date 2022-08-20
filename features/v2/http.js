@@ -31,7 +31,8 @@ module.exports = (function() {
       var headers = _options.headers || {};
       var metaOptions = {
         resolveErrorAsStatusCode: _options.resolveErrorAsStatusCode,
-        rejectUnauthorized: true
+        rejectUnauthorized: true,
+        responseType: _options.responseType || 'text'
       };
 
       if (typeof(_options.rejectUnauthorized) == 'boolean' && !_options.rejectUnauthorized) {
@@ -84,14 +85,33 @@ module.exports = (function() {
         var ret = '';
         var req = nodeHttp.request(options,
           function(response) {
-            var str = ''
+            const finalResponse = {
+              responseText: '',
+              response: Buffer.from([])
+            };
             response.on('data', function (chunk) {
-              str += chunk;
+              switch(metaOptions.responseType) {
+                case 'arraybuffer':
+                  finalResponse.response = Buffer.concat([finalResponse.response, chunk]);
+                  break;
+                default:
+                  finalResponse.responseText += chunk;
+                  break;
+              };
             });
             response.on('end', function () {
+              switch(metaOptions.responseType) {
+                case 'arraybuffer':
+                  finalResponse.response = finalResponse.response.buffer;
+                  break;
+                default:
+                  finalResponse.response = null;
+                  break;
+              };
               cb({
                 success: true,
-                responseText: str,
+                responseText: finalResponse.responseText,
+                response: finalResponse.response,
                 status: response.statusCode,
                 headers: response.headers
               });
