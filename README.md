@@ -466,7 +466,11 @@ CAs are implemented via a chain handler module (CHM) while JSONIO end-point are 
         /* when set to false, it will allow https connections to self-signed certificates */
         rejectUnauthorized: false,
         /* when an error would have triggered an unsuccessful outcome, setting this would return a success outcome with outcome.status set to myNumbericalValue and responseText set to outcome.reason */
-        resolveErrorAsStatusCode: 'myNumericalValue'
+        resolveErrorAsStatusCode: 'myNumericalValue',
+        /* optional */
+        responseType: 'text',
+        /* optional: if you already have a tcp or web socket that you would like to use for multiplexing use requestOverExistingConnection by providing the connectionId */
+        connectionId
     }]
 
 ## Package Runner (runpkg) and using invokeString over the JSONIO APIs
@@ -879,6 +883,10 @@ make 2 versions and 1 for V2?
 
 
 # Changelog
+
+## V6.3
+* 6300025: implement support for requestOverExistingConnection and add json responseType for net.httprequest
+    * returns null when malformed json is present
 
 ## V6.2
 * 6200002: implement responseType for net.httprequest

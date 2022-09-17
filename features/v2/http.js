@@ -50,10 +50,42 @@ module.exports = (function() {
         }
       }
 
+      if (_options.connectionId) return requestOverExistingConnection(cb, _options, metaOptions);
       var req = createXMLHTTPObject();
       if (req) return requestByXmlHttp(cb, url, method, headers, body, req);
       requestByNode(cb, url, method, headers, body, metaOptions);
     };
+
+    function requestOverExistingConnection(cb, _options, metaOptions) {
+      const { method, url, body, connectionId } = _options;
+      const connection = global.__connections[connectionId];
+      const socket = connection.socket;
+      const crlf = '\r\n';
+      const data = method + ' ' + url + ' http/1.1' + crlf + 'content-length: ' + body.length + crlf + crlf + body;
+      let response = '';
+      socket.on('data', data => {
+        response += data.toString();
+        if (response.indexOf(crlf + crlf) == -1) return;
+        try {
+          const headerbody = response.split(crlf + crlf);
+          const contentLength = parseInt(headerbody[0].toLowerCase().split('content-length: ')[1].split(crlf)[0]);
+          const responseText = headerbody[1];
+          if (contentLength < responseText.length) return;
+
+          const finalResponse = {
+            responseType: metaOptions.responseType,
+            responseText,
+            response: Buffer.from([])
+          };
+          finalResponse.status = 200;
+          finalResponse.headers = {};
+          return finalResponseResolve(cb, finalResponse);
+        } catch(e) {
+          return cb({ reason: e.message });
+        }
+      });
+      socket.write(data);
+    }
 
     function requestByNode(cb, url, method, headers, body, metaOptions) {
       try {
@@ -86,6 +118,7 @@ module.exports = (function() {
         var req = nodeHttp.request(options,
           function(response) {
             const finalResponse = {
+              responseType: metaOptions.responseType,
               responseText: '',
               response: Buffer.from([])
             };
@@ -100,21 +133,9 @@ module.exports = (function() {
               };
             });
             response.on('end', function () {
-              switch(metaOptions.responseType) {
-                case 'arraybuffer':
-                  finalResponse.response = finalResponse.response.buffer;
-                  break;
-                default:
-                  finalResponse.response = null;
-                  break;
-              };
-              cb({
-                success: true,
-                responseText: finalResponse.responseText,
-                response: finalResponse.response,
-                status: response.statusCode,
-                headers: response.headers
-              });
+              finalResponse.status = response.statusCode;
+              finalResponse.headers = response.headers;
+              finalResponseResolve(cb, finalResponse);
             });
           }
         );
@@ -142,6 +163,30 @@ module.exports = (function() {
       } catch(e) {
         return cb({ reason: 'Error: ' + e.message + ', host: ' + parts.host });
       }
+    }
+
+    function finalResponseResolve(cb, finalResponse) {
+      switch(finalResponse.responseType) {
+        case 'arraybuffer':
+          finalResponse.response = finalResponse.response.buffer;
+          break;
+        case 'json':
+          finalResponse.response = null;
+          try {
+            finalResponse.response = JSON.parse(finalResponse.responseText);
+          } catch(e) {}
+          break;
+        default:
+          finalResponse.response = null;
+          break;
+      };
+      return cb({
+        success: true,
+        responseText: finalResponse.responseText,
+        response: finalResponse.response,
+        status: finalResponse.statusCode,
+        headers: finalResponse.headers
+      });
     }
 
     function createXMLHTTPObject() {
