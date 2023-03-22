@@ -37,6 +37,8 @@ module.exports = (function() {
         return wrapError('"' + moduleName + '" does not implement method: ' + methodToCall);
       }
 
+      // todo: consolidate with the monitoring and logging module
+      var extraInfoInLogs = true;
       var doChain = chainMain.newChain({
         chainName: moduleName,
         chainItems: [],
@@ -50,6 +52,19 @@ module.exports = (function() {
       myMod.sp('doChain', doChain);
 
       if (theMethod) {
+        if (theMethod.constructor.name === 'AsyncFunction') {
+          return theMethod(
+            queryObject,
+            function() { console.log('warning cb is not used. use return instead') },
+            context
+          ).then(outcomeS => cb(outcomeS ? outcomeS : { success: true })).catch(outcomeF => {
+            if (outcomeF instanceof Error) {
+              if (extraInfoInLogs) console.log(outcomeF);
+              return cb({ reason: outcomeF.toString() });
+            }
+            cb({ reason: String(outcomeF)})
+          });
+        }
         return theMethod(
           queryObject,
           cb,

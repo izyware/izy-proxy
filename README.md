@@ -819,6 +819,7 @@ for more details, visit [izyware]
 * customers have requested that service test runner integration into the izy-proxy library.
 
 ## Misc
+* pkg/run consolidate extraInfoInLogs into the monitoring infrastructure and verbose flags
 * importPackageIfNotPresent does not currently take advantage of strict mode optimizations
     * add option to convert inlinestore item from raw to function for faster looped iterations.
     * an optional improvement would be to use /tmp folder cache to generate the function to skip the first raw evaluation
@@ -918,6 +919,10 @@ for more details, visit [izyware]
 # Changelog
 
 ## V6.8
+* 6800004: add lib/monitoring library from streaming server
+    * customers have requested that logging tools for streams be provided at the base server level
+    * useful for granular logging control and live streaming properties (data frequency, QOS) monitoring
+* 6800003: add proper error handling for json parser
 * 6800002: runpkg new feature - support specifying the full network url.
     * service reference schema now supporting `[http[s]:]//localhost[:port]/${path}/${action}`
     * without this feature, rpc applications (i.e. selenium) will be forced to run on port 80 and can only use `//localhost/${path}/${action}`
