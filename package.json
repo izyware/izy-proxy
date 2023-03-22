@@ -18,6 +18,7 @@
     "modtask",
     "plugin",
     "cli.js",
+    "asyncio.js",
     "g_cli.js",
     "json.js",
     "yaml.js",

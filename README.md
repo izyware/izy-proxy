@@ -405,6 +405,28 @@ See the testing instructions above (under `Testing`) for howto test the service 
     mock: false
 ```
 
+## Data Streaming and QOS
+Use the streamproto1 with the socketReader/Writer nodes to enable QOS monitoring.
+
+As the first step, setting the `enableQOSMetrics` flag to true for the streamproto1 object, will trigger a call to the qosWriter method everytime an audio packet is recieved. A `QOSMetrics` object will be generated and passed on to the the `qosWriter` method. The object will have the following properties:
+
+* head: the header that was immediately preceding the audio packet
+* qosTimestamp: unix timestamp
+
+A typical implementation may be found in `service/audiooutput`:
+
+
+    (xcast) audio source => IzySocketWriterNode => metadata packet(getMetaDataStrFunction) + audio packet => (peer) => IzySocketReaderNode => audio sink
+    (xcast) updateQOSForUser <= socket.on('data') <= Stringify(QOSMetrics) (peer) <= enableQOS?qosWriter
+
+
+* peer: qosWriter method serialize the `QOSMetrics`, and write it back to the xcast
+* xcast: the connection.client.QOSMetrics property will be populated by JSON.parsing the incoming data from the socket, and will be aggregated based on user.id into the `QOSSocketWriterData` storeLib variable.
+
+Eventually, `service/mixeradmin` will push the `QOSSocketWriterData` back to the admin using `socketWriterNode.getMetaDataStrFunction`:
+* xcast: socketWriterNode.getMetaDataStrFunction will pick up the `QOSSocketWriterData` alongside other xcast state objects and serialize them.
+* peer: socketReaderNode.readMetadataPacket will set `storeLib.set('readMetadataPacket')` value which is then consumed by `dashboard/userinput/qos/api` to populate the QOS dashboard.
+
 ## Handling Domain Based Requests
 Use the http plug-in to handle the domain based requests. The http plug-in will use cloudservices data base to configure the raw http handlers. 
 
@@ -704,6 +726,17 @@ require('izy-proxy')(module).series([
 
 ```
 
+To provide easier interoperability with newer versions of Python that support Asynchronous I/O you can use the async version. See [python-asyncio] for details:
+
+```
+const run = require('izy-proxy/asyncio')(module).run;
+let { status } = await run('net.httprequest', {
+    url: 'http://bad.url.o.r.g',
+    resolveErrorAsStatusCode: -1
+});
+console.log(status);
+```
+
 ## 3. Build server functionality for RPC access
 
 ```
@@ -838,7 +871,7 @@ make 2 versions and 1 for V2?
         * for browser context require toolbar.
 * context 
     * domains need to become part of the context 
-    * APIs is not domain aware. nede to add that
+    * APIs is not domain aware. need to add that
         * perhaps after we have added domain to context add a config option to the api-plugin 
         * the API implementor would still be able to do this but might be simpler to filter at the service level
     * pass the IP address and headers metadata to the { sessionObjs } already present in HTTP handler as well as the RAW APIS
@@ -848,7 +881,10 @@ make 2 versions and 1 for V2?
         * Is this a valid point? may be not: this information will NOT be avilable in JSON/IO apis. The point of JSON/IO apis is transport independence and doing this will introduce the trainsport specific concept into it.
     
 ## Chains
-*  single action chain items with top level module fail:
+* runpkg needs to support specifying the networking address.
+    * without this feature, rpc applications (i.e. selenium) will be forced to run on port 80 and can only use `//localhost/${path}/${action}`
+    * ideally support `[http[s]:]//localhost[:port]/${path}/${action}`
+* single action chain items with top level module fail:
 
         /* only happens when called from frameworks */
         req.path = '/path/to/mymodule';
@@ -883,6 +919,10 @@ make 2 versions and 1 for V2?
 
 
 # Changelog
+
+## V6.8
+* 6800001: improve support for net.httprequest service
+    * send actionable feedback when requestObject is null or not provided
 
 ## V6.3
 * 6300025: implement support for requestOverExistingConnection and add json responseType for net.httprequest
@@ -1221,6 +1261,7 @@ make 2 versions and 1 for V2?
 * [git]
 * [npmjs]
 
+[python-asyncio]: https://docs.python.org/3/library/asyncio.html
 [npmjs]: https://www.npmjs.com/package/izy-proxy
 [git]: https://github.com/izyware/izy-proxy
 [izyware]: https://izyware.com

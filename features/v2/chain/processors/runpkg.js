@@ -61,6 +61,7 @@ module.exports = (function() {
                 break;
             case 'net.httprequest':
                 var request = chainItem[i++];
+                if (typeof(request) != 'object' || request == null) return $chain.chainReturnCB({ reason: 'please specify a non null request object' });
                 if (typeof(request.url) != 'string') return $chain.chainReturnCB({ reason: 'url must be a string' });
                 var verbose = request.verbose || {};
                 var httpProxy = modtask.__Kernel.httpProxy;

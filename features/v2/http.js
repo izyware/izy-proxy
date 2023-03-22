@@ -184,7 +184,7 @@ module.exports = (function() {
         success: true,
         responseText: finalResponse.responseText,
         response: finalResponse.response,
-        status: finalResponse.statusCode,
+        status: finalResponse.status,
         headers: finalResponse.headers
       });
     }
