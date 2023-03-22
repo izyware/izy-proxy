@@ -19,7 +19,8 @@ module.exports = (function() {
         if (str.indexOf('?') == 0) {
             str = '//inline/' + str;
         };
-        if (str.indexOf('//') == 0) {
+
+        if (str.indexOf('//') == 0 || str.indexOf('http://') == 0 || str.indexOf('https://') == 0) {
             for(var p in interceptors) {
                 var interceptor = interceptors[p];
                 if (str.match(interceptor.regExpObj)) {
@@ -140,17 +141,20 @@ module.exports = (function() {
         }
 
         var parsedLaunchString = modtask.parseLaunchString(launchString, payload);
-
         if (!parsedLaunchString.success) return modtask.exitChainWithMyStackTrace($chain, parsedLaunchString.reason);
         if (!parsedLaunchString.serviceName) return modtask.exitChainWithMyStackTrace($chain, '/// launch string is ambigous, did you mean //inline/?');
         var url = apiGatewayUrls[parsedLaunchString.serviceName];
         if (!url) {
-            if (modtask.dontDefaultToHttpWhenServiceNameUnrecognized) {
-                return modtask.exitChainWithMyStackTrace($chain,
-                'Cannot find the proper gateway for:' + parsedLaunchString.serviceName
-                );
+            if (parsedLaunchString.protocolPrefix) {
+                url = parsedLaunchString.protocolPrefix + parsedLaunchString.serviceName + '/';
+            } else {
+                if (modtask.dontDefaultToHttpWhenServiceNameUnrecognized) {
+                    return modtask.exitChainWithMyStackTrace($chain,
+                    'Cannot find the proper gateway for:' + parsedLaunchString.serviceName
+                    );
+                }
+                url = 'https://' + parsedLaunchString.serviceName + '/apigateway/:';
             }
-            url = 'https://' + parsedLaunchString.serviceName + '/apigateway/:';
         }
         var queryObject = payload.queryObject;
         if (modtask.verbose) {
@@ -167,10 +171,20 @@ module.exports = (function() {
         var outcome = {
             success: true
         };
-        if (url.length < 2 || url.indexOf('//') != 0) return {
-            reason: 'must start with //, e.g. //service/invokeString or ///invokeString'
-        };
-        url = url.substr(2);
+
+        var reasonForInvalidUrl = 'must start with [http[s]:]//, e.g. //service/invokeString or ///invokeString';
+        if (url.length < 2) return { reason: reasonForInvalidUrl };
+
+        if (url.indexOf('//') == 0) {
+            url = url.substr(2);
+        } else if (url.indexOf('http://') == 0) {
+            url = url.substr(7);
+            outcome.protocolPrefix = 'http://';
+        } else if (url.indexOf('https://') == 0) {
+            url = url.substr(8);
+            outcome.protocolPrefix = 'https://';
+        } else return { reason: reasonForInvalidUrl };
+
         if (url.length < 1 || url.indexOf('/') < 0) return {
             reason: 'need / before the invokeString i.e. ///invokeString'
         };

@@ -41,7 +41,8 @@ var test = function(cb) {
       ['//inline/:test/runpkg/mod1', queryObject], ['assert.value', { data: queryObject }],
       ['//localhost/:test/runpkg/mod1', queryObject], ['assert.value', { data: queryObject }],
       ['//inline/:test/runpkg/mod2', queryObject], ['assert.value', { data: queryObject }],
-      ['//localhost/:test/runpkg/mod2', queryObject], ['assert.value', { data: queryObject }]
+      ['//localhost/:test/runpkg/mod2', queryObject], ['assert.value', { data: queryObject }],
+      ['http://localhost:80/apigateway/::test/runpkg/mod2', queryObject], ['assert.value', { data: queryObject }]
     ],
     __chainProcessorConfig: {
       __moduleSearchPaths: []

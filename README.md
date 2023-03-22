@@ -824,7 +824,7 @@ for more details, visit [izyware]
     * an optional improvement would be to use /tmp folder cache to generate the function to skip the first raw evaluation
 * provide a new JSON/IO compatible package loader
     * this will enable distributing the pkg server across a cluster.
-make 2 versions and 1 for V2?
+    * make 2 versions and 1 for V2?
 * default path resolution call/callpretty needs to allow '..' for izy-proxy children
 
         node node_modules/izy-proxy/cli.js callpretty test/test
@@ -881,9 +881,6 @@ make 2 versions and 1 for V2?
         * Is this a valid point? may be not: this information will NOT be avilable in JSON/IO apis. The point of JSON/IO apis is transport independence and doing this will introduce the trainsport specific concept into it.
     
 ## Chains
-* runpkg needs to support specifying the networking address.
-    * without this feature, rpc applications (i.e. selenium) will be forced to run on port 80 and can only use `//localhost/${path}/${action}`
-    * ideally support `[http[s]:]//localhost[:port]/${path}/${action}`
 * single action chain items with top level module fail:
 
         /* only happens when called from frameworks */
@@ -921,6 +918,9 @@ make 2 versions and 1 for V2?
 # Changelog
 
 ## V6.8
+* 6800002: runpkg new feature - support specifying the full network url.
+    * service reference schema now supporting `[http[s]:]//localhost[:port]/${path}/${action}`
+    * without this feature, rpc applications (i.e. selenium) will be forced to run on port 80 and can only use `//localhost/${path}/${action}`
 * 6800001: improve support for net.httprequest service
     * send actionable feedback when requestObject is null or not provided
 
