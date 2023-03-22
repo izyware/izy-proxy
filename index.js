@@ -77,6 +77,9 @@ module.exports = function(moduleToAttach) {
     basePath: __dirname,
     newChain: newChain,
     series: function(chainItems, cb) {
+      if (moduleToAttach.doChain) {
+        return moduleToAttach.doChain(chainItems, cb);
+      }
       return newChain({
         chainItems: chainItems,
         forceRequireOnLoadFromFile: true,
