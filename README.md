@@ -918,6 +918,9 @@ for more details, visit [izyware]
 
 # Changelog
 
+## V6.9
+* 6900001: bridge/http - pass on request metadata to prerequest modules interceptors
+
 ## V6.8
 * 6800004: add lib/monitoring library from streaming server
     * customers have requested that logging tools for streams be provided at the base server level

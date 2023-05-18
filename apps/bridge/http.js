@@ -62,17 +62,26 @@ modtask.handle = (serverObjs, context) => {
       })
       .on('proxyRes', (d, q, s) => startResponseStream(d, q, s, serverObjs)).web(a,b,c);
 
-    const url = serverObjs.req.url;
+    const { url, method, headers } = serverObjs.req;
+    let requestBody = null;
     let chain = [];
+    if (method.toUpperCase() == 'POST' || method.toUpperCase() == 'PUT') {
+        chain.push(['nop']);
+        chain.push(_chain => {
+            requestBody = '';
+            serverObjs.req.on('data', data => requestBody += data);
+            serverObjs.req.on('end', () => _chain(['continue']));
+        });
+    }
     var prerequestmodules = modtask.sessionConfig.prerequestmodules;
     if (modtask.sessionConfig.verbose.preLandingAdjustments) console.log('[preLandingAdjustments], modules: ' + prerequestmodules.length + ' ' + url);
     prerequestmodules.forEach(item => {
         var callStr = `//inline/${item}`;
         chain.push(modtask.sessionConfig.verbose.prerequestmodules ? ['log', `prerequestmodule [${item}]: ${url}`] : ['nop']);
-        chain.push([callStr + '?should', { url }]);
+        chain.push([callStr + '?should', { url, method, headers, body: requestBody }]);
         chain.push(chain => {
             if (chain.get('outcome').should) return chain([
-              [callStr + '?perform', { url }],
+              [callStr + '?perform', { url, method, headers, body: requestBody }],
               chain => {
                 const outcome = chain.get('outcome');
                 if (outcome.proxyTarget) {
