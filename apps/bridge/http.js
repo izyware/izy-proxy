@@ -78,7 +78,7 @@ modtask.handle = (serverObjs, context) => {
     prerequestmodules.forEach(item => {
         var callStr = `//inline/${item}`;
         chain.push(modtask.sessionConfig.verbose.prerequestmodules ? ['log', `prerequestmodule [${item}]: ${url}`] : ['nop']);
-        chain.push([callStr + '?should', { url, method, headers, body: requestBody }]);
+        chain.push(chain => chain([callStr + '?should', { url, method, headers, body: requestBody }]));
         chain.push(chain => {
             if (chain.get('outcome').should) return chain([
               [callStr + '?perform', { url, method, headers, body: requestBody }],
