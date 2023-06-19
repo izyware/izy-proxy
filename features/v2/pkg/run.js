@@ -50,9 +50,22 @@ module.exports = (function() {
         chainAttachedModule: myMod
       }, cb, true);
       myMod.sp('doChain', doChain);
-
       if (theMethod) {
         if (theMethod.constructor.name === 'AsyncFunction') {
+          myMod.sp('newChainAsync', async function(chainItems) {
+            return new Promise((resolve, reject) => {
+              doChain([
+                ['newChain', {
+                  chainItems: chainItems
+                }],
+                function(chain) {
+                  var outcome = chain.get('outcome');
+                  if (outcome.success) return resolve(outcome);
+                  reject({ reason: outcome.reason });
+                }
+              ]);
+            });
+          });
           return theMethod(
             queryObject,
             function() { console.log('warning cb is not used. use return instead') },
@@ -61,6 +74,9 @@ module.exports = (function() {
             if (outcomeF instanceof Error) {
               if (extraInfoInLogs) console.log(outcomeF);
               return cb({ reason: outcomeF.toString() });
+            } else if (typeof(outcomeF) == 'object') {
+              if (outcomeF.message) return cb({ reason: outcomeF.message });
+              if (outcomeF.reason) return cb({ reason: outcomeF.reason });
             }
             cb({ reason: String(outcomeF)})
           });

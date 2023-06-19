@@ -473,6 +473,13 @@ CAs are implemented via a chain handler module (CHM) while JSONIO end-point are 
         $chain.newChainForProcessor(processorModule, next, {}, [
             ['//service/endpoint', { data }]
         ]);
+        
+To run chain actions, several options are available:
+* By default, `modtask.doChain` is enabled inside the current context module: this is the most common usecase for UI components. The advantage of using this option is that any non-success outcome will be captured by the modtask which can be routed to the UI error div. This will allow implementation of error handling at component level (not application level) without writing extra code.
+* If non-success outcome needs to be captured, the `['newChain', ...` CA can be used with `modtask.doChain`.
+* For new environments (i.e. nodeJS > 7.6) with async capabilities, you can try the following options:
+    * `const run = require('izy-proxy/asyncio')(modtask|module).run`: This option will only run a single CA (no chain arrays). The non-success outcome will be thrown (not captured by modtask). when using module, the relative paths for CA references will not work.
+    * `modtask.newChainAsync`: similar to `modtask.doChain`, except that the non-success outcome will be thrown. Note that this option is only available inside async functions.
 
 ### Standard Built-In Chain Commands reference
 
@@ -501,8 +508,6 @@ You can leverage this feature to create and consume service components that send
 * No need to manage the HTTP metadata and headers
 * JSONIO api security context can be 'transported' and simulated by the IDE, thus making implementation very very easy.
 * The end-points can be directly consumed from chains anywhere in the cloud.
-
-By default, `doChain` is enabled inside the module.
 
 Notice that when settings up the runpkg chain processor, one of the configuration parameters is sessionMod which will be used to carry the authorization info when packages are run:
 
@@ -919,6 +924,7 @@ for more details, visit [izyware]
 # Changelog
 
 ## V6.9
+* 6900002: implement newChainAsync. improve async error handling
 * 6900001: bridge/http - pass on request metadata to prerequest modules interceptors
 
 ## V6.8

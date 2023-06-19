@@ -78,8 +78,16 @@ module.exports = function(moduleToAttach) {
     newChain: newChain,
     series: function(chainItems, cb) {
       if (moduleToAttach.doChain) {
-        return moduleToAttach.doChain(chainItems, cb);
-      }
+        moduleToAttach.doChain([
+          ['newChain', {
+            chainItems: chainItems
+          }],
+          function(chain) {
+            var outcome = chain.get('outcome');
+            return cb(outcome);
+          }
+        ]);
+      };
       return newChain({
         chainItems: chainItems,
         forceRequireOnLoadFromFile: true,
