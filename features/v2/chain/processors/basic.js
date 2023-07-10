@@ -71,7 +71,7 @@ module.exports = (function() {
             __callstackStr: outcome.__callstackStr
           });
           cb();
-        }, (cfg.context || {}), cfg.chainItems);
+        }, $chain.generateChainContextWhenNewChainForModule(cfg.context), cfg.chainItems);
         return true;
       case 'sysview':
         require('izymodtask').getRootModule().ldmod('s_root').cmdlineverbs.sysview();

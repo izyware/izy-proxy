@@ -266,7 +266,7 @@ module.exports = (function() {
         if (parsed.pkg == '') doNotLoadPackage = true;
 
         var runModule = function(moduleName) {
-            var context = { session: modtask.sessionMod.get() };
+            var methodCallContextObject = { session: modtask.sessionMod.get() };
             try {
                 var myMod = modtask.ldmod(moduleName);
                 if (typeof(queryObject) == 'undefined' || queryObject == null) {
@@ -277,12 +277,13 @@ module.exports = (function() {
                 myMod,
                 methodOutcome,
                 queryObject,
-                context,
+                methodCallContextObject,
                 $chain.chainHandlers,
                 function(outcome) {
                     if (!outcome.success) return $chain.chainReturnCB(outcome);
                     cbWhenLaunchSuccessful(outcome);
-                });
+                },
+                $chain);
             } catch (e) {
                 return modtask.exitChainWithMyStackTrace($chain, e.message);
             }

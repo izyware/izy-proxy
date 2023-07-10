@@ -1,6 +1,14 @@
 
 function testV3(testCB) {
   var verbose = false;
+  var lineLogged = '';
+  const monitoringConfig = { 
+    testEventKey: true,
+    monitoringIngestionService: queryObject => lineLogged = queryObject.line
+  };
+  const service = {
+    invokeString: '//inline/izy-proxy/test/chain/servicemodule'
+  }
   var callStackLength = 5;
   var chainContext = {};
   var chainItems = [
@@ -46,6 +54,28 @@ function testV3(testCB) {
       });
     },
 
+    (!verbose) ? ['nop'] : ['log', 'methodCallContextObjectsProvidedByChain and monitoringConfig'],
+    chain => chain(['newChain', {
+      context: {
+        methodCallContextObjectsProvidedByChain: { 
+          service,
+          monitoringConfig,
+          myVariable: 'test'
+        },
+        monitoringConfig
+      },
+      chainItems: [
+        chain => chain([service.invokeString + '?setupInstance'])
+      ]
+    }]),
+    chain => {
+      const outcome = chain.get('outcome');
+      if (!outcome.success) return testCB(outcome);
+      if (lineLogged != '[//inline/izy-proxy/t] {..        }(izy-proxy/test/chain/servicemodule?setupInstance) ** data: test, ') return testCB({
+        reason: 'invalid lineLogged: ' + lineLogged
+      });
+      chain(['continue']);
+    },
     (!verbose) ? ['nop'] : ['log', '/// launch pattern should fail even if the module path is valid'],
     ['set', 'outcome', { success: true }],
     function(chain) {

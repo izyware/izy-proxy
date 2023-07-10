@@ -79,6 +79,20 @@ module.exports = (function() {
       }, cb);
     }
 
+    var generateChainContextWhenNewChainForModule = function(newChainContext) {
+      if (!newChainContext) newChainContext = {};
+      if (typeof(newChainContext) == 'string' && newChainContext == 'copy') {
+        newChainContext = {};
+        var props = ['methodCallContextObjectsProvidedByChain', 'monitoringConfig'];
+        var launcherChainContext = $chain.context || {};
+        for(var i=0; i < props.length; ++i) {
+          var p = props[i];
+          newChainContext[p] = launcherChainContext[p];
+        }
+      }
+      return newChainContext;
+    }
+
     var propsToAdd = {
       chainName: cfg.chainName || '',
       verbose: {
@@ -90,6 +104,7 @@ module.exports = (function() {
       },
       newChainForProcessor: newChainForProcessor,
       newChainForModule: newChainForModule,
+      generateChainContextWhenNewChainForModule: generateChainContextWhenNewChainForModule,
       newChain: modtask.newChain,
       chainReturnCB: chainReturnCB,
       addStackTrace: modtask.addStackTrace,

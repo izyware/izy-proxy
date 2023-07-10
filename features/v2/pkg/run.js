@@ -1,7 +1,7 @@
 /* izy-loadobject nodejs-require */
 module.exports = (function() {
   var modtask = function() {}
-  modtask.runJSONIOModuleInlineWithChainFeature = function(myMod, methodToCall, queryObject, context, chainHandlers, cb) {
+  modtask.runJSONIOModuleInlineWithChainFeature = function(myMod, methodToCall, queryObject, methodCallContextObject, chainHandlers, cb, $launcherChain) {
     var chainMain = modtask.ldmod('rel:../chain/main');
     var methodCallOptionsObj = {};
     if (typeof(methodToCall) == 'object') {
@@ -37,18 +37,47 @@ module.exports = (function() {
         return wrapError('"' + moduleName + '" does not implement method: ' + methodToCall);
       }
 
+      var launcherChainContext = {}; 
+      if ($launcherChain && $launcherChain.context) launcherChainContext = $launcherChain.context;
+
+      var methodCallContextObjectsProvidedByChain = launcherChainContext.methodCallContextObjectsProvidedByChain;
+      if (methodCallContextObjectsProvidedByChain) {
+        for(var p in methodCallContextObjectsProvidedByChain) {
+          methodCallContextObject[p] = methodCallContextObjectsProvidedByChain[p];
+        }
+      }
+
+      var monitoringConfig = launcherChainContext.monitoringConfig;
+      if (monitoringConfig) {
+        var service = {};
+        if (methodCallContextObjectsProvidedByChain) service = methodCallContextObjectsProvidedByChain.service || {};
+        myMod.datastreamMonitor = myMod.ldmod('lib/monitoring').createForMethodCallLogging(monitoringConfig, {
+            module: moduleName,
+            method: methodToCall,
+            service: service
+        });
+      };
+
+      var newChainContext = {};
+      if ($launcherChain) {
+        newChainContext = $launcherChain.generateChainContextWhenNewChainForModule('copy');
+      }
+      // ----------------------- start buggy region
+      // the following mixes up method call object with chain context. probably a bug 
+      newChainContext.queryObject = queryObject;
+      newChainContext.context = methodCallContextObject;
+      // ----------------------- end buggy region
+
       // todo: consolidate with the monitoring and logging module
       var extraInfoInLogs = true;
       var doChain = chainMain.newChain({
         chainName: moduleName,
         chainItems: [],
-        context: {
-          queryObject: queryObject,
-          context: context
-        },
+        context: newChainContext,
         chainHandlers: chainHandlers,
         chainAttachedModule: myMod
       }, cb, true);
+
       myMod.sp('doChain', doChain);
       if (theMethod) {
         if (theMethod.constructor.name === 'AsyncFunction') {
@@ -69,7 +98,7 @@ module.exports = (function() {
           return theMethod(
             queryObject,
             function() { console.log('warning cb is not used. use return instead') },
-            context
+            methodCallContextObject
           ).then(outcomeS => cb(outcomeS ? outcomeS : { success: true })).catch(outcomeF => {
             if (outcomeF instanceof Error) {
               if (extraInfoInLogs) console.log(outcomeF);
@@ -84,7 +113,7 @@ module.exports = (function() {
         return theMethod(
           queryObject,
           cb,
-          context
+          methodCallContextObject
         );
       } else {
         doChain(myMod, cb);

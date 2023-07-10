@@ -368,6 +368,22 @@ There is an *optional* plug-in called logging. If you would like to remotely vie
 
 Due to security requirements, you must whitelist the IP address in order to access the logging feature.
 
+
+## Integrated Monitoring
+Monitoring feature is an improved layer of functionality and surpasses logging. It supports built in metrics collection which can be useful when building streaming solutions. The following features are currently supported:
+* Granular management and verbose flag
+* Filtering and querying by service, component, ...
+* Aggregate metric calculations (Datarate, Sampling Frequency, ...)
+
+While its possible to do `['chain.importProcessor', 'lib/monitoring', {}]` inside each handler, it is recommended that to define the monitoring and logging strategy per service instance. Notice that the following component lifecycles:
+* runpkg chainprocessor handler: per process, shared across services. The handler is a singleton which will share the lifetime of the application.
+* chains available for method calls: notice that unless a chain is instantiated using newChain action, it will share its context across method calls so newChain can be utilized to contextualize the chains per service. 
+
+Using the strategy above, the service entrypoints, should be launched using a newChain, and the `methodCallContextObjectsProvidedByChain` and `monitoringConfig` need to be specified.
+        
+This will guarantee that the proper objects are instantiated and made available within the context of each method call during the service lifetime. The service instantiation cli uses this technique to setup the property logging per service end-point. See service code samples sections for examples.
+
+
 ## Creating TCP/UDP services using the socket plug-in
 You can use the socket plug-in for creating non HTTPs application layer services (SMTP, POP, SOCKS, etc.) that can be deployed from the IzyCloud environment. To configure a node add the following to the plug-ins config:
 
@@ -920,8 +936,10 @@ for more details, visit [izyware]
     * otherwise FAIL, loadObject2, Does not exist: kernel/mod. The module for the chain handler is: node_modules/izy-proxy/features/v2/chain/processors/runpkg
     * turns out the failure is coming from modtask.ldmod('kernel\\selectors').objectExist line in runpkg
 
-
 # Changelog
+## V7.0
+* 7000001: implement newChain object sharing and scoping via methodCallContextObjectsProvidedByChain. add support for monitoringConfig.monitoringIngestionService
+
 
 ## V6.9
 * 6900002: implement newChainAsync. improve async error handling
