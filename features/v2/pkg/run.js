@@ -78,6 +78,22 @@ module.exports = (function() {
         chainAttachedModule: myMod
       }, cb, true);
 
+      var detectModuleReuseAcrossChains = newChainContext.detectModuleReuseAcrossChains;
+      if (detectModuleReuseAcrossChains) {
+        // error, warning
+        var moduleReuseDetectionBehavior = detectModuleReuseAcrossChains;
+        if (myMod.doChain && !myMod.canBeInstantiatedAcrossChainContexts) {
+          var reason = myMod.__myname + ' module is not marked for canBeInstantiatedAcrossChainContexts. Either mark it as such or set forcemodulereload.';
+          switch(moduleReuseDetectionBehavior) {
+            case 'error':
+              return cb({ reason });
+              break;
+            case 'warning':
+              console.log('[WARNING] ', reason);
+              break;
+          }
+        }
+      }
       myMod.sp('doChain', doChain);
       if (theMethod) {
         if (theMethod.constructor.name === 'AsyncFunction') {

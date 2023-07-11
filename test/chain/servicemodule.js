@@ -10,6 +10,9 @@ module.exports = (function() {
     // nested newChain 
     modtask.doChain([
       ['newChain', {
+        context: {
+          detectModuleReuseAcrossChains: 'error'
+        },
         chainItems: [
           ['//inline/?callFromNestedNewChain', { expectedBehavior: 'non-copy' }]
         ]
@@ -43,6 +46,8 @@ module.exports = (function() {
         break;
     }
   }
+
+  modtask.canBeInstantiatedAcrossChainContexts = true;
 
   return modtask;
 })();

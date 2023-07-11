@@ -83,7 +83,7 @@ module.exports = (function() {
       if (!newChainContext) newChainContext = {};
       if (typeof(newChainContext) == 'string' && newChainContext == 'copy') {
         newChainContext = {};
-        var props = ['methodCallContextObjectsProvidedByChain', 'monitoringConfig'];
+        var props = ['methodCallContextObjectsProvidedByChain', 'monitoringConfig', 'detectModuleReuseAcrossChains'];
         var launcherChainContext = $chain.context || {};
         for(var i=0; i < props.length; ++i) {
           var p = props[i];

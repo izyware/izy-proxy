@@ -938,6 +938,7 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.0
+* 7000002: implement detectModuleReuseAcrossChains and canBeInstantiatedAcrossChainContexts
 * 7000001: implement newChain object sharing and scoping via methodCallContextObjectsProvidedByChain. add support for monitoringConfig.monitoringIngestionService
 
 
