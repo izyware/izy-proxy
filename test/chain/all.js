@@ -71,8 +71,8 @@ function testV3(testCB) {
     chain => {
       const outcome = chain.get('outcome');
       if (!outcome.success) return testCB(outcome);
-      if (lineLogged != '[//inline/izy-proxy/t] {..        }(izy-proxy/test/chain/servicemodule?setupInstance) ** data: test, ') return testCB({
-        reason: 'invalid lineLogged: ' + lineLogged
+      if (lineLogged != '[//inline/izy-proxy/t] {.. }(izy-proxy/test/chain/servicemodule?setupInstance)  test') return testCB({
+        reason: 'invalid lineLogged: "' + lineLogged + '"'
       });
       chain(['continue']);
     },
