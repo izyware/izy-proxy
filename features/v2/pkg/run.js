@@ -115,7 +115,13 @@ module.exports = (function() {
             queryObject,
             function() { console.log('warning cb is not used. use return instead') },
             methodCallContextObject
-          ).then(outcomeS => cb(outcomeS ? outcomeS : { success: true })).catch(outcomeF => {
+          ).then(outcomeS => {
+            if (!outcomeS) outcomeS = { success: true };
+            if (typeof(outcomeS) != 'object') {
+              outcomeS = { success: true, data: outcomeS };
+            };
+            cb(outcomeS);
+          }).catch(outcomeF => {
             if (outcomeF instanceof Error) {
               if (extraInfoInLogs) console.log(outcomeF);
               return cb({ reason: outcomeF.toString() });
