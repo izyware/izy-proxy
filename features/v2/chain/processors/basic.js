@@ -64,12 +64,7 @@ module.exports = (function() {
         var cfg = chainItem[i++];
         if (!cfg.chainItems) return $chain.chainReturnCB({ reason: 'please specify the chainItems property' });
         $chain.newChainForModule($chain.chainAttachedModule, function(outcome) {
-          $chain.set('outcome', {
-            success: outcome.success,
-            reason: outcome.reason,
-            __callstack: outcome.__callstack,
-            __callstackStr: outcome.__callstackStr
-          });
+          $chain.set('outcome', outcome);
           cb();
         }, $chain.generateChainContextWhenNewChainForModule(cfg.context), cfg.chainItems);
         return true;

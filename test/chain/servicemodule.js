@@ -32,7 +32,8 @@ module.exports = (function() {
         const outcome = chain.get('outcome');
         if (!outcome.success) return cb(outcome);
         chain(['continue']);
-      }
+      },
+      ['outcome', { success: true, randomProperty: 'randomPropertyValue' }]
     ]);
   };
 

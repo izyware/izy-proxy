@@ -74,6 +74,9 @@ function testV3(testCB) {
       if (lineLogged != '[//inline/izy-proxy/t] {.. }(izy-proxy/test/chain/servicemodule?setupInstance)  test') return testCB({
         reason: 'invalid lineLogged: "' + lineLogged + '"'
       });
+      if (outcome.randomProperty != 'randomPropertyValue') return testCB({
+        reason: 'invalid randomProperty: "' + outcome.randomProperty + '"'
+      });
       chain(['continue']);
     },
     (!verbose) ? ['nop'] : ['log', '/// launch pattern should fail even if the module path is valid'],
