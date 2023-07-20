@@ -101,6 +101,7 @@ module.exports = (function() {
             return new Promise((resolve, reject) => {
               doChain([
                 ['newChain', {
+                  context: 'copy',
                   chainItems: chainItems
                 }],
                 function(chain) {

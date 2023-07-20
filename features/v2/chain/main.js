@@ -81,15 +81,30 @@ module.exports = (function() {
 
     var generateChainContextWhenNewChainForModule = function(newChainContext) {
       if (!newChainContext) newChainContext = {};
-      if (typeof(newChainContext) == 'string' && newChainContext == 'copy') {
-        newChainContext = {};
-        var props = ['methodCallContextObjectsProvidedByChain', 'monitoringConfig', 'detectModuleReuseAcrossChains'];
-        var launcherChainContext = $chain.context || {};
-        for(var i=0; i < props.length; ++i) {
-          var p = props[i];
-          newChainContext[p] = launcherChainContext[p];
+      var launcherChainContext = $chain.context || {};
+      if (typeof(newChainContext) == 'string') {
+        if (newChainContext == 'copy') {
+          newChainContext = {};
+          var props = ['methodCallContextObjectsProvidedByChain', 'monitoringConfig', 'detectModuleReuseAcrossChains'];
+          for(var i=0; i < props.length; ++i) {
+            var p = props[i];
+            newChainContext[p] = launcherChainContext[p];
+          }
         }
       }
+
+      if (typeof(newChainContext) == 'object') {
+        if (newChainContext['spawnChildService']) {
+          newChainContext = {
+            methodCallContextObjectsProvidedByChain: {
+              service: newChainContext['spawnChildService']
+            },
+            monitoringConfig: launcherChainContext.monitoringConfig,
+            detectModuleReuseAcrossChains: launcherChainContext.monitoringConfig
+          };
+        }
+      };
+
       return newChainContext;
     }
 
