@@ -2,7 +2,26 @@
 function testV3(testCB) {
   var verbose = false;
   var lineLogged = '';
-  const monitoringConfig = { 
+  const monitoringConfig = {
+		"forceUpToLevel": 2,
+		"extraInfoInLogs": true,
+		"useANSIColors_": true,
+		"filter_": {
+			"services": ["hub"],
+			"invokeStrings": ["clientToAggregatorInput"],
+			"devices": ["socketReader"],
+			"actions": ["audioDeviceDataExcha"]
+		},
+		"fieldsSchema": {
+			"timestamp_": true,
+			"service": { "len": 20, "prefix": "[", "postfix": "]" },
+			"context": { "len": 3, "prefix": "{", "postfix": "}" },
+			"invokeString": { "len": -40, "prefix": "(", "postfix": ")" },
+			"action": { "len": 20 },
+			"device": { "len": 50 },
+			"outcome": true,
+			"misc": true
+		},
     testEventKey: true,
     monitoringIngestionService: queryObject => lineLogged = queryObject.line
   };
@@ -71,7 +90,7 @@ function testV3(testCB) {
     chain => {
       const outcome = chain.get('outcome');
       if (!outcome.success) return testCB(outcome);
-      if (lineLogged != '[//inline/izy-proxy/t] {.. }(izy-proxy/test/chain/servicemodule?setupInstance)  test') return testCB({
+      if (lineLogged != '[//inline/izy-proxy/t] {@  } (y/test/chain/servicemodule?setupInstance)                                                                         test') return testCB({
         reason: 'invalid lineLogged: "' + lineLogged + '"'
       });
       if (outcome.randomProperty != 'randomPropertyValue') return testCB({
