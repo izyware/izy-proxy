@@ -78,7 +78,7 @@ module.exports = function(moduleToAttach) {
     newChain: newChain,
     series: function(chainItems, cb) {
       if (moduleToAttach.doChain) {
-        moduleToAttach.doChain([
+        return moduleToAttach.doChain([
           ['newChain', {
             chainItems: chainItems
           }],
