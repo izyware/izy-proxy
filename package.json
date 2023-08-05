@@ -18,6 +18,7 @@
     "tcpserver",
     "taskrunner",
     "server.js",
+    "service.js",
     "modtask",
     "plugin",
     "g_cli.js",
