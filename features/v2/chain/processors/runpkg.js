@@ -21,6 +21,7 @@ module.exports = (function() {
         };
 
         if (str.indexOf('//') == 0 || str.indexOf('http://') == 0 || str.indexOf('https://') == 0) {
+            if (str.indexOf('//service/') == 0) return false;
             for(var p in interceptors) {
                 var interceptor = interceptors[p];
                 if (str.match(interceptor.regExpObj)) {

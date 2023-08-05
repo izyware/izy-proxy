@@ -938,6 +938,22 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.0
+* 7000012: add support for nano services inside application space 
+    * support for service compose/call/notify pattern cycle
+    * similar to OS level support for services changeServiceConfig(windows), reload (unix)
+    * similar pattern to docker compose for compose
+    * This will start the service, if not started on first interaction
+    * the service "uniqness" is resolved by the name it has in the compose file
+    * support for observables to the service context
+* 7000011: monitoring - have the chain logger default to service context
+* 7000010: monitoring - implement createForStreamMonitoring, improve log signature flexibility, implement fieldsSchema for logs.
+* 7000009: chains - add spawnChildService mode for newChain context
+* 7000008: chains - bugfix for newChain not capturing the full outcome properties in the parent chain outcome property
+* 7000007: monitoring - implement outcomeMonitoring and syntax highlighting
+* 7000006: monitoring - implement ability to filter by invokeString
+* 7000005: async - convert non outcome return values to success outcome object
+* 7000004: monitoring - implement ability to filter by service 
+* 7000003: monitoring - implement ability to have syntax highlighting in logs via useANSIColors
 * 7000002: implement detectModuleReuseAcrossChains and canBeInstantiatedAcrossChainContexts
 * 7000001: implement newChain object sharing and scoping via methodCallContextObjectsProvidedByChain. add support for monitoringConfig.monitoringIngestionService
 

@@ -56,6 +56,8 @@ module.exports = (function() {
             method: methodToCall,
             service: service
         });
+        myMod.storeLib = myMod.ldmod('lib/globals');
+        myMod.storeLib.setupGlobals();
       };
 
       var newChainContext = {};
