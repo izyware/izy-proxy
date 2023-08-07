@@ -1,0 +1,33 @@
+{
+	"verbose" : {
+		"forceUpToLevel": 2,
+		"extraInfoInLogs": true,
+		"useANSIColors": true,
+		"_filter": {
+			"services": ["portforwarding"],
+			"invokeStrings": ["socket"],
+			"devices": ["ethernet1"],
+			"actions": ["setup"]
+		},
+		"fieldsSchema": {
+			"timestamp_": true,
+			"service": { "len": 20, "prefix": "[", "postfix": "]" }, 
+			"context": { "len": 3, "prefix": "{", "postfix": "}" }, 
+			"invokeString": { "len": -40, "prefix": "(", "postfix": ")" }, 
+			"action": { "len": 5 }, 
+			"device": { "len": 5 }, 
+			"outcome": true,
+			"misc": true
+		}
+	},
+	"user": {
+		"id": "1"
+	},
+	"portforwarding": {
+		"pkgModuleString": "apps/services/portforwarding",
+		"protocol": "tcp",
+		"address": "localhost:10022",
+		"forwardingAddress": "localhost:10012",
+		"logdata": false
+	}
+}

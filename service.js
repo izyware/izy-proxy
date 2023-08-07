@@ -56,11 +56,6 @@ module.exports = function() {
     ]);
   };
 
-  modtask.handleServiceChain = function($chain, cbWhenLaunchSuccessful, parsedLaunchString, queryObject) {
-    console.log({ $chain, cbWhenLaunchSuccessful, parsedLaunchString, queryObject });
-
-  }
-
   modtask.run = (queryObject, cb) => {
     let { serviceName, method, methodQueryObject } = queryObject;
     
@@ -90,6 +85,13 @@ module.exports = function() {
       chain => {
         chain(['outcome', chain.get('outcome')]);
       }
+    ]);
+  }
+
+  modtask.start = queryObject => {
+    modtask.doChain([
+      ['//inline/service?compose', queryObject.serviceComposeId],
+      [`//service/${queryObject.service}?onConfig`]
     ]);
   }
 

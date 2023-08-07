@@ -59,7 +59,8 @@ function newChain(cfg, chainReturnCB) {
         _modtaskModule.ldmod(featureModulesPath + 'chain/processors/basic'),
         _modtaskModule.ldmod(featureModulesPath + 'chain/processors/izynode').sp('__chainProcessorConfig', __chainProcessorConfig.izynode),
         _modtaskModule.ldmod(featureModulesPath + 'chain/processors/import').sp('__chainProcessorConfig', __chainProcessorConfig.import),
-        _modtaskModule.ldmod(featureModulesPath + 'chain/processors/runpkg').sp('__chainProcessorConfig', __chainProcessorConfig.runpkg)
+        _modtaskModule.ldmod(featureModulesPath + 'chain/processors/runpkg').sp('__chainProcessorConfig', __chainProcessorConfig.runpkg),
+        _modtaskModule.ldmod('rel:service').sp('__chainProcessorConfig', __chainProcessorConfig.service)
       ]
     }, chainReturnCB);
   } catch(e) {
