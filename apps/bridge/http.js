@@ -52,6 +52,16 @@ modtask.handle = (serverObjs, context) => {
         return;
     }    
     modtask.sessionConfig = outcome.data;
+
+    let datastreamMonitor = { log: x => {} };
+    const monitoringConfig = {}, fillinValues = {};
+    if (modtask.sessionConfig.verbose) {
+        datastreamMonitor = modtask.ldmod('lib/monitoring').createForMethodCallLogging(monitoringConfig, fillinValues);
+        datastreamMonitor.log({ level: 2, msg: {
+            action: 'handle'
+        }});
+    };
+
     if (modtask.preflightAdjustments(serverObjs)) return;
     const makeRequest = (a,b,c) => require('http-proxy').createProxyServer()
       .on('error', function(err) {
@@ -65,22 +75,28 @@ modtask.handle = (serverObjs, context) => {
     const { url, method, headers } = serverObjs.req;
     let requestBody = null;
     let chain = [];
-    if (method.toUpperCase() == 'POST' || method.toUpperCase() == 'PUT') {
-        chain.push(['nop']);
-        chain.push(_chain => {
-            requestBody = '';
-            serverObjs.req.on('data', data => requestBody += data);
-            serverObjs.req.on('end', () => _chain(['continue']));
-        });
-    }
     var prerequestmodules = modtask.sessionConfig.prerequestmodules;
-    if (modtask.sessionConfig.verbose.preLandingAdjustments) console.log('[preLandingAdjustments], modules: ' + prerequestmodules.length + ' ' + url);
+    datastreamMonitor.log({ msg: {
+        action: 'preLandingAdjustments',
+        modules: prerequestmodules.length,
+        url
+    }});
     prerequestmodules.forEach(item => {
         var callStr = `//inline/${item}`;
         chain.push(modtask.sessionConfig.verbose.prerequestmodules ? ['log', `prerequestmodule [${item}]: ${url}`] : ['nop']);
-        chain.push(chain => chain([callStr + '?should', { url, method, headers, body: requestBody }]));
+        chain.push(chain => chain([callStr + '?should', { url, method, headers }]));
         chain.push(chain => {
             if (chain.get('outcome').should) return chain([
+              ['nop'],
+              _chain => {
+                if (method.toUpperCase() == 'POST' || method.toUpperCase() == 'PUT') {
+                    requestBody = '';
+                    serverObjs.req.on('data', data => requestBody += data);
+                    serverObjs.req.on('end', () => _chain(['continue']));
+                } else {
+                    _chain(['continue']);
+                };
+              },
               [callStr + '?perform', { url, method, headers, body: requestBody }],
               chain => {
                 const outcome = chain.get('outcome');
@@ -90,7 +106,10 @@ modtask.handle = (serverObjs, context) => {
                         selfHandleResponse: true
                     };
                     if (outcome.transportAgent) {
-                        if (modtask.sessionConfig.verbose.transportAgent) console.log('[transportAgent] using ' + outcome.transportAgent);
+                        datastreamMonitor.log({ msg: {
+                            action: 'transportAgent',
+                            agent: outcome.transportAgent
+                        }});
                         handlerConfig.agent = new require('proxy-agent')(outcome.transportAgent);
                     };
                     makeRequest(serverObjs.req, serverObjs.res, handlerConfig);
@@ -129,12 +148,13 @@ modtask.handle = (serverObjs, context) => {
 
 function startResponseStream(httpResponseObject, req, res, serverObjs) {
     var body = new Buffer('');
+    if (modtask.sessionConfig.verbose.datastream) console.log('[startResponseStream] ' + req.url);
     httpResponseObject.on('data', function(data) {
-        if (modtask.sessionConfig.verbose.datastream) console.log('[datastream] length = ' + body.length + ', ' + req.url);
         body = Buffer.concat([body, data]);
+        if (modtask.sessionConfig.verbose.datastream) console.log('[startResponseStream?onData] length = ' + body.length + ', ' + req.url);
     });
     httpResponseObject.on('end', function() {
-        if (modtask.sessionConfig.verbose.datastream) console.log('[datastream] complete, ' + req.url);
+        if (modtask.sessionConfig.verbose.datastream) console.log('[startResponseStream?end], ' + req.url);
         postLandingAdjustments(serverObjs, req, res, {
             statusCode: httpResponseObject.statusCode,
             headers: httpResponseObject.headers,
