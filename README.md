@@ -671,6 +671,20 @@ this way, you can just call the action by doing:
 npm run theAction queryObject.param1 ...
 ```
 
+
+If you need to make these available from the terminal from anywhere, place the call clause inside a seperate js file and link it to the package.json bin property. You can use the link command (or install -g), which will symlink the scripts in under the bin section to the prefix directory
+
+    npm prefix -g
+    
+    chmod +x command.js
+    
+    #!/usr/bin/env node
+    require('izy-proxy/lib/cli').callpretty('module?action');
+    
+    npm link
+    
+See the samples folder for more information.
+
 ### Quick Object Loading
 
 Use the loadById for the source data schema:
@@ -943,6 +957,9 @@ for more details, visit [izyware]
     * turns out the failure is coming from modtask.ldmod('kernel\\selectors').objectExist line in runpkg
 
 # Changelog
+## V7.1
+* 7100001: cli - provide library for running JSONIO scripts globally 
+
 ## V7.0
 * 7000014: monitoring - extend to other nano services inside the module
 * 7000013: apps - portforwarding
