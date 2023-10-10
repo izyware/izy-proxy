@@ -903,7 +903,7 @@ for more details, visit [izyware]
         * Is this a valid point? may be not: this information will NOT be avilable in JSON/IO apis. The point of JSON/IO apis is transport independence and doing this will introduce the trainsport specific concept into it.
     
 ## Chains
-* single action chain items with top level module fail:
+* (bug) single action chain items with top level module fail:
 
         /* only happens when called from frameworks */
         req.path = '/path/to/mymodule';
@@ -922,10 +922,16 @@ for more details, visit [izyware]
         });
 
 
-* 80001331: raw APIs (non JSONIO) do not have the correct context for modtask.doChain module
+* (bug) raw APIs (non JSONIO) do not have the correct context for modtask.doChain module
     * ['//inline/rel:api'] resolves to kernel\extstores\api
     
-* support compact syntax in the framework. Currently `apps/accountmanager/5/sessionfeature:chainprocessor` implements locally
+* (feature) chainify socket and jsonio: its is essentially sending session (user) and what to call (action). this will be consistent with the service //service/mixeradminclient?getDeviceId
+        
+                'jsonio://izyware/rel:api?method', 
+                'socket://{connectionId}/rel:peer?handshake'
+                
+
+* (feature) support compact syntax in the framework. Currently `apps/accountmanager/5/sessionfeature:chainprocessor` implements locally
 
 
         ['chain.importProcessor', 'apps/accountmanager/5/sessionfeature:chainprocessor']
@@ -938,6 +944,9 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.0
+* 7000014: monitoring - extend to other nano services inside the module
+* 7000013: apps - portforwarding
+    * implementation of portforwarding app using nano services compose pattern
 * 7000012: add support for nano services inside application space 
     * support for service compose/call/notify pattern cycle
     * similar to OS level support for services changeServiceConfig(windows), reload (unix)
