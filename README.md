@@ -676,12 +676,26 @@ If you need to make these available from the terminal from anywhere, place the c
 
     npm prefix -g
     
-    chmod +x command.js
-    
+Create a file as the global entry point to your package: 
+
     #!/usr/bin/env node
-    require('izy-proxy/lib/cli').callpretty('module?action');
+    require('izy-proxy/lib/cli').pipe(['callpretty', ...]);
+    
+Make it executable 
+
+    chmod +x bin/izy.js
+    
+And finally reference it in the bin section of package.json. It can be used by npm install or by linking it:
     
     npm link
+    
+Afterwards, instead of 
+
+    cd myApp;npm run theAction ...
+    
+You could do this from anywere
+    
+    izy.myApp theAction ....
     
 See the samples folder for more information.
 
@@ -958,6 +972,7 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.1
+* 7100002: cli - implement generic piping for JSONIO scripts globally 
 * 7100001: cli - provide library for running JSONIO scripts globally 
 
 ## V7.0
