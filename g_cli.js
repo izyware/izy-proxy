@@ -97,6 +97,9 @@ modtask.runWithMethod = function(method, config) {
           currentdir + '/node_modules/izymodtask/'
         ]
       };
+      if (process.__izyProxyCliModuleSearchPaths) {
+        __chainProcessorConfig.__moduleSearchPaths = __chainProcessorConfig.__moduleSearchPaths.concat(process.__izyProxyCliModuleSearchPaths);
+      }
       if (!config.chain.relConfigFile) {
         if (!config.chain.dontUseDefaultRelConfigFile)
           config.chain.relConfigFile = '../configs/izy-proxy/taskrunner';

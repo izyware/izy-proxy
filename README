@@ -972,6 +972,7 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.1
+* 7100003: cli - allow customization of moduleSearchPaths
 * 7100002: cli - implement generic piping for JSONIO scripts globally 
 * 7100001: cli - provide library for running JSONIO scripts globally 
 
