@@ -45,6 +45,7 @@ function newChain(cfg, chainReturnCB) {
   try {
     var __moduleSearchPaths = __chainProcessorConfig.__moduleSearchPaths || [];
     var _modtaskModule = require('./izymodtask/index').getRootModule(__dirname, __moduleSearchPaths, cfg.forceRequireOnLoadFromFile);
+    _modtaskModule.__Kernel.monitoringConfig = __chainProcessorConfig.monitoringConfig;
     var chainAttachedModule = {
       __myname: callerContextModule.filename.replace(/\.js$/, '')
     };

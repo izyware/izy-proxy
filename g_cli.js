@@ -98,6 +98,9 @@ modtask.runWithMethod = function(method, config) {
         ]
       };
       if (process.__izyProxyCliModuleSearchPaths) {
+        __chainProcessorConfig.monitoringConfig = {
+          warnAsyncDoChainUsage: true
+        };
         __chainProcessorConfig.__moduleSearchPaths = __chainProcessorConfig.__moduleSearchPaths.concat(process.__izyProxyCliModuleSearchPaths);
       }
       if (!config.chain.relConfigFile) {
@@ -127,6 +130,7 @@ modtask.runWithMethod = function(method, config) {
           console.log(outcome.reason);
           if (!config.chain.pretty)
             console.log(outcome.__callstackStr);
+          process.exit(1);
         }
       });
       break;

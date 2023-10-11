@@ -491,7 +491,7 @@ CAs are implemented via a chain handler module (CHM) while JSONIO end-point are 
         ]);
         
 To run chain actions, several options are available:
-* By default, `modtask.doChain` is enabled inside the current context module: this is the most common usecase for UI components. The advantage of using this option is that any non-success outcome will be captured by the modtask which can be routed to the UI error div. This will allow implementation of error handling at component level (not application level) without writing extra code.
+* By default, `modtask.doChain` is enabled inside the current context module: this is the most common usecase for UI components. The advantage of using this option is that any non-success outcome will be captured by the modtask which can be routed to the UI error div. This will allow implementation of error handling at component level (not application level) without writing extra code. It is available inside async functions as well, but its usage is discouraged. If your service monitoring config has warnAsyncDoChainUsage enabled you will recieve a warning for using it.
 * If non-success outcome needs to be captured, the `['newChain', ...` CA can be used with `modtask.doChain`.
 * For new environments (i.e. nodeJS > 7.6) with async capabilities, you can try the following options:
     * `const run = require('izy-proxy/asyncio')(modtask|module).run`: This option will only run a single CA (no chain arrays). The non-success outcome will be thrown (not captured by modtask). when using module, the relative paths for CA references will not work.
@@ -972,6 +972,7 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.1
+* 7100004: add warnAsyncDoChainUsage feature 
 * 7100003: cli - allow customization of moduleSearchPaths
 * 7100002: cli - implement generic piping for JSONIO scripts globally 
 * 7100001: cli - provide library for running JSONIO scripts globally 

@@ -99,6 +99,13 @@ module.exports = (function() {
       myMod.sp('doChain', doChain);
       if (theMethod) {
         if (theMethod.constructor.name === 'AsyncFunction') {
+          if (modtask.__Kernel.monitoringConfig && modtask.__Kernel.monitoringConfig.warnAsyncDoChainUsage) {
+            myMod.sp('doChain', x => {
+              console.log(`[warnAsyncDoChainUsage]: you are using doChain inside the async function: \r\n${theMethod.toString()}.`);
+              console.log(`[warnAsyncDoChainUsage]: consider using "await newChainAsync" instead`);
+              return doChain(x);
+            });
+          }
           myMod.sp('newChainAsync', async function(chainItems) {
             return new Promise((resolve, reject) => {
               doChain([
