@@ -7,7 +7,8 @@ var defaultConfig = {
         postrequestmodules: false,
         preLandingAdjustments: false,
         postLandingAdjustments: false,
-        datastream: false
+        datastream: false,
+        changeList: false
     },
     transportAgent: null,
     tldBack: '0000-0000-0000-0000-1111-1111-1111-1111',
@@ -43,6 +44,8 @@ var defaultConfig = {
 };
 
 modtask.handle = (serverObjs, context) => {
+    const changeList = [];
+
     var outcome = modtask.processConfig(context);
     if (!outcome.success) {
         serverObjs.sendStatus({
@@ -52,7 +55,6 @@ modtask.handle = (serverObjs, context) => {
         return;
     }    
     modtask.sessionConfig = outcome.data;
-
     let datastreamMonitor = { log: x => {} };
     const monitoringConfig = {}, fillinValues = {};
     if (modtask.sessionConfig.verbose) {
@@ -62,7 +64,7 @@ modtask.handle = (serverObjs, context) => {
         }});
     };
 
-    if (modtask.preflightAdjustments(serverObjs)) return;
+    if (modtask.preflightAdjustments(serverObjs, changeList)) return;
     const makeRequest = (a,b,c) => require('http-proxy').createProxyServer()
       .on('error', function(err) {
         serverObjs.sendStatus({
@@ -70,7 +72,7 @@ modtask.handle = (serverObjs, context) => {
             subsystem: modtask.__myname
         }, err.toString());          
       })
-      .on('proxyRes', (d, q, s) => startResponseStream(d, q, s, serverObjs)).web(a,b,c);
+      .on('proxyRes', (d, q, s) => startResponseStream(d, q, s, serverObjs, changeList)).web(a,b,c);
 
     const { url, method, headers } = serverObjs.req;
     let requestBody = null;
@@ -146,7 +148,7 @@ modtask.handle = (serverObjs, context) => {
     });
 }
 
-function startResponseStream(httpResponseObject, req, res, serverObjs) {
+function startResponseStream(httpResponseObject, req, res, serverObjs, changeList) {
     var body = new Buffer('');
     if (modtask.sessionConfig.verbose.datastream) console.log('[startResponseStream] ' + req.url);
     httpResponseObject.on('data', function(data) {
@@ -159,7 +161,7 @@ function startResponseStream(httpResponseObject, req, res, serverObjs) {
             statusCode: httpResponseObject.statusCode,
             headers: httpResponseObject.headers,
             body
-        })
+        }, changeList)
     });
 };
 
@@ -172,7 +174,7 @@ modtask.guessCharacterSet = response => {
     return charset;
 }
 
-const postLandingAdjustments = (serverObjs, req, res, response) => {
+const postLandingAdjustments = (serverObjs, req, res, response, changeList) => {
     var charset = modtask.guessCharacterSet(response); 
     var postrequestmodules = modtask.sessionConfig.postrequestmodules;
     if (modtask.sessionConfig.verbose.postLandingAdjustments) console.log('[postLandingAdjustments] (' + charset + '), modules: ' + postrequestmodules.length + ' ' + req.url);
@@ -205,6 +207,10 @@ const postLandingAdjustments = (serverObjs, req, res, response) => {
         });
     });
     chain.push(function() {
+        if (modtask.sessionConfig.verbose.changeList) {
+            console.log('[changeList] ' + req.url);
+            console.log(changeList);
+        }
         res.writeHead(response.statusCode, response.headers);
         return res.end(body);
     });
@@ -219,19 +225,22 @@ const postLandingAdjustments = (serverObjs, req, res, response) => {
     });
 }
 
-modtask.preflightAdjustments = function(serverObjs) {
+modtask.preflightAdjustments = function(serverObjs, changeList) {
     serverObjs.req.headers.connection = 'close';
     delete serverObjs.req.headers['accept-encoding'];
     var clientReqHeaders = ['host', 'referer'];
     for(var i = 0; i < clientReqHeaders.length; ++i) {
         var prop = clientReqHeaders[i];
         if (serverObjs.req.headers[prop]) {
+            changeList.push('req.headers.' + prop);
+            changeList.push(serverObjs.req.headers[prop]);
             serverObjs.req.headers[prop] = serverObjs.req.headers[prop].replace(
               modtask.sessionConfig.tldFront,
               modtask.sessionConfig.tldBack
             );
+            changeList.push(serverObjs.req.headers[prop]);
         }
-    }
+    };
     return false;
 }
 

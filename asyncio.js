@@ -1,13 +1,6 @@
 module.exports = function(moduleToAttach) {
-  const series = require('./index')(moduleToAttach).series;
+  const seriesAsync = require('./index')(moduleToAttach).seriesAsync;
   return {
-    run: async function(action, queryObject) {
-      return new Promise((resolve, reject) => {
-        series([
-          [action, queryObject],
-          chain => resolve(chain.get('outcome'))
-        ], outcomeFail => reject({ reason: outcomeFail.reason }));
-      });
-    }
+    run: async (action, queryObject) => seriesAsync([action, queryObject])
   };
 };

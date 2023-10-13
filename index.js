@@ -78,6 +78,22 @@ module.exports = function(moduleToAttach) {
   return {
     basePath: __dirname,
     newChain: newChain,
+    seriesAsync: async chainItems => {
+      if (moduleToAttach.newChainAsync) {
+        return moduleToAttach.newChainAsync(chainItems);
+      };
+      return new Promise((resolve, reject) => {
+        newChain({
+          chainItems: chainItems,
+          forceRequireOnLoadFromFile: true,
+          __chainProcessorConfig: {},
+          callerContextModule: moduleToAttach
+        }, outcome => {
+          if (outcome.success) return resolve(outcome);
+          return reject({ reason: outcome.reason });
+        });
+      });
+    },
     series: function(chainItems, cb) {
       if (moduleToAttach.doChain) {
         return moduleToAttach.doChain([

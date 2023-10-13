@@ -689,6 +689,11 @@ And finally reference it in the bin section of package.json. It can be used by n
     
     npm link
     
+If npm link does not work, you can manually link
+
+    ln -s `npm prefix -g`/bin/izy.xxx` `pwd`/bin/izy.js
+    
+    
 Afterwards, instead of 
 
     cd myApp;npm run theAction ...
@@ -972,6 +977,7 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.1
+* 7100005: monitoring - improve async code to suppress warnAsyncDoChainUsage feature and add more logging
 * 7100004: add warnAsyncDoChainUsage feature 
 * 7100003: cli - allow customization of moduleSearchPaths
 * 7100002: cli - implement generic piping for JSONIO scripts globally 
