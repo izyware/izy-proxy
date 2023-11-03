@@ -41,7 +41,58 @@ pm2 start 2
 Notice that you should put your containers behind a load balancer (i.e. AWS elb) to avoid ending up with broken connections.
 
 
-# Service Modes
+# Nano services 
+The framework supports implementation of nano services that can be hosted inside cloud containers, browser pages, mobile apps etc. 
+
+The compose tool allows defining and managing multi-service applications. You use a compose JSON file to configure all the nano services and then you can create, configure, start and stop the nano services from your application.
+
+The service lifecycle can be managed by
+
+    service?start
+    
+For better control, a typical component will use the following:
+
+    ['//inline/service?compose', serviceCompose],
+    ['service.subscribeTo', 'shell'],
+    [`//service/shell?exec`, { cmd, verbose: true }]
+    ...
+    modtask.onservice = function(queryObject) {
+        const { serviceName, notification } = queryObject;
+        // ....
+    }
+
+The framework will inject datastreamMonitor and the service instance singleton available to the service implementation:
+
+    modtask.exec = function(queryObject, cb, context) {
+        const {
+            datastreamMonitor
+        } = modtask;
+        const {
+            service,
+            monitoringConfig
+        } = context;
+        
+        ...
+        
+        datastreamMonitor.log({ msg: {
+            action: 'updateConfig',
+            updates
+        }});
+        
+        chain(['//inline/service?notifySubscribers', {
+            source: modtask.__myname,
+            notification: {
+                id: 'speakerAudioContextIsReadyNotification'
+            }
+        }]);
+        
+
+The event management layer allows communication across nano services using a publish subscribe pattern which leads to great flexibility and scalability. 
+
+The monitoring layer allows monitoring and logging activity for the services. It provides useful features for streaming services that can measure streaming parameters (flow through, frequency, etc.). datastreamMonitor.log will be the primary interface.
+
+For a referece implementation refer to the portforwarding sample in the apps directory and the white paper avilable in your enterprise dashboard. You may also refer to the open source tools available in [automation-desktop].
+
 
 ## Picking the correct configuration
 The samples directory contains sample configuration files that you can use for tcpserver, taskrunner, ... modes:
@@ -1359,6 +1410,7 @@ for more details, visit [izyware]
 * [git]
 * [npmjs]
 
+[automation-desktop]: https://github.com/izyware/automation-desktop
 [python-asyncio]: https://docs.python.org/3/library/asyncio.html
 [npmjs]: https://www.npmjs.com/package/izy-proxy
 [git]: https://github.com/izyware/izy-proxy
