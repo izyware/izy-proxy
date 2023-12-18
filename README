@@ -1027,6 +1027,9 @@ for more details, visit [izyware]
     * turns out the failure is coming from modtask.ldmod('kernel\\selectors').objectExist line in runpkg
 
 # Changelog
+## V7.2
+* 7200001: implement support for custom module systems via jsModuleSystem for chains
+    * this will allow integration with CommonJS, AM, RequireJS, etc.
 ## V7.1
 * 7100005: monitoring - improve async code to suppress warnAsyncDoChainUsage feature and add more logging
 * 7100004: add warnAsyncDoChainUsage feature 

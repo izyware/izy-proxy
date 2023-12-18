@@ -45,12 +45,13 @@ module.exports = function() {
   }
 
   modtask.compose = queryObject => {
+    let composeConfig = typeof(queryObject) == 'object' ? queryObject : null;
     modtask.doChain([
-      ['//inline/json?loadById', { id: queryObject }],
+      composeConfig ? ['nop'] : ['//inline/json?loadById', { id: queryObject }],
       chain => {
         const storeLib = modtask.ldmod('lib/globals');
         storeLib.setupGlobals();
-        storeLib.set('serviceCompose', chain.get('outcome').data);
+        storeLib.set('serviceCompose', composeConfig || chain.get('outcome').data);
         chain(['outcome', { success: true }]);
       }
     ]);
@@ -129,7 +130,6 @@ module.exports = function() {
     if (!serviceCompose.__subscriptions) serviceCompose.__subscriptions = {};
     if (!serviceCompose.__subscriptions[serviceName]) serviceCompose.__subscriptions[serviceName] = {};
     return { success: true, data: serviceCompose.__subscriptions[serviceName] };
-
   }
 
   modtask.subscribeTo = function(queryObject) {

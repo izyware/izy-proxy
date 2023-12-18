@@ -68,9 +68,6 @@ module.exports = (function() {
           cb();
         }, $chain.generateChainContextWhenNewChainForModule(cfg.context), cfg.chainItems);
         return true;
-      case 'sysview':
-        require('izymodtask').getRootModule().ldmod('s_root').cmdlineverbs.sysview();
-        cb();
         return true;
     }
     return false;
