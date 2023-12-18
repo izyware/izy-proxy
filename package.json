@@ -20,6 +20,7 @@
     "server.js",
     "service.js",
     "modtask",
+    "newChain.js",
     "plugin",
     "g_cli.js",
     "json.js",
