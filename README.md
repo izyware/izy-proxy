@@ -553,7 +553,8 @@ To run chain actions, several options are available:
     ['net.httprequest', {
         verbose: {
             logRequest: true,
-            logResponse: true
+            logResponse: true,
+            logEvents: true
         },
         url: '',
         method: 'POST',
@@ -1028,6 +1029,7 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.2
+* 7200002: implement logEvents for http request
 * 7200001: implement support for custom module systems via jsModuleSystem for chains
     * this will allow integration with CommonJS, AM, RequireJS, etc.
 ## V7.1

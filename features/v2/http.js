@@ -32,7 +32,8 @@ module.exports = (function() {
       var metaOptions = {
         resolveErrorAsStatusCode: _options.resolveErrorAsStatusCode,
         rejectUnauthorized: true,
-        responseType: _options.responseType || 'text'
+        responseType: _options.responseType || 'text',
+        verbose: _options.verbose || {}
       };
 
       if (typeof(_options.rejectUnauthorized) == 'boolean' && !_options.rejectUnauthorized) {
@@ -89,6 +90,7 @@ module.exports = (function() {
 
     function requestByNode(cb, url, method, headers, body, metaOptions) {
       try {
+        var verbose = metaOptions.verbose || {};
         method = method.toUpperCase();
         var modurl = require('url');
         parts = modurl.parse(url, true);
@@ -107,6 +109,7 @@ module.exports = (function() {
           options.headers['Content-length'] = body.length;
         };
 
+        if (verbose.logEvents) console.log('[req] ', url);
         var nodeHttp = require((parts.protocol == 'https:' ? 'https' : 'http'));
         if (!metaOptions.rejectUnauthorized) {
           options.agent = new nodeHttp.Agent({
@@ -114,7 +117,7 @@ module.exports = (function() {
           });
         }
 
-        var ret = '';
+        var endCalled = false;
         var req = nodeHttp.request(options,
           function(response) {
             const finalResponse = {
@@ -123,6 +126,7 @@ module.exports = (function() {
               response: Buffer.from([])
             };
             response.on('data', function (chunk) {
+              if (verbose.logEvents) console.log('[data] ', url);
               switch(metaOptions.responseType) {
                 case 'arraybuffer':
                   finalResponse.response = Buffer.concat([finalResponse.response, chunk]);
@@ -132,15 +136,30 @@ module.exports = (function() {
                   break;
               };
             });
+            response.on('close', function() {
+              if (verbose.logEvents) console.log('[close] ', url);
+              if (!endCalled && metaOptions.resolveErrorAsStatusCode) {
+                console.log('Warning, experimental feature');
+                cb({
+                  success: true,
+                  responseText: 'The server closed the connection before sending data.',
+                  status: metaOptions.resolveErrorAsStatusCode,
+                  headers: {}
+                });
+              }
+            });
+
             response.on('end', function () {
+              if (verbose.logEvents) console.log('[end] ', url);
+              endCalled = true;
               finalResponse.status = response.statusCode;
               finalResponse.headers = response.headers;
               finalResponseResolve(cb, finalResponse);
             });
           }
         );
-
         req.on('error', function(err) {
+          if (verbose.logEvents) console.log('[error] ', url);
           var str = 'http request error: ' + err + ', host: ' + parts.host;
           if (metaOptions.resolveErrorAsStatusCode) {
             cb({
@@ -161,6 +180,7 @@ module.exports = (function() {
         }
         req.end();
       } catch(e) {
+        if (verbose.logEvents) console.log('[exception] ', url);
         return cb({ reason: 'Error: ' + e.message + ', host: ' + parts.host });
       }
     }
@@ -222,4 +242,3 @@ module.exports = (function() {
   }
   return modtask;
 })();
-

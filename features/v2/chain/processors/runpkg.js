@@ -84,7 +84,7 @@ module.exports = (function() {
                 if (verbose.logRequest || (httpProxy && httpProxy.logRequest)) console.log('request(proxy=' + useProxy + ')', request);
                 if (useProxy) {
                     $chain.newChainForProcessor(modtask, cb, {}, [
-                        [httpProxy.service + '?httprequest', { httparams: request, config: httpProxy.config }],
+                        [httpProxy.service + '?httprequest', { httparams: request, config: httpProxy.config, verbose: verbose }],
                         function(chain) {
                             var outcome = chain.get('outcome').data;
                             if (verbose.logResponse) console.log('response', outcome);
