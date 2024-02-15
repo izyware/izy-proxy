@@ -91,7 +91,7 @@ The event management layer allows communication across nano services using a pub
 
 The monitoring layer allows monitoring and logging activity for the services. It provides useful features for streaming services that can measure streaming parameters (flow through, frequency, etc.). datastreamMonitor.log will be the primary interface.
 
-For a referece implementation refer to the portforwarding sample in the apps directory and the white paper avilable in your enterprise dashboard. You may also refer to the open source tools available in [automation-desktop].
+For a referece implementation refer to the portforwarding sample in the apps directory and the white paper avilable in your enterprise dashboard. You may also refer to the open source tools available in [automation-desktop]. For detailed architectural considerations and metrics schema definition and customization refer to Unified Metrics Stream Pipeline in the help docs.
 
 
 ## Picking the correct configuration
@@ -115,6 +115,19 @@ node cli.js method chain chain.action "//inline/myservice:handler" chain.queryOb
 node cli.js method chain chain.action "//inline/myservice:handler" chain.queryObject.success true chain.relConfigFile ../configs/izy-proxy/tcpserver
 ```
 
+## Manipulating __moduleSearchPaths
+You should not reference modules by the full module (refer to the knowledge center for detailed case studies) path. This will cause the following issues:
+* It will break the platform neurality and portability nano services since non desktop (i.e. browser) environments do not use full file paths.
+* It will limit your ability to call package functionality directly in chain actions because packages are located using relates paths.
+
+To workaround this problem, consider manipulating __moduleSearchPaths:
+* If your code is raw and outside a JSON/IO service handler context (i.e. app.js, bootstrap), use `process.__izyProxyCliModuleSearchPaths`.
+* If your code is inside a JSON/IO service handler, you can use:
+
+        modtask.__Kernel.rootModule.usermodule.__moduleSearchPaths = [
+          'Path1',
+          'Path2'
+        ].concat(modtask.__Kernel.rootModule.usermodule.__moduleSearchPaths);
 
 ## TCP Server Mode
 ```
@@ -1029,6 +1042,7 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.2
+* 7200003: update README. fix typos
 * 7200002: implement logEvents for http request
 * 7200001: implement support for custom module systems via jsModuleSystem for chains
     * this will allow integration with CommonJS, AM, RequireJS, etc.

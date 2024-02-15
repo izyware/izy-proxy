@@ -3,18 +3,18 @@
 		"forceUpToLevel": 2,
 		"extraInfoInLogs": true,
 		"useANSIColors": true,
-		"_filter": {
+		"filter": {
 			"services": ["portforwarding"],
-			"invokeStrings": ["socket"],
-			"devices": ["ethernet1"],
-			"actions": ["setup"]
+			"_invokeStrings": ["socket"],
+			"_devices": ["ethernet1"],
+			"_actions": ["setup"]
 		},
 		"fieldsSchema": {
 			"timestamp_": true,
 			"service": { "len": 20, "prefix": "[", "postfix": "]" }, 
 			"context": { "len": 3, "prefix": "{", "postfix": "}" }, 
 			"invokeString": { "len": -40, "prefix": "(", "postfix": ")" }, 
-			"action": { "len": 5 }, 
+			"action": { "len": 20 }, 
 			"device": { "len": 5 }, 
 			"outcome": true,
 			"misc": true

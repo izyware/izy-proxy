@@ -8,9 +8,15 @@ module.exports = function() {
     const { service, monitoringConfig } = context;
 
     const serviceConfig = service.composeConfig;
-    datastreamMonitor.log({ level: 2, msg: {
-      data: 'starting service',
+
+    datastreamMonitor.log({ msg: {
+      event: 'onConfig',
       serviceConfig
+    }});
+
+
+    datastreamMonitor.log({ msg: {
+      action: 'start'
     }});
 
     // Obsolete variables. Need to stop passing these, since they are available in context
@@ -26,7 +32,12 @@ module.exports = function() {
     var serviceInstance = {
       forwardingAddress: serviceConfig.forwardingAddress
     };
-    
+
+    datastreamMonitor.log({ msg: {
+      event: 'onConfig',
+      action: 'chain'
+    }});
+
     modtask.doChain([
       ['//inline/net/socket?setupServer', { address: serviceConfig.address, handshakeProtocol: 'manual' }],
       ['outcome', { success: true }]
