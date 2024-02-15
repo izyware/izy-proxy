@@ -41,6 +41,9 @@ function newChain(cfg, chainReturnCB) {
   }
 
   var callerContextModule = cfg.callerContextModule || module.parent;
+  if (!callerContextModule) return chainReturnCB({
+    reason: 'You must specify a callerContextModule with a filename property.'
+  });
   var __chainProcessorConfig = cfg.__chainProcessorConfig || {};
   try {
     var __moduleSearchPaths = __chainProcessorConfig.__moduleSearchPaths || [];
@@ -65,7 +68,7 @@ function newChain(cfg, chainReturnCB) {
       ]
     }, chainReturnCB);
   } catch(e) {
-    var outcome = { reason: e.message };
+        var outcome = { reason: e.message };
     if (e.stack) {
       outcome.__callstackStr = String(e.stack);
     }
