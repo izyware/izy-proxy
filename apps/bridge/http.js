@@ -258,7 +258,6 @@ modtask.performReplace = function(obj, pattern, replacement) {
         case 'string':
             return obj.replace(pattern, replacement);
         case 'object':
-            console.log('replace', obj, pattern, replacement);
             if (obj.length) {
                 for(var i=0; i < obj.length; ++i) {
                     obj[i] = modtask.performReplace(obj[i], pattern, replacement);
