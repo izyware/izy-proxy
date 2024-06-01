@@ -30,6 +30,9 @@ var defaultConfig = {
             host: {
                 action: 'F2B'
             },
+            origin: {
+                action: 'F2B'
+            },
             referer: {
                 action: 'F2B' /* | remove */
             },
