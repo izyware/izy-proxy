@@ -1,0 +1,32 @@
+{
+	"verbose" : {
+		"forceUpToLevel": 2,
+		"extraInfoInLogs": true,
+		"useANSIColors": true,
+		"filter": {
+			"services": ["httpproxy"],
+			"_invokeStrings": ["socket"],
+			"_devices": ["ethernet1"],
+			"_actions": ["setup"]
+		},
+		"fieldsSchema": {
+			"timestamp_": true,
+			"service": { "len": 20, "prefix": "[", "postfix": "]" }, 
+			"context": { "len": 3, "prefix": "{", "postfix": "}" }, 
+			"invokeString": { "len": -40, "prefix": "(", "postfix": ")" }, 
+			"action": { "len": 20 }, 
+			"device": { "len": 5 }, 
+			"outcome": true,
+			"misc": true
+		}
+	},
+	"user": {
+		"id": "1"
+	},
+	"httpproxy": {
+		"pkgModuleString": "apps/bridge/http",
+		"protocol": "http|https",
+		"address": "localhost:80|443"
+	}
+}
+

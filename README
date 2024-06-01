@@ -50,20 +50,35 @@ The service lifecycle can be managed by
 
     service?start
     
-For better control, a typical component will use the following:
+This is the equivalent of 
 
+     ['//inline/service?compose', queryObject.serviceComposeId],
+     [`//service/${queryObject.service}?onConfig`]
+    
+For better control, a mini services architecture will use the following:
+
+User interface component will setup the service compose and subscribe to the services it is interested in:
+    
     ['//inline/service?compose', serviceCompose],
     ['service.subscribeTo', 'shell'],
-    [`//service/shell?exec`, { cmd, verbose: true }]
     ...
     modtask.onservice = function(queryObject) {
         const { serviceName, notification } = queryObject;
         // ....
     }
+    
+After the user enters the values and picks config the user interface component will call the service:
 
-The framework will inject datastreamMonitor and the service instance singleton available to the service implementation:
+    [`//service/shell?onConfig`, { cmd, verbose: true }]
+    
+    
+Note that 
+* the framework is interface agnostic and does not need to use onConfig. 
+* services are lazy initiazed and wont be activated until a service interface (e.g. onConfig) is called.
 
-    modtask.exec = function(queryObject, cb, context) {
+On the service side, when the interface is called, the framework will inject datastreamMonitor and the service instance singleton available to the service implementation:
+
+    modtask.onConfig = function(queryObject, cb, context) {
         const {
             datastreamMonitor
         } = modtask;
@@ -79,6 +94,9 @@ The framework will inject datastreamMonitor and the service instance singleton a
             updates
         }});
         
+And service can then notifiy the subscribers by:
+
+
         chain(['//inline/service?notifySubscribers', {
             source: modtask.__myname,
             notification: {
@@ -128,6 +146,8 @@ To workaround this problem, consider manipulating __moduleSearchPaths:
           'Path1',
           'Path2'
         ].concat(modtask.__Kernel.rootModule.usermodule.__moduleSearchPaths);
+        
+Notice that for legacy build system using `./ldo.sh` command syntax, the search paths may be customized inside `thirdparty/config/kernel/extstores/file.js`.
 
 ## TCP Server Mode
 ```
@@ -1041,7 +1061,14 @@ for more details, visit [izyware]
     * turns out the failure is coming from modtask.ldmod('kernel\\selectors').objectExist line in runpkg
 
 # Changelog
+## V7.3
+* 73000010: use nano-service framework for monitoring http proxy
+    * utilize service-compose.json for configuration options
+    * use datastreamMonitor for monitoring
+* 73000009: reset samplerate monitoring window every 10seconds
+
 ## V7.2
+* 7200004: catch error when callerContextModule is not specified
 * 7200003: update README. fix typos
 * 7200002: implement logEvents for http request
 * 7200001: implement support for custom module systems via jsModuleSystem for chains

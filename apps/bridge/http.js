@@ -64,6 +64,8 @@ modtask.handle = (serverObjs, context) => {
         }});
     };
 
+    modtask.datastreamMonitor = datastreamMonitor;
+
     if (modtask.preflightAdjustments(serverObjs, changeList)) return;
     const makeRequest = (a,b,c) => require('http-proxy').createProxyServer()
       .on('error', function(err) {
@@ -99,7 +101,16 @@ modtask.handle = (serverObjs, context) => {
                     _chain(['continue']);
                 };
               },
-              [callStr + '?perform', { url, method, headers, body: requestBody }],
+              _chain => _chain([callStr + '?perform', {
+                url,
+                charset: modtask.guessCharacterSet({ headers }),
+                method,
+                headers,
+                body: requestBody,
+                bodyBase64: requestBody ? requestBody.toString('base64') : null,
+                tldBack: `${modtask.sessionConfig.tldBack}.com`,
+                tldFront: `${modtask.sessionConfig.tldFront}.com`
+              }]),
               chain => {
                 const outcome = chain.get('outcome');
                 if (outcome.proxyTarget) {
@@ -114,6 +125,11 @@ modtask.handle = (serverObjs, context) => {
                         }});
                         handlerConfig.agent = new require('proxy-agent')(outcome.transportAgent);
                     };
+                    processActions({
+                        rules: modtask.sessionConfig.request,
+                        data: outcome.proxyTarget,
+                        propertyTransfer: handlerConfig
+                    });
                     makeRequest(serverObjs.req, serverObjs.res, handlerConfig);
                 } else {
                     const { response } = chain.get('outcome');
@@ -225,22 +241,65 @@ const postLandingAdjustments = (serverObjs, req, res, response, changeList) => {
     });
 }
 
-modtask.preflightAdjustments = function(serverObjs, changeList) {
-    serverObjs.req.headers.connection = 'close';
-    delete serverObjs.req.headers['accept-encoding'];
-    var clientReqHeaders = ['host', 'referer'];
-    for(var i = 0; i < clientReqHeaders.length; ++i) {
-        var prop = clientReqHeaders[i];
-        if (serverObjs.req.headers[prop]) {
-            changeList.push('req.headers.' + prop);
-            changeList.push(serverObjs.req.headers[prop]);
-            serverObjs.req.headers[prop] = serverObjs.req.headers[prop].replace(
-              modtask.sessionConfig.tldFront,
-              modtask.sessionConfig.tldBack
-            );
-            changeList.push(serverObjs.req.headers[prop]);
+modtask.performActionWithLogging = function(rule, obj, prop, changeList, prefix) {
+    const { datastreamMonitor } = modtask;
+    changeList = [];
+    changeList.push(prefix + '.' + prop);
+    changeList.push(obj[prop]);
+    switch(rule.action) {
+        case 'F2B':
+            if (obj[prop]) {
+                obj[prop] = obj[prop].replace(modtask.sessionConfig.tldFront, modtask.sessionConfig.tldBack);
+            }
+            break;
+        case 'B2F':
+            if (obj[prop]) {
+                obj[prop] = obj[prop].replace(modtask.sessionConfig.tldBack, modtask.sessionConfig.tldFront);
+            }
+            break;
+        case 'delete':
+            delete obj[prop];
+            break;
+        case 'overwrite':
+            obj[prop] = rule.value;
+            break;
+    }
+    changeList.push(obj[prop]);
+    datastreamMonitor.log({ msg: {
+        rule,
+        changeList
+    }});
+    return obj[prop];
+}
+
+function processActions({ rules, data, key, changeList, prefix, propertyTransfer }) {
+    let propertyDiff = {};
+    try {
+        if (!changeList) changeList = [];
+        if (!key) key = 'headers';
+        if (!prefix) prefix = 'request';
+        propertyDiff = data[key] || {};
+        for(let p in rules[key]) {
+            propertyDiff[p] = modtask.performActionWithLogging(rules[key][p], data[key], p, changeList, prefix + '.' + key);
+            if (!propertyDiff[p]) delete propertyDiff[p];
         }
-    };
+        if (propertyTransfer) {
+            propertyTransfer[key] = propertyDiff;
+            delete data[key];
+        }
+        return propertyDiff;
+    } catch(e) {}
+    return propertyDiff;
+}
+
+modtask.preflightAdjustments = function(serverObjs, changeList) {
+    processActions({
+        rules: modtask.sessionConfig.request,
+        data: serverObjs.req,
+        key: 'headers',
+        prefix: 'request',
+        changeList
+    });
     return false;
 }
 
@@ -294,7 +353,7 @@ modtask.processConfig = function(context) {
         if (finalConfig.defaultProxyTarget) {
             finalConfig.proxyTargetStr = 'http://' + finalConfig.defaultProxyTarget.host + ':' + finalConfig.defaultProxyTarget.port;
         }
-        applyConfig(['verbose', 'transportAgent', 'proxyTargetStr']);
+        applyConfig(['verbose', 'transportAgent', 'proxyTargetStr', 'response', 'request']);
         modtask.postProcessConfig(finalConfig);
         finalConfig.processed = true;
     }
