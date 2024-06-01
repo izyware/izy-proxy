@@ -1062,6 +1062,7 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.3
+* 73000011: implement response location B2F rule as the default behavior
 * 73000010: use nano-service framework for monitoring http proxy
     * utilize service-compose.json for configuration options
     * use datastreamMonitor for monitoring

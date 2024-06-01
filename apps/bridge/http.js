@@ -19,6 +19,9 @@ var defaultConfig = {
             // if the server is trying to set a cookie domain to to tldBack, either convert B2F or remove
             'set-cookie': {
                 action: 'B2F' /* |remove */
+            },
+            location: {
+                action: 'B2F'
             }
         }
     },
@@ -195,6 +198,15 @@ const postLandingAdjustments = (serverObjs, req, res, response, changeList) => {
     var postrequestmodules = modtask.sessionConfig.postrequestmodules;
     if (modtask.sessionConfig.verbose.postLandingAdjustments) console.log('[postLandingAdjustments] (' + charset + '), modules: ' + postrequestmodules.length + ' ' + req.url);
     const { body } = response;
+
+    processActions({
+        rules: modtask.sessionConfig.response,
+        data: response,
+        key: 'headers',
+        prefix: 'response',
+        changeList
+    });
+    
     var inputPayload = {
         url: req.url,
         charset,
@@ -241,6 +253,22 @@ const postLandingAdjustments = (serverObjs, req, res, response, changeList) => {
     });
 }
 
+modtask.performReplace = function(obj, pattern, replacement) {
+    switch(typeof(obj)) {
+        case 'string':
+            return obj.replace(pattern, replacement);
+        case 'object':
+            console.log('replace', obj, pattern, replacement);
+            if (obj.length) {
+                for(var i=0; i < obj.length; ++i) {
+                    obj[i] = modtask.performReplace(obj[i], pattern, replacement);
+                }
+                return obj;
+            }
+    }
+    return obj;
+}
+
 modtask.performActionWithLogging = function(rule, obj, prop, changeList, prefix) {
     const { datastreamMonitor } = modtask;
     changeList = [];
@@ -249,12 +277,12 @@ modtask.performActionWithLogging = function(rule, obj, prop, changeList, prefix)
     switch(rule.action) {
         case 'F2B':
             if (obj[prop]) {
-                obj[prop] = obj[prop].replace(modtask.sessionConfig.tldFront, modtask.sessionConfig.tldBack);
+                obj[prop] = modtask.performReplace(obj[prop], modtask.sessionConfig.tldFront, modtask.sessionConfig.tldBack);
             }
             break;
         case 'B2F':
             if (obj[prop]) {
-                obj[prop] = obj[prop].replace(modtask.sessionConfig.tldBack, modtask.sessionConfig.tldFront);
+                obj[prop] = modtask.performReplace(obj[prop], modtask.sessionConfig.tldBack, modtask.sessionConfig.tldFront);
             }
             break;
         case 'delete':
