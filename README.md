@@ -1062,6 +1062,7 @@ for more details, visit [izyware]
 
 # Changelog
 ## V7.3
+* 73000013: use streaming for transfering body payload for better performance
 * 73000012: implement request origin F2B rule as the default behavior
 * 73000011: implement response location B2F rule as the default behavior
 * 73000010: use nano-service framework for monitoring http proxy

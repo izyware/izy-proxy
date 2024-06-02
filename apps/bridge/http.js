@@ -49,6 +49,22 @@ var defaultConfig = {
     }
 };
 
+function streamBodyPayload(requestBody, handlerConfig) {
+    if (!(requestBody && requestBody.length)) return;
+    const { Readable } = require('readable-stream');
+    function streamIterator(list) {
+        Readable.call(this, { objectMode: true });
+        this._i = 0;
+        this._l = list.length;
+        this._list = list;
+    };
+    streamIterator.prototype = Object.create(Readable.prototype, { constructor: { value: streamIterator }});
+    streamIterator.prototype._read = function() {
+        this.push(this._i < this._l ? this._list[this._i++] : null);
+    };
+    handlerConfig.buffer = new streamIterator(requestBody.split(''));
+};
+
 modtask.handle = (serverObjs, context) => {
     const changeList = [];
 
@@ -124,6 +140,7 @@ modtask.handle = (serverObjs, context) => {
                         target: outcome.proxyTarget,
                         selfHandleResponse: true
                     };
+                    streamBodyPayload(requestBody, handlerConfig);
                     if (outcome.transportAgent) {
                         datastreamMonitor.log({ msg: {
                             action: 'transportAgent',
